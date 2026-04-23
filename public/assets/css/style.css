@@ -1,0 +1,50 @@
+/* ============================================================
+   Hotel Management System — Custom Styles
+   Extends Bootstrap 5. Keep changes minimal.
+   ============================================================ */
+
+/* ── General ──────────────────────────────────────────────── */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+}
+
+/* ── Navbar ───────────────────────────────────────────────── */
+.navbar-brand i {
+    margin-right: 6px;
+}
+
+/* ── Status Badges ────────────────────────────────────────── */
+.badge-available   { background-color: #28a745; }
+.badge-occupied    { background-color: #007bff; }
+.badge-dirty       { background-color: #dc3545; }
+.badge-cleaning    { background-color: #ffc107; color: #333; }
+.badge-inspecting  { background-color: #17a2b8; }
+.badge-out-of-order { background-color: #6c757d; }
+
+/* ── Cards ────────────────────────────────────────────────── */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── Tables ───────────────────────────────────────────────── */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+footer {
+    margin-top: auto;
+}
+
+/* TODO: Add more custom styles as needed during implementation */
