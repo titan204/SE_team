@@ -123,3 +123,4 @@ git push origin feature/your-branch --force-with-lease
 2. Team lead (Dev 1) decides which version to keep
 3. Lost changes are re-applied by hand
 4. Document what happened to avoid repeating
+hello this is my pc 
