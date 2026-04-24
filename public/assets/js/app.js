@@ -1,7 +1,3 @@
-// ============================================================
-//  Hotel Management System — Main JavaScript File
-//  Vanilla JS only. No jQuery, no frameworks.
-// ============================================================
 
 // ── Form Validation ──────────────────────────────────────────
 

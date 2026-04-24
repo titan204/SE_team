@@ -2,6 +2,9 @@
 // ============================================================
 //  Folio Model — Billing folio for a reservation
 //  Table: folios
+//
+//  Usage:
+//    $folio = new Folio();
 // ============================================================
 
 class Folio extends Model
@@ -20,10 +23,12 @@ class Folio extends Model
     public function all()
     {
         // TODO: Team will implement query logic here
-        // SELECT f.*, r.id AS res_id, g.name AS guest_name
-        // FROM folios f
-        // JOIN reservations r ON f.reservation_id = r.id
-        // JOIN guests g ON r.guest_id = g.id
+        // $sql = "SELECT f.*, r.id AS res_id, g.name AS guest_name
+        //         FROM folios f
+        //         JOIN reservations r ON f.reservation_id = r.id
+        //         JOIN guests g ON r.guest_id = g.id";
+        // $result = mysqli_query($this->db, $sql);
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
@@ -34,7 +39,9 @@ class Folio extends Model
     public function findByReservation($reservationId)
     {
         // TODO: Team will implement query logic here
-        // SELECT * FROM folios WHERE reservation_id = ?
+        // $reservationId = mysqli_real_escape_string($this->db, $reservationId);
+        // $result = mysqli_query($this->db, "SELECT * FROM folios WHERE reservation_id = '$reservationId'");
+        // return mysqli_fetch_assoc($result);
     }
 
     public function create($data)
@@ -62,13 +69,15 @@ class Folio extends Model
     public function charges()
     {
         // TODO: Return all charges on this folio
-        // SELECT * FROM folio_charges WHERE folio_id = ?
+        // $result = mysqli_query($this->db, "SELECT * FROM folio_charges WHERE folio_id = '$this->id'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function payments()
     {
         // TODO: Return all payments on this folio
-        // SELECT * FROM payments WHERE folio_id = ?
+        // $result = mysqli_query($this->db, "SELECT * FROM payments WHERE folio_id = '$this->id'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     // ── Business Logic ───────────────────────────────────────

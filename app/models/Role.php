@@ -2,6 +2,8 @@
 // ============================================================
 //  Role Model — Access roles (manager, front_desk, housekeeper)
 //  Table: roles
+//
+//  Usage: $role = new Role();
 // ============================================================
 
 class Role extends Model
@@ -10,43 +12,43 @@ class Role extends Model
     public $name;
     public $created_at;
 
-    // ── CRUD ─────────────────────────────────────────────────
-
     public function all()
     {
-        // TODO: Team will implement query logic here
-        // SELECT * FROM roles
+        $result = mysqli_query($this->db, "SELECT * FROM roles");
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
     {
-        // TODO: Team will implement query logic here
-        // SELECT * FROM roles WHERE id = ?
+        $id = mysqli_real_escape_string($this->db, $id);
+        $result = mysqli_query($this->db, "SELECT * FROM roles WHERE id = '$id'");
+        return mysqli_fetch_assoc($result);
     }
 
     public function create($data)
     {
-        // TODO: Team will implement query logic here
-        // INSERT INTO roles (name) VALUES (?)
+        $name = mysqli_real_escape_string($this->db, $data['name']);
+        mysqli_query($this->db, "INSERT INTO roles (name) VALUES ('$name')");
+        return mysqli_insert_id($this->db);
     }
 
     public function update($id, $data)
     {
-        // TODO: Team will implement query logic here
-        // UPDATE roles SET name = ? WHERE id = ?
+        $id = mysqli_real_escape_string($this->db, $id);
+        $name = mysqli_real_escape_string($this->db, $data['name']);
+        mysqli_query($this->db, "UPDATE roles SET name = '$name' WHERE id = '$id'");
     }
 
     public function delete($id)
     {
-        // TODO: Team will implement query logic here
-        // DELETE FROM roles WHERE id = ?
+        $id = mysqli_real_escape_string($this->db, $id);
+        mysqli_query($this->db, "DELETE FROM roles WHERE id = '$id'");
     }
-
-    // ── Relationships ────────────────────────────────────────
 
     public function users()
     {
-        // TODO: Return all users that belong to this role
-        // SELECT * FROM users WHERE role_id = ?
+        $roleId = mysqli_real_escape_string($this->db, $this->id);
+        $result = mysqli_query($this->db, "SELECT * FROM users WHERE role_id = '$roleId'");
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 }

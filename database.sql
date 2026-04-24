@@ -7,10 +7,12 @@
 -- ────────────────────────────────────────────────────────────
 --  USERS & ROLES  (Staff authentication & access control)
 -- ────────────────────────────────────────────────────────────
+create database hotel_management ; 
+use hotel_management ; 
 
 CREATE TABLE roles (
     id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    name       VARCHAR(50)  NOT NULL UNIQUE,   -- 'manager', 'front_desk', 'housekeeper'
+    name       VARCHAR(50)  NOT NULL UNIQUE,   -- 'manager', 'front_desk', 'housekeeper' , 'guest' 
     created_at TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -267,4 +269,4 @@ CREATE TABLE audit_log (
 --  SEED DATA — Roles
 -- ────────────────────────────────────────────────────────────
 
-INSERT INTO roles (name) VALUES ('manager'), ('front_desk'), ('housekeeper');
+INSERT INTO roles (name) VALUES ('manager'), ('front_desk'), ('housekeeper') , ('guest');

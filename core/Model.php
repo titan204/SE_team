@@ -2,12 +2,13 @@
 // ============================================================
 //  Base Model
 //  All models extend this class to get the DB connection.
+//  Usage: $guest = new Guest();
 // ============================================================
 
 class Model
 {
-    // Shared PDO connection available to all child models
-    protected PDO $db;
+    // Shared mysqli connection available to all child models
+    protected $db;
 
     public function __construct()
     {

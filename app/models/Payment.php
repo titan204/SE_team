@@ -2,6 +2,8 @@
 // ============================================================
 //  Payment Model — Payments against folios
 //  Table: payments
+//
+//  Usage: $payment = new Payment();
 // ============================================================
 
 class Payment extends Model
@@ -14,7 +16,7 @@ class Payment extends Model
     public $processed_by;
     public $processed_at;
 
-    public function all() { /* TODO: SELECT * FROM payments */ }
+    public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM payments") */ }
     public function find($id) { /* TODO: SELECT * FROM payments WHERE id = ? */ }
     public function findByFolio($folioId) { /* TODO: WHERE folio_id = ? */ }
     public function create($data) { /* TODO: INSERT INTO payments */ }

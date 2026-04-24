@@ -2,6 +2,9 @@
 // ============================================================
 //  FolioCharge Model — Individual charges on a folio
 //  Table: folio_charges
+//
+//  Usage:
+//    $charge = new FolioCharge();
 // ============================================================
 
 class FolioCharge extends Model
@@ -29,13 +32,15 @@ class FolioCharge extends Model
     public function findByFolio($folioId)
     {
         // TODO: Team will implement query logic here
-        // SELECT * FROM folio_charges WHERE folio_id = ?
+        // $folioId = mysqli_real_escape_string($this->db, $folioId);
+        // $result = mysqli_query($this->db, "SELECT * FROM folio_charges WHERE folio_id = '$folioId'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function create($data)
     {
         // TODO: Team will implement query logic here
-        // INSERT INTO folio_charges (folio_id, charge_type, description, amount, posted_by) VALUES (?, ?, ?, ?, ?)
+        // Use mysqli_real_escape_string() for each field, then INSERT
     }
 
     public function update($id, $data)

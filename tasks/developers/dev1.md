@@ -249,9 +249,7 @@ $_SESSION['user_role']  → string (the role NAME: 'manager', 'front_desk', 'hou
 ```
 
 ### Password Security:
-- NEVER store plain-text passwords
-- Always use `password_hash($password, PASSWORD_DEFAULT)` when creating users
-- Always use `password_verify($inputPassword, $hashedPassword)` when checking login
+- Always use `password_verify($inputPassword, $)` when checking login
 - Never use MD5 or SHA1 for passwords
 
 ### RBAC (Role-Based Access Control):

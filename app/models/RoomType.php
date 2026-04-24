@@ -2,6 +2,8 @@
 // ============================================================
 //  RoomType Model — Categories of rooms (Standard, Deluxe, Suite)
 //  Table: room_types
+//
+//  Usage: $roomType = new RoomType();
 // ============================================================
 
 class RoomType extends Model
@@ -12,43 +14,38 @@ class RoomType extends Model
     public $base_price;
     public $capacity;
 
-    // ── CRUD ─────────────────────────────────────────────────
-
     public function all()
     {
-        // TODO: Team will implement query logic here
-        // SELECT * FROM room_types ORDER BY base_price
+        // TODO: $result = mysqli_query($this->db, "SELECT * FROM room_types ORDER BY base_price");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
     {
-        // TODO: Team will implement query logic here
-        // SELECT * FROM room_types WHERE id = ?
+        // TODO: $id = mysqli_real_escape_string($this->db, $id);
+        // $result = mysqli_query($this->db, "SELECT * FROM room_types WHERE id = '$id'");
+        // return mysqli_fetch_assoc($result);
     }
 
     public function create($data)
     {
-        // TODO: Team will implement query logic here
-        // INSERT INTO room_types (name, description, base_price, capacity) VALUES (?, ?, ?, ?)
+        // TODO: INSERT INTO room_types (name, description, base_price, capacity) VALUES (...)
     }
 
     public function update($id, $data)
     {
-        // TODO: Team will implement query logic here
-        // UPDATE room_types SET name=?, description=?, base_price=?, capacity=? WHERE id = ?
+        // TODO: UPDATE room_types SET ... WHERE id = ...
     }
 
     public function delete($id)
     {
-        // TODO: Team will implement query logic here
-        // DELETE FROM room_types WHERE id = ?
+        // TODO: DELETE FROM room_types WHERE id = ...
     }
-
-    // ── Relationships ────────────────────────────────────────
 
     public function rooms()
     {
         // TODO: Return all rooms of this type
-        // SELECT * FROM rooms WHERE room_type_id = ?
+        // $result = mysqli_query($this->db, "SELECT * FROM rooms WHERE room_type_id = '$this->id'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 }

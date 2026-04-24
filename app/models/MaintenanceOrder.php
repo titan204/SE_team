@@ -2,6 +2,8 @@
 // ============================================================
 //  MaintenanceOrder Model — Repair work orders
 //  Table: maintenance_orders
+//
+//  Usage: $order = new MaintenanceOrder();
 // ============================================================
 
 class MaintenanceOrder extends Model
@@ -17,7 +19,7 @@ class MaintenanceOrder extends Model
     public $created_at;
     public $updated_at;
 
-    public function all() { /* TODO: SELECT * FROM maintenance_orders */ }
+    public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM maintenance_orders") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }
     public function create($data) { /* TODO: INSERT INTO maintenance_orders */ }
     public function update($id, $data) { /* TODO: UPDATE maintenance_orders */ }

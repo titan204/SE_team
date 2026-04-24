@@ -2,6 +2,8 @@
 // ============================================================
 //  CorporateAccount Model — Company accounts with contracted rates
 //  Table: corporate_accounts
+//
+//  Usage: $corp = new CorporateAccount();
 // ============================================================
 
 class CorporateAccount extends Model
@@ -13,7 +15,7 @@ class CorporateAccount extends Model
     public $contracted_rate;
     public $created_at;
 
-    public function all() { /* TODO: SELECT * FROM corporate_accounts */ }
+    public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM corporate_accounts") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }
     public function create($data) { /* TODO: INSERT INTO corporate_accounts */ }
     public function update($id, $data) { /* TODO: UPDATE corporate_accounts */ }

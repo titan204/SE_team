@@ -2,6 +2,8 @@
 // ============================================================
 //  Feedback Model — Post-stay guest surveys
 //  Table: feedback
+//
+//  Usage: $fb = new Feedback();
 // ============================================================
 
 class Feedback extends Model
@@ -13,7 +15,7 @@ class Feedback extends Model
     public $comments;
     public $submitted_at;
 
-    public function all() { /* TODO: SELECT * FROM feedback */ }
+    public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM feedback") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }
     public function create($data) { /* TODO: INSERT INTO feedback */ }
     public function update($id, $data) { /* TODO: UPDATE feedback */ }

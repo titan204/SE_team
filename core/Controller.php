@@ -2,29 +2,14 @@
 // ============================================================
 //  Base Controller
 //  All controllers extend this class.
+//
+//  To use a model, just create it with new:
+//    $guest = new Guest();
+//    $room  = new Room();
 // ============================================================
 
 class Controller
 {
-    /**
-     * Loads a model by name and returns an instance.
-     *
-     * Usage inside a controller:
-     *   $guest = $this->model('Guest');
-     */
-    protected function model(string $modelName): object
-    {
-        // Build the path to the requested model file
-        $file = APP_PATH . '/models/' . $modelName . '.php';
-
-        if (!file_exists($file)) {
-            die("Model not found: {$modelName}");
-        }
-
-        require_once $file;
-        return new $modelName();
-    }
-
     /**
      * Renders a view file and passes data to it.
      *
@@ -79,8 +64,8 @@ class Controller
         $this->requireLogin();
 
         if ($_SESSION['user_role'] !== $role) {
-            // TODO: Show a "403 Forbidden" view
-            die('Access denied. Required role: ' . $role);
+        $this->view("forbidden/index");
+        die('Access denied. Required role: ' . $role);
         }
     }
 }

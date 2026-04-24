@@ -13,8 +13,8 @@
 class Router
 {
     // Default controller and method when no URL is given
-    private string $defaultController = 'DashboardController';
-    private string $defaultMethod     = 'index';
+    private string $defaultController = 'AuthController';
+    private string $defaultMethod     = 'login';
 
     /**
      * Reads the ?url= query string, splits it into parts,
@@ -102,10 +102,8 @@ class Router
     private function notFound(string $message = ''): void
     {
         http_response_code(404);
-        // TODO: Load a proper 404 view
-        echo "<h1>404 — Page Not Found</h1>";
-        if (APP_DEBUG ?? false) {
-            echo "<p>{$message}</p>";
-        }
+    
+        echo "<h1 style = 'color: red ; fontsize: 20px ; font-weight: bold; '>404 — Page Not Found</h1>";
+   
     }
 }

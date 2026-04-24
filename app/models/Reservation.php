@@ -2,6 +2,10 @@
 // ============================================================
 //  Reservation Model — Bookings / check-in / check-out
 //  Table: reservations
+//
+//  Usage:
+//    $reservation = new Reservation();
+//    $all = $reservation->all();
 // ============================================================
 
 class Reservation extends Model
@@ -31,34 +35,39 @@ class Reservation extends Model
     public function all()
     {
         // TODO: Team will implement query logic here
-        // SELECT r.*, g.name AS guest_name, rm.room_number
-        // FROM reservations r
-        // JOIN guests g ON r.guest_id = g.id
-        // JOIN rooms rm ON r.room_id = rm.id
+        // $sql = "SELECT r.*, g.name AS guest_name, rm.room_number
+        //         FROM reservations r
+        //         JOIN guests g ON r.guest_id = g.id
+        //         JOIN rooms rm ON r.room_id = rm.id";
+        // $result = mysqli_query($this->db, $sql);
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
     {
         // TODO: Team will implement query logic here
-        // SELECT * FROM reservations WHERE id = ?
+        // $id = mysqli_real_escape_string($this->db, $id);
+        // $result = mysqli_query($this->db, "SELECT * FROM reservations WHERE id = '$id'");
+        // return mysqli_fetch_assoc($result);
     }
 
     public function create($data)
     {
         // TODO: Team will implement query logic here
-        // INSERT INTO reservations (...) VALUES (...)
+        // Use mysqli_real_escape_string() for each field, then INSERT
     }
 
     public function update($id, $data)
     {
         // TODO: Team will implement query logic here
-        // UPDATE reservations SET ... WHERE id = ?
+        // Use mysqli_real_escape_string() for each field, then UPDATE ... WHERE id = '$id'
     }
 
     public function delete($id)
     {
         // TODO: Team will implement query logic here
-        // DELETE FROM reservations WHERE id = ?
+        // $id = mysqli_real_escape_string($this->db, $id);
+        // mysqli_query($this->db, "DELETE FROM reservations WHERE id = '$id'");
     }
 
     // ── Relationships ────────────────────────────────────────

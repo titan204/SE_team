@@ -2,6 +2,11 @@
 // ============================================================
 //  Guest Model — Hotel guest profiles and CRM data
 //  Table: guests
+//
+//  Usage:
+//    $guest = new Guest();
+//    $all   = $guest->all();
+//    $one   = $guest->find(5);
 // ============================================================
 
 class Guest extends Model
@@ -29,31 +34,40 @@ class Guest extends Model
     public function all()
     {
         // TODO: Team will implement query logic here
-        // SELECT * FROM guests ORDER BY name
+        // $result = mysqli_query($this->db, "SELECT * FROM guests ORDER BY name");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
     {
         // TODO: Team will implement query logic here
-        // SELECT * FROM guests WHERE id = ?
+        // $id = mysqli_real_escape_string($this->db, $id);
+        // $result = mysqli_query($this->db, "SELECT * FROM guests WHERE id = '$id'");
+        // return mysqli_fetch_assoc($result);
     }
 
     public function create($data)
     {
         // TODO: Team will implement query logic here
-        // INSERT INTO guests (name, email, phone, ...) VALUES (?, ?, ?, ...)
+        // $name  = mysqli_real_escape_string($this->db, $data['name']);
+        // $email = mysqli_real_escape_string($this->db, $data['email']);
+        // mysqli_query($this->db, "INSERT INTO guests (name, email, ...) VALUES ('$name', '$email', ...)");
+        // return mysqli_insert_id($this->db);
     }
 
     public function update($id, $data)
     {
         // TODO: Team will implement query logic here
-        // UPDATE guests SET name=?, email=?, ... WHERE id = ?
+        // $name = mysqli_real_escape_string($this->db, $data['name']);
+        // $id   = mysqli_real_escape_string($this->db, $id);
+        // mysqli_query($this->db, "UPDATE guests SET name='$name', ... WHERE id = '$id'");
     }
 
     public function delete($id)
     {
         // TODO: Team will implement query logic here
-        // DELETE FROM guests WHERE id = ?
+        // $id = mysqli_real_escape_string($this->db, $id);
+        // mysqli_query($this->db, "DELETE FROM guests WHERE id = '$id'");
     }
 
     // ── Relationships ────────────────────────────────────────
@@ -61,27 +75,32 @@ class Guest extends Model
     public function reservations()
     {
         // TODO: Return all reservations for this guest
-        // SELECT * FROM reservations WHERE guest_id = ?
+        // $result = mysqli_query($this->db, "SELECT * FROM reservations WHERE guest_id = '$this->id'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function preferences()
     {
         // TODO: Return guest preferences
-        // SELECT * FROM guest_preferences WHERE guest_id = ?
+        // $result = mysqli_query($this->db, "SELECT * FROM guest_preferences WHERE guest_id = '$this->id'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function corporateAccount()
     {
         // TODO: Return the corporate account linked to this guest
-        // SELECT ca.* FROM corporate_accounts ca
-        // JOIN guest_corporate gc ON gc.corporate_id = ca.id
-        // WHERE gc.guest_id = ?
+        // $sql = "SELECT ca.* FROM corporate_accounts ca
+        //         JOIN guest_corporate gc ON gc.corporate_id = ca.id
+        //         WHERE gc.guest_id = '$this->id'";
+        // $result = mysqli_query($this->db, $sql);
+        // return mysqli_fetch_assoc($result);
     }
 
     public function feedback()
     {
         // TODO: Return all feedback from this guest
-        // SELECT * FROM feedback WHERE guest_id = ?
+        // $result = mysqli_query($this->db, "SELECT * FROM feedback WHERE guest_id = '$this->id'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     // ── Business Logic Prototypes ────────────────────────────
@@ -115,6 +134,7 @@ class Guest extends Model
     public function referrals()
     {
         // TODO: Return all guests referred by this guest
-        // SELECT * FROM guests WHERE referred_by = ?
+        // $result = mysqli_query($this->db, "SELECT * FROM guests WHERE referred_by = '$this->id'");
+        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 }

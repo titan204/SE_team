@@ -2,6 +2,10 @@
 // ============================================================
 //  User Model — Staff accounts (Manager, Front-Desk, Housekeeper)
 //  Table: users
+//
+//  Usage:
+//    $user = new User();
+//    $all  = $user->all();
 // ============================================================
 
 class User extends Model
@@ -19,53 +23,90 @@ class User extends Model
 
     public function all()
     {
-        // TODO: Team will implement query logic here
-        // SELECT * FROM users JOIN roles ON users.role_id = roles.id
+        $result = mysqli_query($this->db, "SELECT * FROM users JOIN roles ON users.role_id = roles.id");
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
     {
-        // TODO: Team will implement query logic here
-        // SELECT * FROM users WHERE id = ?
+        $id = mysqli_real_escape_string($this->db, $id);
+        $result = mysqli_query($this->db, "SELECT * FROM users WHERE id = '$id'");
+        return mysqli_fetch_assoc($result);
     }
 
     public function findByEmail($email)
     {
-        // TODO: Team will implement query logic here
-        // SELECT * FROM users WHERE email = ?
+        $email = mysqli_real_escape_string($this->db, $email);
+        $result = mysqli_query(
+            $this->db,
+            "SELECT users.*, roles.name AS role_name
+             FROM users
+             LEFT JOIN roles ON users.role_id = roles.id
+             WHERE users.email = '$email'
+             LIMIT 1"
+        );
+        return mysqli_fetch_assoc($result);
     }
 
     public function create($data)
     {
-        // TODO: Team will implement query logic here
-        // INSERT INTO users (role_id, name, email, password) VALUES (?, ?, ?, ?)
+        $name     = mysqli_real_escape_string($this->db, $data['name']);
+        $email    = mysqli_real_escape_string($this->db, $data['email']);
+        $password = mysqli_real_escape_string($this->db, $data['password']);
+        $role_id  = mysqli_real_escape_string($this->db, $data['role_id']);
+        mysqli_query($this->db, "INSERT INTO users (role_id, name, email, password) VALUES ('$role_id', '$name', '$email', '$password')");
+        return mysqli_insert_id($this->db);
     }
 
     public function update($id, $data)
     {
-        // TODO: Team will implement query logic here
-        // UPDATE users SET name=?, email=?, role_id=? WHERE id = ?
+        $id = mysqli_real_escape_string($this->db, $id);
+
+        $updates = [];
+        foreach ($data as $key => $value) {
+            if (in_array($key, ['name', 'email', 'role_id', 'is_active'])) {
+                $value = mysqli_real_escape_string($this->db, $value);
+                $updates[] = "`$key` = '$value'";
+            }
+        }
+
+        if (empty($updates)) {
+            return;
+        }
+
+        $query = "UPDATE users SET " . implode(", ", $updates) . " WHERE id = '$id'";
+        mysqli_query($this->db, $query);
     }
 
     public function delete($id)
     {
-        // TODO: Team will implement query logic here
-        // DELETE FROM users WHERE id = ?
+        // Soft delete: set is_active = 0
+        $id = mysqli_real_escape_string($this->db, $id);
+        mysqli_query($this->db, "UPDATE users SET is_active = 0 WHERE id = '$id'");
     }
 
     // ── Relationships ────────────────────────────────────────
 
     public function role()
     {
-        // TODO: Return the role record for this user
-        // SELECT * FROM roles WHERE id = this->role_id
+        $result = mysqli_query($this->db, "SELECT * FROM roles WHERE id = '$this->role_id'");
+        return mysqli_fetch_assoc($result);
     }
 
     // ── Authentication Helpers ───────────────────────────────
-
     public function authenticate($email, $password)
     {
-        // TODO: Find user by email, verify password with password_verify()
-        // Return user data on success, false on failure
+        $email = trim($email);
+        $user = $this->findByEmail($email);
+
+        if (!$user || (int)$user['is_active'] !== 1) {
+            return false;
+        }
+
+        if ($user['password'] === $password) {
+            return $user;
+        }
+
+        return false;
     }
 }

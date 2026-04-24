@@ -2,6 +2,8 @@
 // ============================================================
 //  HousekeepingTask Model — Cleaning & inspection tasks
 //  Table: housekeeping_tasks
+//
+//  Usage: $task = new HousekeepingTask();
 // ============================================================
 
 class HousekeepingTask extends Model
@@ -16,7 +18,7 @@ class HousekeepingTask extends Model
     public $created_at;
     public $updated_at;
 
-    public function all() { /* TODO: SELECT * FROM housekeeping_tasks */ }
+    public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM housekeeping_tasks") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }
     public function create($data) { /* TODO: INSERT INTO housekeeping_tasks */ }
     public function update($id, $data) { /* TODO: UPDATE housekeeping_tasks */ }

@@ -2,6 +2,8 @@
 // ============================================================
 //  LostAndFound Model — Items found in rooms
 //  Table: lost_and_found
+//
+//  Usage: $item = new LostAndFound();
 // ============================================================
 
 class LostAndFound extends Model
@@ -14,7 +16,7 @@ class LostAndFound extends Model
     public $status;       // found, claimed, donated, discarded
     public $found_at;
 
-    public function all() { /* TODO: SELECT * FROM lost_and_found */ }
+    public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM lost_and_found") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }
     public function create($data) { /* TODO: INSERT INTO lost_and_found */ }
     public function update($id, $data) { /* TODO: UPDATE lost_and_found */ }
