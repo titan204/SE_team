@@ -1,6 +1,7 @@
-<?php $pageTitle = 'All Rooms'; ?>
-
-<?php require VIEW_PATH . '/layouts/main.php'; ?>
+<?php
+$pageTitle = 'All Rooms';
+ob_start();
+?>
 
 <div class="container mt-4">
 
@@ -140,3 +141,7 @@ function filterTable() {
     });
 }
 </script>
+<?php
+$content = ob_get_clean();
+require VIEW_PATH . '/layouts/main.php';
+?>

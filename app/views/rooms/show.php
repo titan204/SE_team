@@ -1,6 +1,7 @@
-<?php $pageTitle = 'Room Details'; ?>
-
-<?php require VIEW_PATH . '/layouts/main.php'; ?>
+<?php
+$pageTitle = 'Room Details';
+ob_start();
+?>
 
 <?php
 $badgeMap = [
@@ -182,3 +183,7 @@ $nextStatuses = $transitions[$room['status']] ?? [];
     <?php endif; ?>
 
 </div>
+<?php
+$content = ob_get_clean();
+require VIEW_PATH . '/layouts/main.php';
+?>

@@ -209,8 +209,17 @@ class Room extends Model
      * Validate the transition against the state machine, then UPDATE if valid.
      * Returns true on success, or an error message string if the transition is invalid.
      */
-    public function updateStatus($roomId, $newStatus)
+    public function updateStatus($roomId, $newStatus = null)
     {
+        if ($newStatus === null) {
+            $newStatus = $roomId;
+            $roomId = $this->id;
+        }
+
+        if (empty($roomId)) {
+            throw new Exception("Room ID is required to update status.");
+        }
+
         // Fetch current status
         $stmt = mysqli_prepare($this->db, "SELECT status FROM rooms WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $roomId);

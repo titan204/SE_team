@@ -18,18 +18,17 @@ $currentUserName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES
     <link href="<?= APP_URL ?>/public/assets/css/style.css" rel="stylesheet">
 </head>
 
-<body>
-    <?php if ($isLoggedIn): ?>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="<?= APP_URL ?>">
-                    <i class="bi bi-building"></i> <?= APP_NAME ?>
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="mainNav">
-
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="<?= APP_URL ?>">
+                <i class="bi bi-building"></i> <?= APP_NAME ?>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <?php if ($isLoggedIn): ?>
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/dashboard">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/reservations">Reservations</a></li>
@@ -51,24 +50,25 @@ $currentUserName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES
                             <a class="nav-link" href="<?= APP_URL ?>/auth/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
                         </li>
                     </ul>
+                <?php else: ?>
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/auth/login">Login</a></li>
                     </ul>
                 <?php endif; ?>
-                </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
-        <main class="container-fluid py-4">
-            <?= $content ?? '' ?>
-        </main>
+    <main class="container-fluid py-4 flex-grow-1">
+        <?= $content ?? '' ?>
+    </main>
 
-        <footer class="bg-dark text-white text-center py-3 mt-auto">
-            <small>&copy; <?= date('Y') ?> <?= APP_NAME ?> - SE Project</small>
-        </footer>
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
+        <small>&copy; <?= date('Y') ?> <?= APP_NAME ?> - SE Project</small>
+    </footer>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="<?= APP_URL ?>/public/assets/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= APP_URL ?>/public/assets/js/app.js"></script>
 </body>
 
 </html>

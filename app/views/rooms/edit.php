@@ -1,6 +1,7 @@
-<?php $pageTitle = 'Edit Room'; ?>
-
-<?php require VIEW_PATH . '/layouts/main.php'; ?>
+<?php
+$pageTitle = 'Edit Room';
+ob_start();
+?>
 
 <div class="container mt-4">
     <div class="row justify-content-center">
@@ -84,3 +85,7 @@
         </div>
     </div>
 </div>
+<?php
+$content = ob_get_clean();
+require VIEW_PATH . '/layouts/main.php';
+?>
