@@ -135,7 +135,7 @@ class Room extends Model
         $row = mysqli_fetch_assoc($result);
 
         if ($row['cnt'] > 0) {
-            return "Cannot delete: room has {$row['cnt']} active reservation(s).";
+            throw new Exception("Cannot delete: room has {$row['cnt']} active reservation(s).");
         }
 
         $stmt = mysqli_prepare($this->db, "DELETE FROM rooms WHERE id = ?");
@@ -219,7 +219,7 @@ class Room extends Model
         $row = mysqli_fetch_assoc($result);
 
         if (!$row) {
-            return "Room not found.";
+            throw new Exception("Room not found.");
         }
 
         $current = $row['status'];
@@ -227,13 +227,13 @@ class Room extends Model
         // Validate that newStatus is a known status
         $allStatuses = array_keys($this->transitions);
         if (!in_array($newStatus, $allStatuses)) {
-            return "Invalid status: '$newStatus'.";
+            throw new Exception("Invalid status: '$newStatus'.");
         }
 
         // Validate transition
         $allowed = $this->transitions[$current] ?? [];
         if (!in_array($newStatus, $allowed)) {
-            return "Transition from '$current' to '$newStatus' is not allowed.";
+            throw new Exception("Transition from '$current' to '$newStatus' is not allowed.");
         }
 
         // Perform update
@@ -250,40 +250,29 @@ class Room extends Model
      */
     public function findAvailable($checkIn, $checkOut, $typeId = null)
     {
-        if ($typeId) {
-            $stmt = mysqli_prepare(
-                $this->db,
-                "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
+        $sql = "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
                  FROM   rooms
                  JOIN   room_types ON rooms.room_type_id = room_types.id
-                 WHERE  rooms.status = 'available'
-                   AND  rooms.room_type_id = ?
-                   AND  rooms.id NOT IN (
+                 WHERE  rooms.status = 'available'";
+
+        if ($typeId) {
+            $sql .= " AND rooms.room_type_id = ?";
+        }
+
+        $sql .= " AND rooms.id NOT IN (
                             SELECT DISTINCT room_id
                             FROM   reservations
                             WHERE  status NOT IN ('cancelled', 'no_show', 'checked_out')
                               AND  check_in_date  < ?
                               AND  check_out_date > ?
                         )
-                 ORDER BY rooms.room_number ASC"
-            );
+                 ORDER BY rooms.room_number ASC";
+
+        $stmt = mysqli_prepare($this->db, $sql);
+        
+        if ($typeId) {
             mysqli_stmt_bind_param($stmt, 'iss', $typeId, $checkOut, $checkIn);
         } else {
-            $stmt = mysqli_prepare(
-                $this->db,
-                "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
-                 FROM   rooms
-                 JOIN   room_types ON rooms.room_type_id = room_types.id
-                 WHERE  rooms.status = 'available'
-                   AND  rooms.id NOT IN (
-                            SELECT DISTINCT room_id
-                            FROM   reservations
-                            WHERE  status NOT IN ('cancelled', 'no_show', 'checked_out')
-                              AND  check_in_date  < ?
-                              AND  check_out_date > ?
-                        )
-                 ORDER BY rooms.room_number ASC"
-            );
             mysqli_stmt_bind_param($stmt, 'ss', $checkOut, $checkIn);
         }
 

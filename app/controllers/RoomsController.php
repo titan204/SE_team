@@ -170,12 +170,11 @@ class RoomsController extends Controller
         $this->requireLogin();
 
         $room   = new Room();
-        $result = $room->delete($id);
-
-        if ($result === true) {
+        try {
+            $room->delete($id);
             $_SESSION['success'] = 'Room deleted successfully.';
-        } else {
-            $_SESSION['error'] = $result;
+        } catch (Exception $e) {
+            $_SESSION['error'] = $e->getMessage();
         }
 
         $this->redirect('rooms');
@@ -195,15 +194,14 @@ class RoomsController extends Controller
             $this->redirect("rooms/show/$id");
         }
 
-        $room   = new Room();
-        $result = $room->updateStatus($id, $newStatus);
-
-        if ($result === true) {
+        $room = new Room();
+        try {
+            $room->updateStatus($id, $newStatus);
             // Log the status change using the existing AuditLog model
             AuditLog::log($_SESSION['user_id'] ?? null, 'room_status_change', 'room', $id, null, $newStatus);
             $_SESSION['success'] = "Status updated to '$newStatus'.";
-        } else {
-            $_SESSION['error'] = $result;
+        } catch (Exception $e) {
+            $_SESSION['error'] = $e->getMessage();
         }
 
         $this->redirect("rooms/show/$id");

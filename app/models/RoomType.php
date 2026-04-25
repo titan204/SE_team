@@ -89,7 +89,7 @@ class RoomType extends Model
         $row = mysqli_fetch_assoc($result);
 
         if ($row['cnt'] > 0) {
-            return "Cannot delete: {$row['cnt']} room(s) still use this type.";
+            throw new Exception("Cannot delete: {$row['cnt']} room(s) still use this type.");
         }
 
         $stmt = mysqli_prepare($this->db, "DELETE FROM room_types WHERE id = ?");
