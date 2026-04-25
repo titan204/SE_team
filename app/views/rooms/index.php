@@ -4,13 +4,15 @@
 
 <div class="container mt-4">
 
-    
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>All Rooms</h2>
-        <a href="<?= BASE_URL ?>/rooms/create" class="btn btn-primary">+ Add Room</a>
+        <h2><i class="bi bi-door-open"></i> All Rooms</h2>
+        <a href="<?= APP_URL ?>/rooms/create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Add Room
+        </a>
     </div>
 
-    
+    <!-- Flash: success -->
     <?php if (!empty($_SESSION['success'])): ?>
         <div class="alert alert-success alert-dismissible fade show">
             <?= htmlspecialchars($_SESSION['success']) ?>
@@ -19,6 +21,7 @@
         <?php unset($_SESSION['success']); ?>
     <?php endif; ?>
 
+    <!-- Flash: error -->
     <?php if (!empty($_SESSION['error'])): ?>
         <div class="alert alert-danger alert-dismissible fade show">
             <?= htmlspecialchars($_SESSION['error']) ?>
@@ -27,7 +30,7 @@
         <?php unset($_SESSION['error']); ?>
     <?php endif; ?>
 
-  
+    <!-- Filters -->
     <div class="row g-2 mb-3">
         <div class="col-auto">
             <select id="filterStatus" class="form-select form-select-sm">
@@ -44,7 +47,6 @@
             <select id="filterType" class="form-select form-select-sm">
                 <option value="">All Types</option>
                 <?php
-                
                 $types = array_unique(array_column($rooms, 'type_name'));
                 foreach ($types as $t): ?>
                     <option value="<?= htmlspecialchars($t) ?>"><?= htmlspecialchars($t) ?></option>
@@ -53,14 +55,14 @@
         </div>
     </div>
 
-    
+    <!-- Table -->
     <div class="table-responsive">
         <table class="table table-hover align-middle" id="roomsTable">
             <thead class="table-dark">
                 <tr>
                     <th>Room No.</th>
-                    <th>Type</th>
                     <th>Floor</th>
+                    <th>Type</th>
                     <th>Price/Night</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -78,12 +80,10 @@
 
                             <td><strong><?= htmlspecialchars($room['room_number']) ?></strong></td>
 
-                            
-                            <td><?= htmlspecialchars($room['type_name']) ?></td>
-
                             <td><?= (int)$room['floor'] ?></td>
 
-                            
+                            <td><?= htmlspecialchars($room['type_name']) ?></td>
+
                             <td>$<?= number_format($room['base_price'], 2) ?></td>
 
                             <td>
@@ -99,19 +99,19 @@
                                 $badge = $badgeMap[$room['status']] ?? 'dark';
                                 ?>
                                 <span class="badge bg-<?= $badge ?>">
-                                    <?= htmlspecialchars($room['status']) ?>
+                                    <?= htmlspecialchars(str_replace('_', ' ', $room['status'])) ?>
                                 </span>
                             </td>
 
                             <td>
-                                <a href="<?= BASE_URL ?>/rooms/show/<?= $room['id'] ?>"
+                                <a href="<?= APP_URL ?>/rooms/show/<?= $room['id'] ?>"
                                    class="btn btn-sm btn-outline-secondary">View</a>
 
-                                <a href="<?= BASE_URL ?>/rooms/edit/<?= $room['id'] ?>"
+                                <a href="<?= APP_URL ?>/rooms/edit/<?= $room['id'] ?>"
                                    class="btn btn-sm btn-outline-primary">Edit</a>
 
                                 <form method="POST"
-                                      action="<?= BASE_URL ?>/rooms/delete/<?= $room['id'] ?>"
+                                      action="<?= APP_URL ?>/rooms/delete/<?= $room['id'] ?>"
                                       class="d-inline"
                                       onsubmit="return confirm('Delete room <?= htmlspecialchars($room['room_number']) ?>?')">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>

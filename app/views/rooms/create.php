@@ -7,11 +7,13 @@
         <div class="col-md-6">
 
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h2>Add New Room</h2>
-                <a href="<?= BASE_URL ?>/rooms" class="btn btn-outline-secondary">Back</a>
+                <h2><i class="bi bi-plus-circle"></i> Add New Room</h2>
+                <a href="<?= APP_URL ?>/rooms" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
             </div>
 
-            
+            <!-- Validation errors -->
             <?php if (!empty($_SESSION['errors'])): ?>
                 <div class="alert alert-danger">
                     <ul class="mb-0">
@@ -23,12 +25,12 @@
                 <?php unset($_SESSION['errors']); ?>
             <?php endif; ?>
 
-            
-            <form method="POST" action="<?= BASE_URL ?>/rooms/store">
+            <!-- Create form -->
+            <form method="POST" action="<?= APP_URL ?>/rooms/store">
                 <div class="card">
                     <div class="card-body">
 
-                        
+                        <!-- Room Number -->
                         <div class="mb-3">
                             <label class="form-label">Room Number <span class="text-danger">*</span></label>
                             <input type="text" name="room_number" class="form-control"
@@ -36,7 +38,7 @@
                                    value="<?= htmlspecialchars($_SESSION['old_input']['room_number'] ?? '') ?>">
                         </div>
 
-                        
+                        <!-- Room Type dropdown -->
                         <div class="mb-3">
                             <label class="form-label">Room Type <span class="text-danger">*</span></label>
                             <select name="room_type_id" class="form-select" required>
@@ -51,7 +53,7 @@
                             </select>
                         </div>
 
-                        
+                        <!-- Floor -->
                         <div class="mb-3">
                             <label class="form-label">Floor <span class="text-danger">*</span></label>
                             <input type="number" name="floor" class="form-control"
@@ -59,7 +61,7 @@
                                    value="<?= htmlspecialchars($_SESSION['old_input']['floor'] ?? '') ?>">
                         </div>
 
-                        
+                        <!-- Notes -->
                         <div class="mb-3">
                             <label class="form-label">Notes</label>
                             <textarea name="notes" class="form-control" rows="3"
@@ -74,7 +76,7 @@
                     </div>
                     <div class="card-footer text-end">
                         <?php unset($_SESSION['old_input']); ?>
-                        <a href="<?= BASE_URL ?>/rooms" class="btn btn-secondary me-2">Cancel</a>
+                        <a href="<?= APP_URL ?>/rooms" class="btn btn-secondary me-2">Cancel</a>
                         <button type="submit" class="btn btn-primary">Create Room</button>
                     </div>
                 </div>

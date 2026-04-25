@@ -19,6 +19,16 @@ class Room extends Model
     public $created_at;
     public $updated_at;
 
+    /**
+     * State machine — only these transitions are valid:
+     *   available    → occupied       (guest checks in)
+     *   occupied     → dirty          (guest checks out)
+     *   dirty        → cleaning       (housekeeping starts)
+     *   cleaning     → inspecting     (housekeeping done)
+     *   inspecting   → available      (inspection passed)
+     *   any status   → out_of_order   (escalation / maintenance)
+     *   out_of_order → available      (issue resolved)
+     */
     private $transitions = [
         'available'    => ['occupied',   'out_of_order'],
         'occupied'     => ['dirty',      'out_of_order'],
@@ -30,22 +40,29 @@ class Room extends Model
 
     // ── CRUD ─────────────────────────────────────────────────
 
+    /**
+     * SELECT all rooms with JOIN on room_types to include type_name and base_price.
+     */
     public function all()
     {
-        $result = mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
             "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
              FROM   rooms
              JOIN   room_types ON rooms.room_type_id = room_types.id
              ORDER BY rooms.room_number ASC"
         );
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
+    /**
+     * SELECT one room by ID with JOIN on room_types.
+     */
     public function find($id)
     {
-        $id = mysqli_real_escape_string($this->db, $id);
-        $result = mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
             "SELECT rooms.*,
                     room_types.name        AS type_name,
@@ -53,203 +70,273 @@ class Room extends Model
                     room_types.description AS type_description
              FROM   rooms
              JOIN   room_types ON rooms.room_type_id = room_types.id
-             WHERE  rooms.id = '$id'
+             WHERE  rooms.id = ?
              LIMIT  1"
         );
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_assoc($result);
     }
 
+    /**
+     * INSERT new room; default status is 'available'.
+     */
     public function create($data)
     {
-        $room_type_id = mysqli_real_escape_string($this->db, $data['room_type_id']);
-        $room_number  = mysqli_real_escape_string($this->db, $data['room_number']);
-        $floor        = mysqli_real_escape_string($this->db, $data['floor']);
-        $notes        = mysqli_real_escape_string($this->db, $data['notes'] ?? '');
- 
-        mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
             "INSERT INTO rooms (room_type_id, room_number, floor, status, notes)
-             VALUES ('$room_type_id', '$room_number', '$floor', 'available', '$notes')"
+             VALUES (?, ?, ?, 'available', ?)"
         );
+        $room_type_id = $data['room_type_id'];
+        $room_number  = $data['room_number'];
+        $floor        = $data['floor'];
+        $notes        = $data['notes'] ?? '';
+        mysqli_stmt_bind_param($stmt, 'isis', $room_type_id, $room_number, $floor, $notes);
+        mysqli_stmt_execute($stmt);
         return mysqli_insert_id($this->db);
     }
 
+    /**
+     * UPDATE room fields.
+     */
     public function update($id, $data)
     {
-        $id           = mysqli_real_escape_string($this->db, $id);
-        $room_type_id = mysqli_real_escape_string($this->db, $data['room_type_id']);
-        $room_number  = mysqli_real_escape_string($this->db, $data['room_number']);
-        $floor        = mysqli_real_escape_string($this->db, $data['floor']);
-        $notes        = mysqli_real_escape_string($this->db, $data['notes'] ?? '');
- 
-        mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
             "UPDATE rooms
-             SET room_type_id = '$room_type_id',
-                 room_number  = '$room_number',
-                 floor        = '$floor',
-                 notes        = '$notes'
-             WHERE id = '$id'"
+             SET room_type_id = ?, room_number = ?, floor = ?, notes = ?
+             WHERE id = ?"
         );
+        $room_type_id = $data['room_type_id'];
+        $room_number  = $data['room_number'];
+        $floor        = $data['floor'];
+        $notes        = $data['notes'] ?? '';
+        mysqli_stmt_bind_param($stmt, 'isisi', $room_type_id, $room_number, $floor, $notes, $id);
+        mysqli_stmt_execute($stmt);
     }
 
+    /**
+     * DELETE only if no active reservations exist (pending / confirmed / checked_in).
+     */
     public function delete($id)
     {
-        $id = mysqli_real_escape_string($this->db, $id);
- 
-        $check = mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
             "SELECT COUNT(*) AS cnt
              FROM   reservations
-             WHERE  room_id = '$id'
-               AND  status IN ('confirmed', 'checked_in')"
+             WHERE  room_id = ?
+               AND  status IN ('pending', 'confirmed', 'checked_in')"
         );
-        $row = mysqli_fetch_assoc($check);
- 
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
+
         if ($row['cnt'] > 0) {
             return "Cannot delete: room has {$row['cnt']} active reservation(s).";
         }
- 
-        mysqli_query($this->db, "DELETE FROM rooms WHERE id = '$id'");
+
+        $stmt = mysqli_prepare($this->db, "DELETE FROM rooms WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $id);
+        mysqli_stmt_execute($stmt);
         return true;
     }
 
     // ── Relationships ────────────────────────────────────────
 
+    /**
+     * Return the associated room_type record for this room.
+     */
     public function roomType()
     {
-        $type_id = mysqli_real_escape_string($this->db, $this->room_type_id);
-        $result  = mysqli_query(
-            $this->db,
-            "SELECT * FROM room_types WHERE id = '$type_id' LIMIT 1"
-        );
+        $stmt = mysqli_prepare($this->db, "SELECT * FROM room_types WHERE id = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, 'i', $this->room_type_id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_assoc($result);
     }
 
+    /**
+     * Return all reservations for this room.
+     */
     public function reservations()
     {
-        $id     = mysqli_real_escape_string($this->db, $this->id);
-        $result = mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
-            "SELECT * FROM reservations WHERE room_id = '$id' ORDER BY check_in_date DESC"
+            "SELECT * FROM reservations WHERE room_id = ? ORDER BY check_in_date DESC"
         );
+        mysqli_stmt_bind_param($stmt, 'i', $this->id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
+    /**
+     * Return all housekeeping tasks for this room.
+     */
     public function housekeepingTasks()
     {
-        $id     = mysqli_real_escape_string($this->db, $this->id);
-        $result = mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
-            "SELECT * FROM housekeeping_tasks WHERE room_id = '$id' ORDER BY created_at DESC"
+            "SELECT * FROM housekeeping_tasks WHERE room_id = ? ORDER BY created_at DESC"
         );
+        mysqli_stmt_bind_param($stmt, 'i', $this->id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
+    /**
+     * Return all maintenance orders for this room.
+     */
     public function maintenanceOrders()
     {
-        $id     = mysqli_real_escape_string($this->db, $this->id);
-        $result = mysqli_query(
+        $stmt = mysqli_prepare(
             $this->db,
-            "SELECT * FROM maintenance_orders WHERE room_id = '$id' ORDER BY created_at DESC"
+            "SELECT * FROM maintenance_orders WHERE room_id = ? ORDER BY created_at DESC"
         );
+        mysqli_stmt_bind_param($stmt, 'i', $this->id);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     // ── Status Helpers ───────────────────────────────────────
 
-    public function updateStatus($newStatus)
+    /**
+     * Validate the transition against the state machine, then UPDATE if valid.
+     * Returns true on success, or an error message string if the transition is invalid.
+     */
+    public function updateStatus($roomId, $newStatus)
     {
-    
-        $id      = mysqli_real_escape_string($this->db, $this->id);
-        $result  = mysqli_query($this->db, "SELECT status FROM rooms WHERE id = '$id'");
-        $row     = mysqli_fetch_assoc($result);
- 
+        // Fetch current status
+        $stmt = mysqli_prepare($this->db, "SELECT status FROM rooms WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'i', $roomId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
+
         if (!$row) {
             return "Room not found.";
         }
- 
+
         $current = $row['status'];
- 
+
+        // Validate that newStatus is a known status
         $allStatuses = array_keys($this->transitions);
         if (!in_array($newStatus, $allStatuses)) {
             return "Invalid status: '$newStatus'.";
         }
- 
+
+        // Validate transition
         $allowed = $this->transitions[$current] ?? [];
         if (!in_array($newStatus, $allowed)) {
             return "Transition from '$current' to '$newStatus' is not allowed.";
         }
- 
-        $newStatus = mysqli_real_escape_string($this->db, $newStatus);
-        mysqli_query($this->db, "UPDATE rooms SET status = '$newStatus' WHERE id = '$id'");
- 
+
+        // Perform update
+        $stmt = mysqli_prepare($this->db, "UPDATE rooms SET status = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'si', $newStatus, $roomId);
+        mysqli_stmt_execute($stmt);
         return true;
     }
 
+    /**
+     * Find all rooms NOT reserved during the given date range.
+     * Excludes reservations with status IN ('cancelled', 'no_show', 'checked_out').
+     * Optionally filter by room_type_id.
+     */
     public function findAvailable($checkIn, $checkOut, $typeId = null)
     {
-        $checkIn  = mysqli_real_escape_string($this->db, $checkIn);
-        $checkOut = mysqli_real_escape_string($this->db, $checkOut);
- 
-        $typeFilter = '';
         if ($typeId) {
-            $typeId     = mysqli_real_escape_string($this->db, $typeId);
-            $typeFilter = "AND rooms.room_type_id = '$typeId'";
+            $stmt = mysqli_prepare(
+                $this->db,
+                "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
+                 FROM   rooms
+                 JOIN   room_types ON rooms.room_type_id = room_types.id
+                 WHERE  rooms.status = 'available'
+                   AND  rooms.room_type_id = ?
+                   AND  rooms.id NOT IN (
+                            SELECT DISTINCT room_id
+                            FROM   reservations
+                            WHERE  status NOT IN ('cancelled', 'no_show', 'checked_out')
+                              AND  check_in_date  < ?
+                              AND  check_out_date > ?
+                        )
+                 ORDER BY rooms.room_number ASC"
+            );
+            mysqli_stmt_bind_param($stmt, 'iss', $typeId, $checkOut, $checkIn);
+        } else {
+            $stmt = mysqli_prepare(
+                $this->db,
+                "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
+                 FROM   rooms
+                 JOIN   room_types ON rooms.room_type_id = room_types.id
+                 WHERE  rooms.status = 'available'
+                   AND  rooms.id NOT IN (
+                            SELECT DISTINCT room_id
+                            FROM   reservations
+                            WHERE  status NOT IN ('cancelled', 'no_show', 'checked_out')
+                              AND  check_in_date  < ?
+                              AND  check_out_date > ?
+                        )
+                 ORDER BY rooms.room_number ASC"
+            );
+            mysqli_stmt_bind_param($stmt, 'ss', $checkOut, $checkIn);
         }
- 
-        $result = mysqli_query(
-            $this->db,
-            "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
-             FROM   rooms
-             JOIN   room_types ON rooms.room_type_id = room_types.id
-             WHERE  rooms.status = 'available'
-             $typeFilter
-               AND  rooms.id NOT IN (
-                        SELECT DISTINCT room_id
-                        FROM   reservations
-                        WHERE  status IN ('confirmed', 'checked_in')
-                          AND  check_in_date  < '$checkOut'
-                          AND  check_out_date > '$checkIn'
-                    )
-             ORDER BY rooms.room_number ASC"
-        );
+
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    public function suggestUpgrade($currentRoomId)
+    /**
+     * Suggest an upgrade: find the current room's base_price, then find
+     * room types with a higher base_price, and return the first available
+     * higher-tier room for the given date range.
+     */
+    public function suggestUpgrade($currentRoomId, $checkIn, $checkOut)
     {
-    
-        $currentRoomId = mysqli_real_escape_string($this->db, $currentRoomId);
-        $result        = mysqli_query(
+        // Find current room's type and base_price
+        $stmt = mysqli_prepare(
             $this->db,
-            "SELECT rooms.id, room_types.base_price
+            "SELECT room_types.base_price
              FROM   rooms
              JOIN   room_types ON rooms.room_type_id = room_types.id
-             WHERE  rooms.id = '$currentRoomId'
+             WHERE  rooms.id = ?
              LIMIT  1"
         );
+        mysqli_stmt_bind_param($stmt, 'i', $currentRoomId);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
         $current = mysqli_fetch_assoc($result);
- 
+
         if (!$current) {
             return false;
         }
- 
-        $currentPrice = mysqli_real_escape_string($this->db, $current['base_price']);
- 
 
-        $upgrade = mysqli_query(
+        $currentPrice = $current['base_price'];
+
+        // Find room types with a higher base_price
+        $stmt = mysqli_prepare(
             $this->db,
-            "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
-             FROM   rooms
-             JOIN   room_types ON rooms.room_type_id = room_types.id
-             WHERE  rooms.status     = 'available'
-               AND  room_types.base_price > '$currentPrice'
-               AND  rooms.id         != '$currentRoomId'
-             ORDER BY room_types.base_price ASC
-             LIMIT 1"
+            "SELECT id FROM room_types WHERE base_price > ? ORDER BY base_price ASC"
         );
-        $row = mysqli_fetch_assoc($upgrade);
-        return $row ?: false;
+        mysqli_stmt_bind_param($stmt, 'd', $currentPrice);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $higherTypes = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+        // For each higher type, call findAvailable and return the first hit
+        foreach ($higherTypes as $type) {
+            $available = $this->findAvailable($checkIn, $checkOut, $type['id']);
+            if (!empty($available)) {
+                return $available[0];
+            }
+        }
+
+        return false;
     }
 }
