@@ -55,6 +55,7 @@ ob_start();
 
         <div class="d-grid gap-2">
           <button type="submit" class="btn btn-primary btn-lg shadow-sm">Sign In</button>
+          <a href="<?= APP_URL ?>/?url=auth/register" class="btn btn-outline-primary btn-lg">Register</a>
         </div>
       </form>
     </div>

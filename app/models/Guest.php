@@ -28,6 +28,7 @@ class Guest extends Model
     public $referred_by;
     public $created_at;
     public $updated_at;
+    private $columnCache = null;
 
     // ── CRUD ─────────────────────────────────────────────────
 
@@ -56,22 +57,60 @@ class Guest extends Model
         return mysqli_fetch_array($result, MYSQLI_ASSOC); //return an array of the guest with the specified id
     }
 
+    public function findByEmail($email)
+    {
+        $email = mysqli_real_escape_string($this->db, trim($email));
+        $query = "SELECT * FROM guests WHERE email = '$email' LIMIT 1";
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+            die("Query Failed: " . mysqli_error($this->db));
+        }
+
+        return mysqli_fetch_assoc($result);
+    }
+
     public function create($data)
     {
-        $name = mysqli_real_escape_string($this->db, $data['name']);
-        $email = mysqli_real_escape_string($this->db, $data['email']);
-        $phone = mysqli_real_escape_string($this->db, $data['phone'] ?? '');
-        $national_id = mysqli_real_escape_string($this->db, $data['national_id'] ?? '');
-        $nationality = mysqli_real_escape_string($this->db, $data['nationality'] ?? '');
-        $date_of_birth = mysqli_real_escape_string($this->db, $data['date_of_birth'] ?? null);
-        $referred_by = !empty($data['referred_by']) ? (int)$data['referred_by'] : "NULL";
+        $supportedColumns = array_flip($this->getExistingColumns());
+        $allowedColumns = ['name', 'email', 'phone', 'national_id', 'nationality', 'date_of_birth', 'referred_by'];
+        $columns = [];
+        $values = [];
 
+        foreach ($allowedColumns as $column) {
+            if (!isset($supportedColumns[$column]) || !array_key_exists($column, $data)) {
+                continue;
+            }
 
-        $query = " 
-        INSERT INTO guests (name, email, phone, national_id, nationality, date_of_birth, referred_by) 
-            VALUES ('$name', '$email', '$phone', '$national_id', '$nationality', 
-            " . ($date_of_birth ? "'$date_of_birth'" : "NULL") . ", 
-            " . ($referred_by !== "NULL" ? $referred_by : "NULL") . ") "; // can be NULL if not provided 
+            if ($column === 'referred_by') {
+                if ($data[$column] === '' || $data[$column] === null || !is_numeric($data[$column])) {
+                    continue;
+                }
+
+                $columns[] = $column;
+                $values[] = (string) ((int) $data[$column]);
+                continue;
+            }
+
+            if ($column === 'date_of_birth') {
+                $columns[] = $column;
+                $values[] = !empty($data[$column])
+                    ? "'" . mysqli_real_escape_string($this->db, $data[$column]) . "'"
+                    : "NULL";
+                continue;
+            }
+
+            $columns[] = $column;
+            $values[] = "'" . mysqli_real_escape_string($this->db, (string) ($data[$column] ?? '')) . "'";
+        }
+
+        if (!in_array('name', $columns, true) || !in_array('email', $columns, true)) {
+            die("Insert Failed: guests table is missing required columns.");
+        }
+
+        $query = "
+        INSERT INTO guests (" . implode(', ', $columns) . ")
+        VALUES (" . implode(', ', $values) . ") ";
 
         $result = mysqli_query($this->db, $query);
 
@@ -80,6 +119,34 @@ class Guest extends Model
         }
 
         return mysqli_insert_id($this->db);
+    }
+
+    public function getExistingColumns()
+    {
+        if ($this->columnCache !== null) {
+            return $this->columnCache;
+        }
+
+        $result = mysqli_query($this->db, "SHOW COLUMNS FROM guests");
+
+        if (!$result) {
+            $this->columnCache = ['name', 'email'];
+            return $this->columnCache;
+        }
+
+        $columns = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            if (!empty($row['Field'])) {
+                $columns[] = $row['Field'];
+            }
+        }
+
+        if (empty($columns)) {
+            $columns = ['name', 'email'];
+        }
+
+        $this->columnCache = $columns;
+        return $this->columnCache;
     }
 
     public function update($id, $data)

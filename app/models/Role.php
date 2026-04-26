@@ -25,6 +25,13 @@ class Role extends Model
         return mysqli_fetch_assoc($result);
     }
 
+    public function findByName($name)
+    {
+        $name = mysqli_real_escape_string($this->db, strtolower(trim($name)));
+        $result = mysqli_query($this->db, "SELECT * FROM roles WHERE LOWER(name) = '$name' LIMIT 1");
+        return mysqli_fetch_assoc($result);
+    }
+
     public function create($data)
     {
         $name = mysqli_real_escape_string($this->db, $data['name']);
