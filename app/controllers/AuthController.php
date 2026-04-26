@@ -106,7 +106,7 @@ class AuthController extends Controller
         }
 
         if ($roleName === 'guest' || $roleId === 4) {
-            return 'Guests/index';
+            return 'home/index';
         }
 
         return '';
