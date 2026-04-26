@@ -171,5 +171,24 @@ class GuestsController extends Controller
 
         $this->redirect('guests/show/' . $id);
     }
+    public function profile()
+{
+   
+    if (empty($_SESSION['user_id'])) {
+        $this->redirect('auth/login');
+    }
+ 
+    $userModel = new User();
+    $guest = $userModel->find($_SESSION['user_id']);
+ 
+    if (!$guest) {
+        $this->redirect('');
+    }
+ 
+    $this->view('guests/profile', [
+        'pageTitle' => 'My Profile',
+        'guest'     => $guest,
+    ]);
+}
 }
 ?>

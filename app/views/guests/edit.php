@@ -1,6 +1,5 @@
-<?php $pageTitle = 'Edit Guest'; ?>
-<?php require VIEW_PATH . '/layouts/main.php'; ?>
-
+<?php $pageTitle = 'Edit Guest';
+ob_start();  ?>
 <style>
 body {
     background: #FBF9D1;
@@ -185,3 +184,6 @@ body {
     });
 })();
 </script>
+<?php
+$content = ob_get_clean();
+ require VIEW_PATH . '/layouts/main.php'; ?>

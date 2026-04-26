@@ -1,4 +1,5 @@
-<?php $pageTitle = 'Add New Guest'; ?>
+<?php $pageTitle = 'Add New Guest';
+ob_start();  ?>
 <!--
 ============================================================
   Used by: GuestsController@create
@@ -11,7 +12,6 @@
 ============================================================
 -->
 
-<?php require VIEW_PATH . '/layouts/main.php'; ?> 
 <style>
 body {
     background: #FBF9D1;
@@ -209,3 +209,6 @@ body {
 
 })();
 </script>
+<?php
+$content = ob_get_clean();
+require VIEW_PATH . '/layouts/main.php'; ?> 

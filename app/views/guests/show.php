@@ -1,5 +1,5 @@
-<?php $pageTitle = 'Guest Details'; ?>
-<?php require VIEW_PATH . '/layouts/main.php'; ?>
+<?php $pageTitle = 'Guest Details'; 
+ob_start(); ?>
 
 <style>
 body { background: #FBF9D1; }
@@ -269,3 +269,6 @@ body { background: #FBF9D1; }
     </div>
 
 </div>
+<?php 
+$content = ob_get_clean();
+require VIEW_PATH . '/layouts/main.php'; ?>

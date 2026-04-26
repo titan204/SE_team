@@ -1,7 +1,6 @@
-<?php $pageTitle = 'All Guests'; ?>
-
-<?php require VIEW_PATH . '/layouts/main.php'; ?>
-
+<?php $pageTitle = 'All Guests'; 
+ob_start(); 
+?>
 <style>
 body {
     background: #FBF9D1;
@@ -184,3 +183,6 @@ mark {
     </div>
 
 </div>
+<?php 
+$content = ob_get_clean();
+require VIEW_PATH . '/layouts/main.php'; ?>
