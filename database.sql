@@ -270,3 +270,26 @@ CREATE TABLE audit_log (
 -- ────────────────────────────────────────────────────────────
 
 INSERT INTO roles (name) VALUES ('manager'), ('front_desk'), ('housekeeper') , ('guest');
+
+-- ────────────────────────────────────────────────────────────
+--  SEED DATA — Room Types
+-- ────────────────────────────────────────────────────────────
+
+INSERT INTO room_types (name, description, base_price, capacity) VALUES
+('Standard', 'Comfortable room with essential amenities for a pleasant stay.',        500.00, 2),
+('Deluxe',   'Spacious room with premium amenities and city view.',                   800.00, 3),
+('Suite',    'Luxury suite with separate living area, premium furnishings and minibar.', 1500.00, 4);
+
+-- ────────────────────────────────────────────────────────────
+--  SEED DATA — Rooms  (at least one of each status)
+-- ────────────────────────────────────────────────────────────
+
+INSERT INTO rooms (room_type_id, room_number, floor, status, notes) VALUES
+(1, '101', 1, 'available',    'Ground floor, near lobby'),
+(1, '102', 1, 'occupied',     'Guest currently checked in'),
+(2, '201', 2, 'dirty',        'Checkout completed, awaiting housekeeping'),
+(2, '202', 2, 'cleaning',     'Housekeeping in progress'),
+(2, '203', 2, 'inspecting',   'Cleaning done, supervisor review pending'),
+(3, '301', 3, 'available',    'Premium corner suite'),
+(3, '302', 3, 'out_of_order', 'AC unit under repair'),
+(1, '103', 1, 'available',    'Near elevator');
