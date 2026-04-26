@@ -15,41 +15,84 @@ class GuestPreference extends Model
 
     public function all()
     {
-        // TODO: $result = mysqli_query($this->db, "SELECT * FROM guest_preferences");
-        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $query = "SELECT * FROM guest_preferences";
+        $result = mysqli_query($this->db, $query);
+
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
     {
-        // TODO: $id = mysqli_real_escape_string($this->db, $id);
-        // $result = mysqli_query($this->db, "SELECT * FROM guest_preferences WHERE id = '$id'");
-        // return mysqli_fetch_assoc($result);
+        $id = (int)$id;
+        $query = "SELECT * FROM guest_preferences WHERE id = $id";
+        $result = mysqli_query($this->db, $query);
+
+        return mysqli_fetch_assoc($result);
     }
 
     public function findByGuest($guestId)
     {
-        // TODO: $guestId = mysqli_real_escape_string($this->db, $guestId);
-        // $result = mysqli_query($this->db, "SELECT * FROM guest_preferences WHERE guest_id = '$guestId'");
-        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $guestId = (int)$guestId;
+        $query = "SELECT * FROM guest_preferences WHERE guest_id = $guestId";
+        $result = mysqli_query($this->db, $query);
+
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function create($data)
     {
-        // TODO: INSERT INTO guest_preferences (guest_id, pref_key, pref_value) VALUES (...)
+        $guest_id   = (int)$data['guest_id'];
+        $pref_key   = mysqli_real_escape_string($this->db, $data['pref_key']);
+        $pref_value = mysqli_real_escape_string($this->db, $data['pref_value']);
+
+        $query = "
+        INSERT INTO guest_preferences (guest_id, pref_key, pref_value)
+        VALUES ($guest_id, '$pref_key', '$pref_value') ";
+
+        mysqli_query($this->db, $query);
+
+        return mysqli_insert_id($this->db);
     }
 
     public function update($id, $data)
     {
-        // TODO: UPDATE guest_preferences SET pref_key=..., pref_value=... WHERE id = ...
+        $id = (int)$id;
+        $pref_key   = mysqli_real_escape_string($this->db, $data['pref_key']);
+        $pref_value = mysqli_real_escape_string($this->db, $data['pref_value']);
+
+        $query = "
+        UPDATE guest_preferences 
+        SET pref_key = '$pref_key',
+            pref_value = '$pref_value'
+        WHERE id = $id";
+
+        mysqli_query($this->db, $query);
+
+        return true;
     }
 
     public function delete($id)
     {
-        // TODO: DELETE FROM guest_preferences WHERE id = ...
+        $id = (int)$id;
+        $query = "DELETE FROM guest_preferences WHERE id = $id";
+        mysqli_query($this->db, $query);
+
+        return true;
     }
 
     public function guest()
     {
-        // TODO: Return the guest who owns this preference
+        $query = "
+        SELECT g.*
+        FROM guests g
+        JOIN guest_preferences gp ON gp.guest_id = g.id
+        WHERE gp.id = $this->id
+        LIMIT 1
+    ";
+
+        $result = mysqli_query($this->db, $query);
+
+        return mysqli_fetch_assoc($result);
     }
 }
+?>

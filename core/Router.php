@@ -34,9 +34,8 @@ class Router
             : $this->defaultController;
 
         $method = isset($url[1]) && $url[1] !== ''
-            ? $url[1]
-            : $this->defaultMethod;
-
+        ? $url[1]
+            : (isset($url[0]) && $url[0] !== '' ? 'index' : $this->defaultMethod);
         $param = $url[2] ?? null;
 
         // Load the controller file

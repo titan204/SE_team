@@ -37,10 +37,10 @@ class Controller
      *   $this->redirect('reservations');
      */
     protected function redirect(string $path): void
-    {
-        header('Location: ' . APP_URL . '/' . ltrim($path, '/'));
-        exit;
-    }
+   {
+    header('Location: ' . APP_URL . '/index.php?url=' . ltrim($path, '/'));
+    exit;
+   }
 
     /**
      * Checks whether the current user is logged in.
@@ -69,3 +69,4 @@ class Controller
         }
     }
 }
+?>
