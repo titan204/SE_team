@@ -48,6 +48,11 @@ class User extends Model
         return mysqli_fetch_assoc($result);
     }
 
+    public function hashPassword($password)
+    {
+        return password_hash($password, PASSWORD_DEFAULT);
+    }
+
     public function create($data)
     {
         $name     = mysqli_real_escape_string($this->db, $data['name']);
@@ -103,10 +108,23 @@ class User extends Model
             return false;
         }
 
-        if ($user['password'] === $password) {
+        if ($this->passwordMatches($password, $user['password'] ?? '')) {
             return $user;
         }
 
         return false;
+    }
+
+    private function passwordMatches($plainPassword, $storedPassword)
+    {
+        if ($storedPassword === '') {
+            return false;
+        }
+
+        if (password_verify($plainPassword, $storedPassword)) {
+            return true;
+        }
+
+        return $plainPassword === $storedPassword;
     }
 }

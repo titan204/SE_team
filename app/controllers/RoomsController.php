@@ -20,7 +20,7 @@ class RoomsController extends Controller
     public function index()
     {
         $this->requireLogin();
-        $this->requireRole("admin"); 
+        $this->requireRole("manager"); 
 
         $room  = new Room();
         $rooms = $room->all();
@@ -34,7 +34,7 @@ class RoomsController extends Controller
     public function show($id)
     {
         $this->requireLogin();
-        $this->requireRole("admin"); 
+        $this->requireRole("manager"); 
         $room = new Room();
         $data = $room->find($id);
 
@@ -59,7 +59,7 @@ class RoomsController extends Controller
     public function create()
     {
         $this->requireLogin();
-        $this->requireRole("admin");
+        $this->requireRole("manager");
         $roomType  = new RoomType();
         $roomTypes = $roomType->all();
 
@@ -72,7 +72,7 @@ class RoomsController extends Controller
     public function store()
     {
         $this->requireLogin();
-        $this->requireRole("admin");
+        $this->requireRole("manager");
 
         $errors = [];
 
@@ -110,7 +110,7 @@ class RoomsController extends Controller
     public function edit($id)
     {
         $this->requireLogin();
-        $this->requireRole("admin");
+        $this->requireRole("manager");
 
         $room     = new Room();
         $roomData = $room->find($id);
@@ -135,7 +135,7 @@ class RoomsController extends Controller
     public function update($id)
     {
         $this->requireLogin();
-        $this->requireRole("admin");
+        $this->requireRole("manager");
 
         $errors = [];
 
@@ -172,7 +172,7 @@ class RoomsController extends Controller
     public function delete($id)
     {
         $this->requireLogin();
-        $this->requireRole("admin");
+        $this->requireRole("manager");
 
         $room   = new Room();
         try {
@@ -191,7 +191,7 @@ class RoomsController extends Controller
     public function updateStatus($id)
     {
         $this->requireLogin();
-        $this->requireRoles(array("admin" ,"housekeeper" , "front_desk"));
+        $this->requireRoles(array("manager" ,"housekeeper" , "front_desk"));
         $newStatus = $_POST['status'] ?? '';
 
         if (empty($newStatus)) {
