@@ -30,7 +30,9 @@ $isGuest        = ($currentRole === 'guest' || ($_SESSION['user_role_id'] ?? 0) 
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
-                <?php if ($isLoggedIn): ?>
+                <?php if ($isLoggedIn && !$isGuest): ?>
+                    <!-- ── Staff Navigation ── -->
+        
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/dashboard">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/reservations">Reservations</a></li>
@@ -57,7 +59,13 @@ $isGuest        = ($currentRole === 'guest' || ($_SESSION['user_role_id'] ?? 0) 
 
                 <?php elseif ($isLoggedIn && $isGuest): ?>
                     <!-- ── Guest Navigation ── -->
-                    <ul class="navbar-nav me-auto"></ul>
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=home/externalServices">
+                                External Services Booking
+                            </a>
+                        </li>
+                    </ul>
                     <ul class="navbar-nav ms-auto align-items-center gap-2">
                         <!-- Profile Icon -->
                         <li class="nav-item">

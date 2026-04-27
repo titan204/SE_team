@@ -200,6 +200,12 @@ setTimeout(function(){
 .hotel-footer-addr  { font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Sans',sans-serif; }
 .hotel-footer-phone { font-size:12px;color:var(--muted);letter-spacing:0.5px;font-family:'DM Sans',sans-serif; }
 
+.disabled-link {
+    pointer-events: none;
+    cursor: default;
+    opacity: 1;
+}
+
 @media(max-width:768px){
     .hotel-hero { height:340px; }
     .hotel-hero h1 { font-size:32px; }
@@ -240,7 +246,7 @@ setTimeout(function(){
         ['Wellness',   'Gym & yoga',          'wellness',   'wellness.jpg'],
     ];
     foreach ($sections as $s): ?>
-    <a href="index.php?url=<?= $s[2] ?>" class="hotel-ex-card">
+    <a href="javascript:void(0)" sytel="hover: " class="hotel-ex-card disabled-link">
         <img src="<?= APP_URL ?>/public/assets/images/<?= $s[3] ?>" alt="<?= htmlspecialchars($s[0]) ?>">
         <div class="hotel-ex-overlay"></div>
         <div class="hotel-ex-arrow">↗</div>
