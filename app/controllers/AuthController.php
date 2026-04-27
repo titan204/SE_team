@@ -484,6 +484,14 @@ class AuthController extends Controller
             return 'Housekeeping/index';
         }
 
+        if ($roleName === 'supervisor') {
+            return 'supervisor/index';
+        }
+
+        if (in_array($roleName, ['revenue_manager', 'revenue manager', 'revenuemanager'], true)) {
+            return 'revenue_manager/index';
+        }
+
         if ($roleName === 'guest' || $roleId === 4) {
             return 'home/index';
         }
