@@ -4,6 +4,8 @@
 --  SE Project — University Level
 -- ============================================================
 
+
+
 -- ────────────────────────────────────────────────────────────
 --  USERS & ROLES  (Staff authentication & access control)
 -- ────────────────────────────────────────────────────────────
@@ -293,3 +295,127 @@ INSERT INTO rooms (room_type_id, room_number, floor, status, notes) VALUES
 (3, '301', 3, 'available',    'Premium corner suite'),
 (3, '302', 3, 'out_of_order', 'AC unit under repair'),
 (1, '103', 1, 'available',    'Near elevator');
+
+CREATE TABLE external_services (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(150) NOT NULL,
+    service_type VARCHAR(50)  NOT NULL,
+    description  TEXT,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE service_bookings (
+    id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    guest_id     INT UNSIGNED NOT NULL,
+    service_id   INT UNSIGNED NOT NULL,
+    booking_date DATE         NOT NULL,
+    booking_time TIME         NOT NULL,
+    status       ENUM('pending','confirmed','cancelled') NOT NULL DEFAULT 'pending',
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_service_booking_guest FOREIGN KEY (guest_id) REFERENCES guests(id) ON DELETE CASCADE,
+    CONSTRAINT fk_service_booking_service FOREIGN KEY (service_id) REFERENCES external_services(id) ON DELETE CASCADE
+);
+
+USE hotel_management;
+
+-- ============================================================
+-- USERS
+-- ============================================================
+INSERT INTO users (role_id, name, email, password, is_active) VALUES
+(1, 'Admin Manager', 'admin@hotel.com', 'hashedpass', 1),
+(2, 'Front Desk 1', 'front1@hotel.com', 'hashedpass', 1),
+(3, 'House Keeper 1', 'house1@hotel.com', 'hashedpass', 1);
+
+-- ============================================================
+-- GUESTS (additional test data)
+-- ============================================================
+INSERT INTO guests (name, email, phone, national_id, nationality, date_of_birth, is_vip) VALUES
+('Ahmed Hassan', 'ahmed@example.com', '0100000001', 'EG123', 'Egyptian', '1990-05-10', 1),
+('Sara Ali', 'sara@example.com', '0100000002', 'EG124', 'Egyptian', '1995-07-20', 0),
+('Omar Khaled', 'omar@example.com', '0100000003', 'EG125', 'Egyptian', '1988-03-15', 0);
+
+-- ============================================================
+-- CORPORATE ACCOUNTS
+-- ============================================================
+INSERT INTO corporate_accounts (company_name, contact_email, contact_phone, contracted_rate) VALUES
+('ABC Corp', 'abc@corp.com', '0111111111', 15.00),
+('XYZ Ltd', 'xyz@corp.com', '0222222222', 10.00);
+
+-- ============================================================
+-- RESERVATIONS
+-- ============================================================
+INSERT INTO reservations 
+(guest_id, room_id, assigned_by, check_in_date, check_out_date, status, adults, children, total_price) VALUES
+(1, 1, 2, '2026-04-25', '2026-04-28', 'checked_in', 2, 0, 1500.00),
+(2, 2, 2, '2026-04-26', '2026-04-29', 'confirmed', 2, 1, 2000.00),
+(3, 3, 2, '2026-04-27', '2026-04-30', 'pending', 1, 0, 1200.00);
+
+-- ============================================================
+-- FOLIOS
+-- ============================================================
+INSERT INTO folios (reservation_id, total_amount, amount_paid, status) VALUES
+(1, 1500.00, 500.00, 'open'),
+(2, 2000.00, 0.00, 'open'),
+(3, 1200.00, 0.00, 'open');
+
+-- ============================================================
+-- FOLIO CHARGES
+-- ============================================================
+INSERT INTO folio_charges (folio_id, charge_type, description, amount, posted_by) VALUES
+(1, 'spa', 'Massage service', 100.00, 2),
+(1, 'restaurant', 'Breakfast', 50.00, 2),
+(2, 'minibar', 'Drinks', 30.00, 2);
+
+-- ============================================================
+-- PAYMENTS
+-- ============================================================
+INSERT INTO payments (folio_id, amount, method, reference, processed_by) VALUES
+(1, 500.00, 'cash', 'CASH001', 2);
+
+-- ============================================================
+-- HOUSEKEEPING
+-- ============================================================
+INSERT INTO housekeeping_tasks (room_id, assigned_to, task_type, status, notes) VALUES
+(1, 3, 'cleaning', 'done', 'Room cleaned'),
+(2, 3, 'inspection', 'pending', 'Waiting inspection'),
+(3, 3, 'deep_clean', 'in_progress', 'Deep cleaning ongoing');
+
+-- ============================================================
+-- MAINTENANCE
+-- ============================================================
+INSERT INTO maintenance_orders (room_id, reported_by, assigned_to, description, priority, status) VALUES
+(3, 2, 3, 'AC not working', 'high', 'open'),
+(2, 2, 3, 'Broken light', 'medium', 'in_progress');
+
+-- ============================================================
+-- LOST & FOUND
+-- ============================================================
+INSERT INTO lost_and_found (guest_id, room_id, found_by, description, status) VALUES
+(1, 1, 3, 'Watch found in room', 'found'),
+(2, 2, 3, 'Phone charger', 'claimed');
+
+-- ============================================================
+-- FEEDBACK
+-- ============================================================
+INSERT INTO feedback (reservation_id, guest_id, rating, comments) VALUES
+(1, 1, 5, 'Excellent service'),
+(2, 2, 4, 'Good stay'),
+(3, 3, 3, 'Average experience');
+
+-- ============================================================
+-- AUDIT LOG
+-- ============================================================
+INSERT INTO audit_log (user_id, action, target_type, target_id, old_value, new_value) VALUES
+(1, 'create_reservation', 'reservation', 1, NULL, 'created'),
+(2, 'update_room', 'room', 2, 'dirty', 'cleaning');
+
+-- ============================================================
+-- EXTRA SAFE TEST DATA SUMMARY
+-- ============================================================
+-- ✔ Users: 3
+-- ✔ Guests: 6 (3 + 3 extra)
+-- ✔ Rooms: already exist
+-- ✔ Reservations: 3
+-- ✔ Billing (folios/charges/payments): included
+-- ✔ Services: already inserted in your schema
+-- ✔ Bookings: already included
