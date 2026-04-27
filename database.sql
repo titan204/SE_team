@@ -318,104 +318,464 @@ CREATE TABLE service_bookings (
 
 USE hotel_management;
 
+
 -- ============================================================
--- USERS
+--  Hotel Management System — Comprehensive Seed Data
+--  All guests are also linked to user accounts (same email)
+--  Today's reference date: 2026-04-27
 -- ============================================================
+
+USE hotel_management;
+
+-- ════════════════════════════════════════════════════════════
+--  1. USERS  (7 Staff + 8 Guest Accounts)
+--     All passwords = 'Password123!'  (bcrypt, cost 10)
+-- ════════════════════════════════════════════════════════════
+
 INSERT INTO users (role_id, name, email, password, is_active) VALUES
-(1, 'Admin Manager', 'admin@hotel.com', 'hashedpass', 1),
-(2, 'Front Desk 1', 'front1@hotel.com', 'hashedpass', 1),
-(3, 'House Keeper 1', 'house1@hotel.com', 'hashedpass', 1);
+-- ── Managers ─────────────────────────────────────────────────
+(1, 'Ahmed Hassan',      'ahmed.hassan@grandhotel.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+(1, 'Sara Mohamed',      'sara.mohamed@grandhotel.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+-- ── Front Desk ───────────────────────────────────────────────
+(2, 'Omar Ali',          'omar.ali@grandhotel.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+(2, 'Nour Ibrahim',      'nour.ibrahim@grandhotel.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+-- ── Housekeepers ─────────────────────────────────────────────
+(3, 'Fatma Khaled',      'fatma.khaled@grandhotel.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+(3, 'Mohamed Samir',     'mohamed.samir@grandhotel.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+(3, 'Layla Ahmed',       'layla.ahmed@grandhotel.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),
+-- ── Guest Accounts  (email = guests.email → the link) ────────
+(4, 'John Smith',        'john.smith@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),  -- user_id 8
+(4, 'Emma Wilson',       'emma.wilson@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),  -- user_id 9
+(4, 'Carlos Rodriguez',  'carlos.rodriguez@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),  -- user_id 10
+(4, 'Yuki Tanaka',       'yuki.tanaka@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),  -- user_id 11
+(4, 'Aisha Al-Rashid',   'aisha.alrashid@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),  -- user_id 12
+(4, 'Pierre Dubois',     'pierre.dubois@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),  -- user_id 13
+(4, 'Priya Sharma',      'priya.sharma@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1),  -- user_id 14
+(4, 'David Chen',        'david.chen@gmail.com',
+ '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1); -- user_id 15
 
--- ============================================================
--- GUESTS (additional test data)
--- ============================================================
-INSERT INTO guests (name, email, phone, national_id, nationality, date_of_birth, is_vip) VALUES
-('Ahmed Hassan', 'ahmed@example.com', '0100000001', 'EG123', 'Egyptian', '1990-05-10', 1),
-('Sara Ali', 'sara@example.com', '0100000002', 'EG124', 'Egyptian', '1995-07-20', 0),
-('Omar Khaled', 'omar@example.com', '0100000003', 'EG125', 'Egyptian', '1988-03-15', 0);
+-- ════════════════════════════════════════════════════════════
+--  2. GUESTS  (Mirror of guest user accounts — same email)
+--     guest_id 1-8 map to user_id 8-15 via shared email
+-- ════════════════════════════════════════════════════════════
 
--- ============================================================
--- CORPORATE ACCOUNTS
--- ============================================================
-INSERT INTO corporate_accounts (company_name, contact_email, contact_phone, contracted_rate) VALUES
-('ABC Corp', 'abc@corp.com', '0111111111', 15.00),
-('XYZ Ltd', 'xyz@corp.com', '0222222222', 10.00);
+INSERT INTO guests
+    (name, email, phone, national_id, nationality, date_of_birth,
+     loyalty_tier, lifetime_nights, lifetime_value, is_vip, is_blacklisted)
+VALUES
+-- id=1
+('John Smith',       'john.smith@gmail.com',       '+1-212-555-0101',  'US123456',
+ 'American',  '1985-03-14', 'gold',     42,  35000.00, 1, 0),
+-- id=2
+('Emma Wilson',      'emma.wilson@gmail.com',       '+44-207-946-0102', 'UK789012',
+ 'British',   '1990-07-22', 'silver',   18,   9500.00, 0, 0),
+-- id=3
+('Carlos Rodriguez', 'carlos.rodriguez@gmail.com',  '+34-91-555-0103',  'ES345678',
+ 'Spanish',   '1978-11-05', 'standard',  5,   2500.00, 0, 0),
+-- id=4
+('Yuki Tanaka',      'yuki.tanaka@gmail.com',       '+81-3-5555-0104',  'JP901234',
+ 'Japanese',  '1992-01-30', 'platinum', 95,  95000.00, 1, 0),
+-- id=5
+('Aisha Al-Rashid',  'aisha.alrashid@gmail.com',    '+971-4-555-0105',  'AE567890',
+ 'Emirati',   '1988-09-18', 'silver',   22,  12000.00, 0, 0),
+-- id=6
+('Pierre Dubois',    'pierre.dubois@gmail.com',     '+33-1-5555-0106',  'FR123789',
+ 'French',    '1975-05-25', 'gold',     55,  48000.00, 0, 0),
+-- id=7
+('Priya Sharma',     'priya.sharma@gmail.com',      '+91-98-5555-0107', 'IN456012',
+ 'Indian',    '1995-12-10', 'standard',  8,   3200.00, 0, 0),
+-- id=8
+('David Chen',       'david.chen@gmail.com',        '+1-650-555-0108',  'US789345',
+ 'American',  '1982-06-03', 'gold',     38,  30000.00, 0, 0);
 
--- ============================================================
--- RESERVATIONS
--- ============================================================
-INSERT INTO reservations 
-(guest_id, room_id, assigned_by, check_in_date, check_out_date, status, adults, children, total_price) VALUES
-(1, 1, 2, '2026-04-25', '2026-04-28', 'checked_in', 2, 0, 1500.00),
-(2, 2, 2, '2026-04-26', '2026-04-29', 'confirmed', 2, 1, 2000.00),
-(3, 3, 2, '2026-04-27', '2026-04-30', 'pending', 1, 0, 1200.00);
+-- Referral links (done after insert to satisfy FK)
+UPDATE guests SET referred_by = 1 WHERE id = 3;  -- Carlos referred by John
+UPDATE guests SET referred_by = 2 WHERE id = 7;  -- Priya referred by Emma
 
--- ============================================================
--- FOLIOS
--- ============================================================
+-- ════════════════════════════════════════════════════════════
+--  3. GUEST PREFERENCES
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO guest_preferences (guest_id, pref_key, pref_value) VALUES
+(1, 'pillow_type',      'firm'),
+(1, 'floor_preference', 'high'),
+(1, 'dietary',          'no pork'),
+(2, 'pillow_type',      'soft'),
+(2, 'room_temperature', 'cool'),
+(3, 'dietary',          'vegetarian'),
+(3, 'floor_preference', 'low'),
+(4, 'pillow_type',      'memory_foam'),
+(4, 'room_temperature', 'warm'),
+(4, 'newspaper',        'Financial Times'),
+(4, 'amenities',        'extra towels,fruit basket'),
+(5, 'dietary',          'halal'),
+(5, 'pillow_type',      'soft'),
+(6, 'newspaper',        'Le Monde'),
+(6, 'dietary',          'no shellfish'),
+(7, 'dietary',          'vegan'),
+(7, 'room_temperature', 'cool'),
+(8, 'pillow_type',      'firm'),
+(8, 'floor_preference', 'high');
+
+-- ════════════════════════════════════════════════════════════
+--  4. CORPORATE ACCOUNTS
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO corporate_accounts
+    (company_name, contact_email, contact_phone, contracted_rate)
+VALUES
+('TechCorp International',  'travel@techcorp.com',       '+1-800-555-0201', 15.00),
+('Global Consulting Group', 'bookings@gcg.com',           '+44-800-555-0202', 10.00),
+('Emirates Business Hub',   'hotels@emirateshub.ae',      '+971-4-800-0203',  20.00);
+
+-- Guest ↔ Corporate links
+INSERT INTO guest_corporate (guest_id, corporate_id) VALUES
+(1, 1),   -- John Smith      → TechCorp
+(4, 1),   -- Yuki Tanaka     → TechCorp
+(6, 2),   -- Pierre Dubois   → Global Consulting
+(5, 3);   -- Aisha Al-Rashid → Emirates Business Hub
+
+-- ════════════════════════════════════════════════════════════
+--  5. RESERVATIONS
+--
+--  Room map (from schema seed):
+--    id=1  101 Standard   available
+--    id=2  102 Standard   occupied   ← John Smith checked in
+--    id=3  201 Standard   dirty      ← Emma Wilson just checked out
+--    id=4  202 Deluxe     cleaning   ← Priya Sharma just checked out
+--    id=5  203 Deluxe     inspecting ← Pierre Dubois just checked out
+--    id=6  301 Suite      available  ← Yuki Tanaka arrives May 1
+--    id=7  302 Suite      out_of_order
+--    id=8  103 Standard   available
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO reservations
+    (guest_id, room_id, assigned_by,
+     check_in_date, check_out_date,
+     actual_check_in, actual_check_out,
+     status, adults, children,
+     special_requests,
+     deposit_amount, deposit_paid,
+     is_group, group_id,
+     total_price)
+VALUES
+-- ── 1. John Smith — currently checked in, room 102 (4 nights × 500 = 2000) ──
+(1, 2, 3,
+ '2026-04-25', '2026-04-29',
+ '2026-04-25 14:30:00', NULL,
+ 'checked_in', 2, 0,
+ 'Extra pillows, high floor preference',
+ 500.00, 1, 0, NULL, 2000.00),
+
+-- ── 2. Emma Wilson — checked out, room 201 (4 nights × 500 = 2000) ──────────
+(2, 3, 4,
+ '2026-04-22', '2026-04-26',
+ '2026-04-22 15:10:00', '2026-04-26 11:45:00',
+ 'checked_out', 1, 0,
+ NULL,
+ 500.00, 1, 0, NULL, 2000.00),
+
+-- ── 3. Priya Sharma — checked out, room 202 (4 nights × 800 = 3200) ─────────
+(7, 4, 3,
+ '2026-04-23', '2026-04-27',
+ '2026-04-23 13:00:00', '2026-04-27 10:30:00',
+ 'checked_out', 2, 1,
+ 'Baby cot needed, vegan breakfast',
+ 800.00, 1, 0, NULL, 3200.00),
+
+-- ── 4. Pierre Dubois — checked out, room 203 (3 nights × 800 = 2400) ────────
+(6, 5, 4,
+ '2026-04-24', '2026-04-27',
+ '2026-04-24 16:00:00', '2026-04-27 12:30:00',
+ 'checked_out', 1, 0,
+ 'Late check-out requested',
+ 800.00, 1, 0, NULL, 2400.00),
+
+-- ── 5. Carlos Rodriguez — confirmed, arrives tomorrow (4 nights × 500 = 2000) ─
+(3, 1, 3,
+ '2026-04-28', '2026-05-02',
+ NULL, NULL,
+ 'confirmed', 2, 0,
+ 'Vegetarian welcome plate',
+ 500.00, 1, 0, NULL, 2000.00),
+
+-- ── 6. Yuki Tanaka — confirmed VIP, Suite 301 (6 nights × 1500 = 9000) ───────
+(4, 6, 4,
+ '2026-05-01', '2026-05-07',
+ NULL, NULL,
+ 'confirmed', 2, 0,
+ 'Champagne on arrival, butler service, Financial Times daily',
+ 2000.00, 1, 1, 1, 9000.00),
+
+-- ── 7. Aisha Al-Rashid — pending, room 103 (2 nights × 500 = 1000) ───────────
+(5, 8, NULL,
+ '2026-05-10', '2026-05-12',
+ NULL, NULL,
+ 'pending', 1, 0,
+ 'Halal dining options, prayer mat in room',
+ 0.00, 0, 0, NULL, 1000.00),
+
+-- ── 8. David Chen — cancelled, room 101 ──────────────────────────────────────
+(8, 1, 3,
+ '2026-05-03', '2026-05-06',
+ NULL, NULL,
+ 'cancelled', 2, 0,
+ NULL,
+ 500.00, 0, 0, NULL, 1500.00),
+
+-- ── 9. John Smith — old checked-out stay, Suite 301 (5 nights × 1500 = 7500) ─
+(1, 6, 3,
+ '2026-03-10', '2026-03-15',
+ '2026-03-10 14:00:00', '2026-03-15 12:00:00',
+ 'checked_out', 2, 0,
+ 'Anniversary celebration – roses and champagne in room',
+ 2000.00, 1, 0, NULL, 7500.00),
+
+-- ── 10. Yuki Tanaka — no-show, room 103 (old booking) ─────────────────────
+(4, 8, 4,
+ '2026-02-20', '2026-02-22',
+ NULL, NULL,
+ 'no_show', 2, 0,
+ NULL,
+ 500.00, 1, 0, NULL, 1000.00);
+
+-- ════════════════════════════════════════════════════════════
+--  6. FOLIOS  (One per active/completed reservation)
+--     Cancelled & no-show get folios to track deposit status
+-- ════════════════════════════════════════════════════════════
+
 INSERT INTO folios (reservation_id, total_amount, amount_paid, status) VALUES
-(1, 1500.00, 500.00, 'open'),
-(2, 2000.00, 0.00, 'open'),
-(3, 1200.00, 0.00, 'open');
+(1,  2085.00,   500.00, 'open'),      -- John Smith in-house (minibar added)
+(2,  2150.00,  2150.00, 'settled'),   -- Emma Wilson (room service added)
+(3,  3350.00,  3350.00, 'settled'),   -- Priya Sharma (spa added)
+(4,  2550.00,  2550.00, 'settled'),   -- Pierre Dubois (late checkout penalty)
+(5,  2000.00,   500.00, 'open'),      -- Carlos Rodriguez (deposit only, not arrived)
+(6,  9000.00,  2000.00, 'open'),      -- Yuki Tanaka (deposit only, not arrived)
+(8,  1500.00,     0.00, 'open'),      -- David Chen (deposit not paid, cancelled)
+(9,  7850.00,  7850.00, 'settled'),   -- John Smith old stay (spa + dinner added)
+(10, 1000.00,   500.00, 'open');      -- Yuki no-show (deposit held)
 
--- ============================================================
--- FOLIO CHARGES
--- ============================================================
-INSERT INTO folio_charges (folio_id, charge_type, description, amount, posted_by) VALUES
-(1, 'spa', 'Massage service', 100.00, 2),
-(1, 'restaurant', 'Breakfast', 50.00, 2),
-(2, 'minibar', 'Drinks', 30.00, 2);
+-- ════════════════════════════════════════════════════════════
+--  7. FOLIO CHARGES
+--     folio IDs: 1=JohnActive, 2=Emma, 3=Priya, 4=Pierre,
+--                5=CarlosFuture, 6=YukiFuture, 7=DavidCancelled,
+--                8=JohnOld, 9=YukiNoShow
+-- ════════════════════════════════════════════════════════════
 
--- ============================================================
--- PAYMENTS
--- ============================================================
-INSERT INTO payments (folio_id, amount, method, reference, processed_by) VALUES
-(1, 500.00, 'cash', 'CASH001', 2);
+INSERT INTO folio_charges
+    (folio_id, charge_type, description, amount, posted_by)
+VALUES
+-- ── Folio 1: John Smith (currently in-house) ──────────────────────────────
+(1, 'room_rate',  'Room 102 – Standard × 4 nights',            2000.00, 3),
+(1, 'minibar',    'Minibar consumption – 2026-04-26',             65.00, 5),
+(1, 'service',    'Extra pillow set + turndown service',           20.00, 6),
 
--- ============================================================
--- HOUSEKEEPING
--- ============================================================
-INSERT INTO housekeeping_tasks (room_id, assigned_to, task_type, status, notes) VALUES
-(1, 3, 'cleaning', 'done', 'Room cleaned'),
-(2, 3, 'inspection', 'pending', 'Waiting inspection'),
-(3, 3, 'deep_clean', 'in_progress', 'Deep cleaning ongoing');
+-- ── Folio 2: Emma Wilson (settled) ────────────────────────────────────────
+(2, 'room_rate',  'Room 201 – Standard × 4 nights',            2000.00, 4),
+(2, 'restaurant', 'In-room dining – 2026-04-24',                 150.00, 4),
 
--- ============================================================
--- MAINTENANCE
--- ============================================================
-INSERT INTO maintenance_orders (room_id, reported_by, assigned_to, description, priority, status) VALUES
-(3, 2, 3, 'AC not working', 'high', 'open'),
-(2, 2, 3, 'Broken light', 'medium', 'in_progress');
+-- ── Folio 3: Priya Sharma (settled) ───────────────────────────────────────
+(3, 'room_rate',  'Room 202 – Deluxe × 4 nights',              3200.00, 3),
+(3, 'spa',        'Aromatherapy massage – 2026-04-25',            150.00, 3),
 
--- ============================================================
--- LOST & FOUND
--- ============================================================
-INSERT INTO lost_and_found (guest_id, room_id, found_by, description, status) VALUES
-(1, 1, 3, 'Watch found in room', 'found'),
-(2, 2, 3, 'Phone charger', 'claimed');
+-- ── Folio 4: Pierre Dubois (settled) ──────────────────────────────────────
+(4, 'room_rate',  'Room 203 – Deluxe × 3 nights',              2400.00, 4),
+(4, 'restaurant', 'Restaurant dinner – 2026-04-25',               100.00, 4),
+(4, 'penalty',    'Late check-out fee (2 hrs past policy)',         50.00, 1),
 
--- ============================================================
--- FEEDBACK
--- ============================================================
+-- ── Folio 5: Carlos Rodriguez (future – room rate pre-posted) ─────────────
+(5, 'room_rate',  'Room 101 – Standard × 4 nights (pre-auth)', 2000.00, 3),
+
+-- ── Folio 6: Yuki Tanaka (future – room rate pre-posted) ──────────────────
+(6, 'room_rate',  'Room 301 – Suite × 6 nights (pre-auth)',    9000.00, 4),
+
+-- ── Folio 8: John Smith old stay (settled) ────────────────────────────────
+(8, 'room_rate',  'Room 301 – Suite × 5 nights',               7500.00, 3),
+(8, 'spa',        'Couples massage – 2026-03-12',                 200.00, 3),
+(8, 'restaurant', 'Anniversary dinner – 2026-03-14',              150.00, 3),
+
+-- ── Folio 9: Yuki no-show (deposit held as penalty) ───────────────────────
+(9, 'room_rate',  'No-show fee – deposit forfeited',             500.00, 1);
+
+-- ════════════════════════════════════════════════════════════
+--  8. PAYMENTS
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO payments
+    (folio_id, amount, method, reference, processed_by)
+VALUES
+-- Folio 1: John Smith deposit
+(1,   500.00, 'credit_card',   'TXN-APR25-001', 3),
+-- Folio 2: Emma Wilson — deposit + balance at checkout
+(2,   500.00, 'credit_card',   'TXN-APR22-001', 4),
+(2,  1650.00, 'credit_card',   'TXN-APR26-002', 4),
+-- Folio 3: Priya Sharma — deposit + balance
+(3,   800.00, 'credit_card',   'TXN-APR23-001', 3),
+(3,  2550.00, 'credit_card',   'TXN-APR27-001', 3),
+-- Folio 4: Pierre Dubois — deposit + balance (mix of methods)
+(4,   800.00, 'credit_card',   'TXN-APR24-001', 4),
+(4,  1750.00, 'cash',           NULL,             4),
+-- Folio 5: Carlos Rodriguez deposit via online portal
+(5,   500.00, 'online',        'WEB-APR20-001', 3),
+-- Folio 6: Yuki Tanaka deposit via bank transfer
+(6,  2000.00, 'bank_transfer', 'BT-APR15-001',  4),
+-- Folio 8: John Smith old stay — deposit then full settlement
+(8,  2000.00, 'credit_card',   'TXN-MAR10-001', 3),
+(8,  5850.00, 'credit_card',   'TXN-MAR15-002', 3),
+-- Folio 9: Yuki no-show — deposit was paid (now forfeited)
+(9,   500.00, 'credit_card',   'TXN-FEB18-001', 4);
+
+-- ════════════════════════════════════════════════════════════
+--  9. HOUSEKEEPING TASKS
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO housekeeping_tasks
+    (room_id, assigned_to, task_type, status, notes, quality_score)
+VALUES
+-- Room 201 (dirty) → full clean assigned to Fatma
+(3, 5, 'cleaning',      'pending',     'Post-checkout full clean, change all linen', NULL),
+-- Room 202 (cleaning) → Samir in progress
+(4, 6, 'cleaning',      'in_progress', 'Deep clean + restock minibar and amenities', NULL),
+-- Room 203 (inspecting) → clean done by Fatma, inspection pending for Layla
+(5, 5, 'cleaning',      'done',        'Clean completed after checkout',              4),
+(5, 7, 'inspection',    'pending',     'Supervisor sign-off required before re-let',  NULL),
+-- Room 102 (occupied, VIP) → evening turndown by Samir
+(2, 6, 'turndown',      'pending',     'VIP guest – chocolates and extra towels',      NULL),
+-- Room 301 (Suite available) → minibar stocked for VIP arrival May 1
+(6, 7, 'minibar_check', 'done',        'Fully stocked, champagne chilled for Yuki',   5),
+-- Room 101 (available) → inspection cleared for Carlos arriving tomorrow
+(1, 5, 'inspection',    'done',        'Room cleared and ready for check-in',         5),
+-- Room 103 (available) → routine clean completed
+(8, 6, 'cleaning',      'done',        'Routine clean, ready for next guest',         4),
+-- Room 201 deep-clean scheduled (scheduled for later today)
+(3, 7, 'deep_clean',    'pending',     'Full mattress flip and carpet steam clean',   NULL);
+
+-- ════════════════════════════════════════════════════════════
+--  10. MAINTENANCE ORDERS
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO maintenance_orders
+    (room_id, reported_by, assigned_to, description, priority, status, resolved_at)
+VALUES
+-- Room 302 — AC failure (reason it's out_of_order)
+(7, 3, NULL,
+ 'AC unit not cooling and making grinding noise. Room taken out of service pending repair.',
+ 'high', 'in_progress', NULL),
+-- Room 202 — dripping tap (minor, reported during stay)
+(4, 5, NULL,
+ 'Bathroom basin tap dripping. Needs washer replacement.',
+ 'low', 'open', NULL),
+-- Room 102 — TV remote resolved
+(2, 3, NULL,
+ 'Guest reported TV remote unresponsive. Batteries replaced, issue resolved.',
+ 'low', 'resolved', '2026-04-26 10:00:00'),
+-- Room 301 — balcony door stiff (before VIP arrival)
+(6, 4, NULL,
+ 'Suite balcony sliding door lock is stiff. Lubrication and adjustment required before May 1.',
+ 'medium', 'open', NULL),
+-- Room 201 — light flickering
+(3, 6, NULL,
+ 'Bathroom ceiling light flickering. Likely loose fitting or blown bulb.',
+ 'low', 'open', NULL);
+
+-- ════════════════════════════════════════════════════════════
+--  11. EXTERNAL SERVICES & BOOKINGS
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO external_services (name, service_type, description) VALUES
+('Grand Spa & Wellness',      'spa',        'Full-service spa: massages, facials, hydrotherapy'),
+('The Gourmet Kitchen',       'restaurant', 'Fine dining with international and local cuisine'),
+('Airport Luxury Transfers',  'transport',  'Premium car service to/from all major airports'),
+('City Cultural Tours',       'tour',       'Guided half-day and full-day city sightseeing tours'),
+('Business Centre Services',  'business',  'Printing, scanning, secretarial, and meeting room hire');
+
+INSERT INTO service_bookings
+    (guest_id, service_id, booking_date, booking_time, status)
+VALUES
+(1, 1, '2026-04-28', '10:00:00', 'confirmed'),   -- John  → Spa (tomorrow)
+(1, 3, '2026-04-29', '12:00:00', 'confirmed'),   -- John  → Airport transfer on checkout
+(4, 1, '2026-05-03', '11:00:00', 'confirmed'),   -- Yuki  → Spa mid-stay
+(4, 2, '2026-05-02', '19:30:00', 'confirmed'),   -- Yuki  → Fine dining
+(5, 3, '2026-05-10', '08:00:00', 'pending'),     -- Aisha → Airport transfer on arrival
+(2, 4, '2026-04-23', '14:00:00', 'confirmed'),   -- Emma  → City tour during stay
+(3, 5, '2026-04-29', '09:00:00', 'pending'),     -- Carlos → Business centre day after arrival
+(6, 2, '2026-04-25', '20:00:00', 'confirmed');   -- Pierre → Restaurant (past stay)
+
+-- ════════════════════════════════════════════════════════════
+--  12. LOST & FOUND
+-- ════════════════════════════════════════════════════════════
+
+INSERT INTO lost_and_found
+    (guest_id, room_id, found_by, description, status)
+VALUES
+(2, 3, 5,
+ 'Black leather wallet found under bed after checkout. Contains credit cards and cash.',
+ 'found'),
+(1, 6, 6,
+ 'Gold wristwatch left on bathroom shelf after March stay. Guest notified.',
+ 'claimed'),
+(NULL, 4, 5,
+ 'Blue umbrella found in wardrobe. No guest could be identified.',
+ 'donated'),
+(7, 4, 6,
+ 'USB-C phone charger on bedside table after checkout.',
+ 'found'),
+(6, 5, 7,
+ 'Designer sunglasses case (Gucci) left in room safe.',
+ 'found');
+
+-- ════════════════════════════════════════════════════════════
+--  13. FEEDBACK  (only from completed stays)
+-- ════════════════════════════════════════════════════════════
+
 INSERT INTO feedback (reservation_id, guest_id, rating, comments) VALUES
-(1, 1, 5, 'Excellent service'),
-(2, 2, 4, 'Good stay'),
-(3, 3, 3, 'Average experience');
+(2, 2, 4,
+ 'Great stay overall. Room was clean and the front desk staff were very helpful. WiFi could be faster.'),
+(3, 7, 5,
+ 'Absolutely wonderful experience. The spa was exceptional and the room was spotless. Will return!'),
+(4, 6, 3,
+ 'Room and food were good, but the late checkout fee was unexpected and not communicated upfront.'),
+(9, 1, 5,
+ 'The anniversary surprise exceeded all expectations. Suite was magnificent. Cannot wait to come back.');
 
--- ============================================================
--- AUDIT LOG
--- ============================================================
-INSERT INTO audit_log (user_id, action, target_type, target_id, old_value, new_value) VALUES
-(1, 'create_reservation', 'reservation', 1, NULL, 'created'),
-(2, 'update_room', 'room', 2, 'dirty', 'cleaning');
+-- ════════════════════════════════════════════════════════════
+--  14. AUDIT LOG  (key actions trail)
+-- ════════════════════════════════════════════════════════════
 
--- ============================================================
--- EXTRA SAFE TEST DATA SUMMARY
--- ============================================================
--- ✔ Users: 3
--- ✔ Guests: 6 (3 + 3 extra)
--- ✔ Rooms: already exist
--- ✔ Reservations: 3
--- ✔ Billing (folios/charges/payments): included
--- ✔ Services: already inserted in your schema
--- ✔ Bookings: already included
+INSERT INTO audit_log
+    (user_id, action, target_type, target_id, old_value, new_value)
+VALUES
+-- Manager added penalty charge to Pierre's folio
+(1, 'price_override',   'folio',       4,  '2500.00',    '2550.00'),
+-- David Chen cancelled his reservation
+(1, 'status_change',    'reservation', 8,  'confirmed',  'cancelled'),
+-- Check-in events
+(3, 'check_in',         'reservation', 1,  'confirmed',  'checked_in'),
+(3, 'check_in',         'reservation', 9,  'confirmed',  'checked_in'),
+-- Check-out events
+(4, 'check_out',        'reservation', 2,  'checked_in', 'checked_out'),
+(3, 'check_out',        'reservation', 3,  'checked_in', 'checked_out'),
+(4, 'check_out',        'reservation', 4,  'checked_in', 'checked_out'),
+(3, 'check_out',        'reservation', 9,  'checked_in', 'checked_out'),
+-- Room 302 taken out of service
+(1, 'room_status',      'room',        7,  'available',  'out_of_order'),
+-- Yuki Tanaka upgraded to Platinum
+(2, 'loyalty_upgrade',  'guest',       4,  'gold',       'platinum'),
+-- VIP flag set for John Smith
+(2, 'vip_flag',         'guest',       1,  '0',          '1'),
+-- No-show marked
+(4, 'no_show',          'reservation', 10, 'confirmed',  'no_show');
