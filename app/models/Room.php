@@ -345,4 +345,361 @@ class Room extends Model
 
         return false;
     }
+
+    /**
+     * Dynamic room allocation:
+     * - excludes overlapping reservations (reuses findAvailable)
+     * - applies capacity/budget/preference matching
+     * - returns rooms ordered by best match
+     */
+    public function getBestRoomsForClient($clientData)
+    {
+        $request = $this->normalizeAllocationInput((array) $clientData);
+
+        if ($request['check_in_date'] === '' || $request['check_out_date'] === '') {
+            throw new Exception('check_in_date and check_out_date are required.');
+        }
+
+        if ($request['check_in_date'] >= $request['check_out_date']) {
+            throw new Exception('check_out_date must be after check_in_date.');
+        }
+
+        $available = $this->findAvailable(
+            $request['check_in_date'],
+            $request['check_out_date'],
+            $request['preferred_room_type_id']
+        );
+
+        // If preferred type has no inventory, still return best alternatives.
+        if (empty($available) && !empty($request['preferred_room_type_id'])) {
+            $available = $this->findAvailable($request['check_in_date'], $request['check_out_date']);
+        }
+
+        if (empty($available)) {
+            return [];
+        }
+
+        $floorRange = $this->getFloorRange($available);
+        $ranked = [];
+
+        foreach ($available as $room) {
+            $capacity = (int) ($room['capacity'] ?? 0);
+            if ($capacity > 0 && $capacity < $request['guest_count']) {
+                continue;
+            }
+
+            $room['match_score'] = $this->scoreRoomForClient($room, $request, $floorRange);
+            $ranked[] = $room;
+        }
+
+        usort($ranked, function ($a, $b) {
+            $scoreComparison = ((float) $b['match_score']) <=> ((float) $a['match_score']);
+            if ($scoreComparison !== 0) {
+                return $scoreComparison;
+            }
+
+            $priceComparison = ((float) $a['base_price']) <=> ((float) $b['base_price']);
+            if ($priceComparison !== 0) {
+                return $priceComparison;
+            }
+
+            return strcmp((string) $a['room_number'], (string) $b['room_number']);
+        });
+
+        if ($request['result_limit'] > 0) {
+            return array_slice($ranked, 0, $request['result_limit']);
+        }
+
+        return $ranked;
+    }
+
+    private function normalizeAllocationInput(array $clientData)
+    {
+        $checkIn = $this->normalizeDate(
+            $this->pickFirstValue($clientData, ['check_in_date', 'check_in', 'checkInDate', 'arrival_date'])
+        );
+        $checkOut = $this->normalizeDate(
+            $this->pickFirstValue($clientData, ['check_out_date', 'check_out', 'checkOutDate', 'departure_date'])
+        );
+
+        $adults = (int) ($this->pickFirstValue($clientData, ['adults']) ?: 1);
+        $children = (int) ($this->pickFirstValue($clientData, ['children']) ?: 0);
+        $guestCount = (int) ($this->pickFirstValue($clientData, ['guest_count', 'guests', 'total_guests']) ?: 0);
+        if ($guestCount <= 0) {
+            $guestCount = max(1, $adults + max(0, $children));
+        }
+
+        $guestId = (int) ($this->pickFirstValue($clientData, ['guest_id']) ?: 0);
+        $guestPreferences = $this->loadGuestPreferences($guestId);
+
+        $preferredTypeId = (int) ($this->pickFirstValue($clientData, ['room_type_id', 'preferred_room_type_id', 'type_id']) ?: 0);
+        $preferredTypeName = trim((string) $this->pickFirstValue($clientData, ['room_type', 'preferred_room_type', 'room_type_name']));
+        if ($preferredTypeId <= 0 && $preferredTypeName !== '') {
+            $preferredTypeId = (int) $this->findRoomTypeIdByName($preferredTypeName);
+        }
+        if ($preferredTypeId <= 0 && !empty($guestPreferences['room_type'])) {
+            $preferredTypeId = (int) $this->findRoomTypeIdByName($guestPreferences['room_type']);
+        }
+        if ($preferredTypeId <= 0) {
+            $preferredTypeId = null;
+        }
+
+        $floorPreferenceRaw = $this->pickFirstValue($clientData, ['floor_preference', 'preferred_floor', 'floor']);
+        if ($floorPreferenceRaw === null || $floorPreferenceRaw === '') {
+            $floorPreferenceRaw = $guestPreferences['floor_preference'] ?? ($guestPreferences['floor_level_preference'] ?? null);
+        }
+        $floorPreference = $this->normalizeFloorPreference($floorPreferenceRaw);
+
+        $nights = $this->calculateNights($checkIn, $checkOut);
+        $maxBudgetPerNight = $this->normalizeBudget($clientData, $nights);
+
+        $resultLimit = (int) ($this->pickFirstValue($clientData, ['limit', 'max_results']) ?: 0);
+        if ($resultLimit < 0) {
+            $resultLimit = 0;
+        }
+
+        return [
+            'check_in_date' => $checkIn,
+            'check_out_date' => $checkOut,
+            'guest_count' => $guestCount,
+            'preferred_room_type_id' => $preferredTypeId,
+            'floor_preference' => $floorPreference,
+            'max_budget_per_night' => $maxBudgetPerNight,
+            'result_limit' => $resultLimit,
+        ];
+    }
+
+    private function pickFirstValue(array $source, array $keys)
+    {
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $source)) {
+                return $source[$key];
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeDate($value)
+    {
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return '';
+        }
+
+        $raw = substr($raw, 0, 10);
+        $date = DateTime::createFromFormat('Y-m-d', $raw);
+
+        if (!$date || $date->format('Y-m-d') !== $raw) {
+            return '';
+        }
+
+        return $raw;
+    }
+
+    private function calculateNights($checkIn, $checkOut)
+    {
+        if ($checkIn === '' || $checkOut === '') {
+            return 0;
+        }
+
+        $in = DateTime::createFromFormat('Y-m-d', $checkIn);
+        $out = DateTime::createFromFormat('Y-m-d', $checkOut);
+        if (!$in || !$out) {
+            return 0;
+        }
+
+        return max(0, (int) $in->diff($out)->format('%a'));
+    }
+
+    private function normalizeBudget(array $clientData, $nights)
+    {
+        $perNightCandidates = ['budget_per_night', 'max_budget', 'budget', 'max_price', 'price_limit'];
+        foreach ($perNightCandidates as $key) {
+            if (!array_key_exists($key, $clientData)) {
+                continue;
+            }
+
+            $value = (float) $clientData[$key];
+            if ($value > 0) {
+                return $value;
+            }
+        }
+
+        if (array_key_exists('total_budget', $clientData)) {
+            $totalBudget = (float) $clientData['total_budget'];
+            if ($totalBudget > 0 && $nights > 0) {
+                return $totalBudget / $nights;
+            }
+        }
+
+        return null;
+    }
+
+    private function loadGuestPreferences($guestId)
+    {
+        if ($guestId <= 0) {
+            return [];
+        }
+
+        $guestPreferenceModel = new GuestPreference();
+        $rows = $guestPreferenceModel->findByGuest($guestId);
+        if (empty($rows)) {
+            return [];
+        }
+
+        $preferences = [];
+        foreach ($rows as $row) {
+            $key = trim((string) ($row['pref_key'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+
+            $preferences[$key] = trim((string) ($row['pref_value'] ?? ''));
+        }
+
+        return $preferences;
+    }
+
+    private function findRoomTypeIdByName($name)
+    {
+        $normalizedName = trim((string) $name);
+        if ($normalizedName === '') {
+            return null;
+        }
+
+        if (ctype_digit($normalizedName)) {
+            return (int) $normalizedName;
+        }
+
+        $stmt = mysqli_prepare(
+            $this->db,
+            "SELECT id
+             FROM room_types
+             WHERE LOWER(name) = LOWER(?)
+             LIMIT 1"
+        );
+        mysqli_stmt_bind_param($stmt, 's', $normalizedName);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
+
+        return $row ? (int) $row['id'] : null;
+    }
+
+    private function normalizeFloorPreference($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $raw = trim((string) $value);
+        if ($raw === '') {
+            return null;
+        }
+
+        if (ctype_digit($raw)) {
+            return (int) $raw;
+        }
+
+        $normalized = strtolower(str_replace(['-', '_'], ' ', $raw));
+        if (in_array($normalized, ['high', 'high floor', 'upper floor', 'top floor'], true)) {
+            return 'high';
+        }
+
+        if (in_array($normalized, ['low', 'low floor', 'lower floor'], true)) {
+            return 'low';
+        }
+
+        return null;
+    }
+
+    private function getFloorRange(array $rooms)
+    {
+        if (empty($rooms)) {
+            return ['min' => null, 'max' => null];
+        }
+
+        $floors = array_map(function ($room) {
+            return (int) ($room['floor'] ?? 0);
+        }, $rooms);
+
+        return [
+            'min' => min($floors),
+            'max' => max($floors),
+        ];
+    }
+
+    private function scoreRoomForClient(array $room, array $request, array $floorRange)
+    {
+        $score = 0.0;
+        $capacity = (int) ($room['capacity'] ?? 0);
+        $guestCount = (int) $request['guest_count'];
+        $price = (float) ($room['base_price'] ?? 0.0);
+        $roomFloor = (int) ($room['floor'] ?? 0);
+
+        // Capacity fit: tighter fit ranks higher.
+        if ($capacity > 0) {
+            $difference = $capacity - $guestCount;
+            if ($difference === 0) {
+                $score += 35;
+            } elseif ($difference === 1) {
+                $score += 28;
+            } elseif ($difference === 2) {
+                $score += 20;
+            } elseif ($difference > 2) {
+                $score += 12;
+            }
+        } else {
+            $score += 10;
+        }
+
+        // Budget fit.
+        if ($request['max_budget_per_night'] !== null) {
+            $budget = (float) $request['max_budget_per_night'];
+            if ($price <= $budget) {
+                $score += 30;
+            } else {
+                $overRatio = ($price - $budget) / max($budget, 1.0);
+                $score -= min(25, $overRatio * 30);
+            }
+        } else {
+            $score += 15;
+        }
+
+        // Room type preference.
+        if (!empty($request['preferred_room_type_id'])) {
+            if ((int) $room['room_type_id'] === (int) $request['preferred_room_type_id']) {
+                $score += 25;
+            } else {
+                $score -= 8;
+            }
+        }
+
+        // Floor preference.
+        if ($request['floor_preference'] !== null) {
+            $preference = $request['floor_preference'];
+
+            if (is_int($preference)) {
+                if ($roomFloor === $preference) {
+                    $score += 20;
+                } else {
+                    $score -= min(10, abs($roomFloor - $preference) * 3);
+                }
+            } elseif ($preference === 'high' && $floorRange['max'] !== null) {
+                if ($roomFloor >= ($floorRange['max'] - 1)) {
+                    $score += 15;
+                }
+            } elseif ($preference === 'low' && $floorRange['min'] !== null) {
+                if ($roomFloor <= ($floorRange['min'] + 1)) {
+                    $score += 15;
+                }
+            }
+        }
+
+        // Tie-break helper: slight preference for lower nightly price.
+        $score += max(0, 5 - ($price / 1000));
+
+        return round($score, 2);
+    }
 }
