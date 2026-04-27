@@ -29,6 +29,58 @@ class RoomsController extends Controller
     }
 
     /**
+     * Show guest-facing available rooms.
+     * Uses date-range availability logic when dates are provided,
+     * otherwise falls back to rooms currently marked as available.
+     */
+    public function guest()
+    {
+        $roomModel = new Room();
+        $checkIn = trim((string) ($_GET['check_in_date'] ?? ''));
+        $checkOut = trim((string) ($_GET['check_out_date'] ?? ''));
+        $errors = [];
+        $rooms = [];
+
+        if ($checkIn !== '' || $checkOut !== '') {
+            $checkInDate = DateTime::createFromFormat('Y-m-d', $checkIn);
+            $checkOutDate = DateTime::createFromFormat('Y-m-d', $checkOut);
+
+            if ($checkIn === '' || !$checkInDate || $checkInDate->format('Y-m-d') !== $checkIn) {
+                $errors['check_in_date'] = 'Please choose a valid check-in date.';
+            }
+
+            if ($checkOut === '' || !$checkOutDate || $checkOutDate->format('Y-m-d') !== $checkOut) {
+                $errors['check_out_date'] = 'Please choose a valid check-out date.';
+            }
+
+            if (empty($errors) && $checkIn >= $checkOut) {
+                $errors['date_range'] = 'Check-out date must be after check-in date.';
+            }
+
+            if (empty($errors)) {
+                $rooms = $roomModel->findAvailable($checkIn, $checkOut);
+            }
+        }
+
+        if (($checkIn === '' && $checkOut === '') || !empty($errors)) {
+            $rooms = array_values(array_filter($roomModel->all(), function ($room) {
+                return ($room['status'] ?? '') === 'available';
+            }));
+        }
+
+        $this->view('rooms/guest', [
+            'pageTitle' => 'Available Rooms',
+            'rooms' => $rooms,
+            'filters' => [
+                'check_in_date' => $checkIn,
+                'check_out_date' => $checkOut,
+            ],
+            'errors' => $errors,
+            'isFilteredByDates' => ($checkIn !== '' && $checkOut !== '' && empty($errors)),
+        ]);
+    }
+
+    /**
      * Show a single room with reservations, housekeeping, maintenance.
      */
     public function show($id)
