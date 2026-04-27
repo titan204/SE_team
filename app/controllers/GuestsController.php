@@ -13,73 +13,182 @@
 
 class GuestsController extends Controller
 {
-    public function index()
-    {
-        // TODO: Require login
-        // TODO: Load all guests from Guest model
-        // TODO: Pass to guests/index view
-        $this->view('guests/index');
+   public function index()
+{
+    $guestModel = new Guest();
+    $search = trim($_GET['search'] ?? '');
+    $filter = trim($_GET['filter'] ?? '');  
+    if (!empty($search)) {
+        $guests = $guestModel->search($search);
+    } elseif ($filter === 'vip') {
+        $guests = $guestModel->filterByVip();
+    } elseif ($filter === 'blacklist') {
+        $guests = $guestModel->filterByBlacklist();
+    } else {
+        $guests = $guestModel->all();
     }
 
+    $this->view('guests/index', [
+        'guests' => $guests,
+        'search' => $search,
+    ]);
+}
     public function show($id)
     {
-        // TODO: Load guest by ID
-        // TODO: Load guest preferences, reservations, feedback
-        // TODO: Calculate Lifetime Value (LTV)
-        // TODO: Pass to guests/show view
-        $this->view('guests/show');
+        $guestModel = new Guest();
+        $guest = $guestModel->find($id);
+
+        if (!$guest) {
+            $this->view('errors/404');
+            return;
+        }
+
+        $guestModel->id = $id;
+        $reservations = $guestModel->reservations();
+        $preferences  = $guestModel->preferences();
+        $feedback     = $guestModel->feedback();
+        $ltv          = $guestModel->calculateLifetimeValue();
+
+        $this->view('guests/show', [
+            'guest'        => $guest,
+            'reservations' => $reservations,
+            'preferences'  => $preferences,
+            'feedback'     => $feedback,
+            'ltv'          => $ltv,
+        ]);
     }
 
     public function create()
     {
-        // TODO: Show empty form
         $this->view('guests/create');
     }
 
     public function store()
     {
-        // TODO: Validate $_POST data
-        // TODO: Call Guest model create()
-        // TODO: Redirect to guests/index
+        $name  = trim($_POST['name']  ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+
+        $errors = [];
+        if (empty($name))                                $errors[] = 'Name is required.';
+        if (empty($email))                               $errors[] = 'Email is required.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL))  $errors[] = 'Invalid email.';
+
+        if (!empty($errors)) {
+            $this->view('guests/create', ['errors' => $errors, 'old' => $_POST]);
+            return;
+        }
+
+        $guestModel = new Guest();
+        $guestModel->create([
+            'name'          => $name,
+            'email'         => $email,
+            'phone'         => $phone,
+            'national_id'   => $_POST['national_id']   ?? '',
+            'nationality'   => $_POST['nationality']   ?? '',
+            'date_of_birth' => $_POST['date_of_birth'] ?? null,
+            'referred_by'   => $_POST['referred_by']   ?? null,
+        ]);
+
+        $this->redirect('guests');
     }
 
     public function edit($id)
     {
-        // TODO: Load guest by ID
-        // TODO: Pass to guests/edit view
-        $this->view('guests/edit');
+        $guestModel = new Guest();
+        $guest = $guestModel->find($id);
+
+        if (!$guest) {
+            $this->view('errors/404');
+            return;
+        }
+
+        $this->view('guests/edit', ['guest' => $guest]);
     }
 
     public function update($id)
     {
-        // TODO: Validate $_POST data
-        // TODO: Call Guest model update()
-        // TODO: Redirect to guests/show/$id
+        $name  = trim($_POST['name']  ?? '');
+        $email = trim($_POST['email'] ?? '');
+
+        $errors = [];
+        if (empty($name))                                $errors[] = 'Name is required.';
+        if (empty($email))                               $errors[] = 'Email is required.';
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL))  $errors[] = 'Invalid email.';
+
+        if (!empty($errors)) {
+            $this->view('guests/edit', ['errors' => $errors, 'old' => $_POST]);
+            return;
+        }
+
+        $guestModel = new Guest();
+        $guestModel->update($id, [
+            'name'          => $name,
+            'email'         => $email,
+            'phone'         => $_POST['phone']         ?? '',
+            'nationality'   => $_POST['nationality']   ?? '',
+            'date_of_birth' => $_POST['date_of_birth'] ?? null,
+        ]);
+
+        $this->redirect('guests/show/' . $id);
     }
 
     public function delete($id)
     {
-        // TODO: Call Guest model delete()
-        // TODO: Redirect to guests/index
+        $guestModel = new Guest();
+        $guestModel->delete($id);
+
+        $this->redirect('guests');
     }
 
     // ── Special Actions ──────────────────────────────────────
 
     public function blacklist($id)
     {
-        // TODO: Call Guest model blacklist() with reason
-        // TODO: Log to audit_log
+        $reason = trim($_POST['reason'] ?? 'No reason provided.');
+
+        $guestModel     = new Guest();
+        $guestModel->id = $id;
+        $guestModel->blacklist($reason);
+
+        $this->redirect('guests/show/' . $id);
     }
 
     public function anonymize($id)
     {
-        // TODO: GDPR Right to be Forgotten
-        // TODO: Call Guest model anonymize()
+        $guestModel     = new Guest();
+        $guestModel->id = $id;
+        $guestModel->anonymize();
+
+        $this->redirect('guests');
     }
 
     public function flagVip($id)
     {
-        // TODO: Call Guest model flagAsVip()
-        // TODO: Alert front desk
+        $guestModel     = new Guest();
+        $guestModel->id = $id;
+        $guestModel->flagAsVip();
+
+        $this->redirect('guests/show/' . $id);
     }
+    public function profile()
+{
+   
+    if (empty($_SESSION['user_id'])) {
+        $this->redirect('auth/login');
+    }
+ 
+    $userModel = new User();
+    $guest = $userModel->find($_SESSION['user_id']);
+ 
+    if (!$guest) {
+        $this->redirect('');
+    }
+ 
+    $this->view('guests/profile', [
+        'pageTitle' => 'My Profile',
+        'guest'     => $guest,
+    ]);
 }
+}
+?>

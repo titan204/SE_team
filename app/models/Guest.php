@@ -28,113 +28,362 @@ class Guest extends Model
     public $referred_by;
     public $created_at;
     public $updated_at;
+    private $columnCache = null;
 
     // ── CRUD ─────────────────────────────────────────────────
 
     public function all()
     {
-        // TODO: Team will implement query logic here
-        // $result = mysqli_query($this->db, "SELECT * FROM guests ORDER BY name");
-        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $query = " SELECT * from guests order by name ";
+        $result = mysqli_query($this->db, $query);
+        if (!$result) {
+
+            die("Query Failed: " . mysqli_error($this->db)); // if query fails, output error message and stop execution
+        }
+
+        return mysqli_fetch_all($result, MYSQLI_ASSOC); //return an array of all guests
     }
 
     public function find($id)
     {
-        // TODO: Team will implement query logic here
-        // $id = mysqli_real_escape_string($this->db, $id);
-        // $result = mysqli_query($this->db, "SELECT * FROM guests WHERE id = '$id'");
-        // return mysqli_fetch_assoc($result);
+        $id = mysqli_real_escape_string($this->db, $id);
+        $query = " SELECT * from guests where id = '$id' ";
+        $result = mysqli_query($this->db, $query);
+        if (!$result) {
+
+            die("Query Failed: " . mysqli_error($this->db)); // if query fails, output error message and stop execution
+        }  
+
+        return mysqli_fetch_array($result, MYSQLI_ASSOC); //return an array of the guest with the specified id
+    }
+
+    public function findByEmail($email)
+    {
+        $email = mysqli_real_escape_string($this->db, trim($email));
+        $query = "SELECT * FROM guests WHERE email = '$email' LIMIT 1";
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+            die("Query Failed: " . mysqli_error($this->db));
+        }
+
+        return mysqli_fetch_assoc($result);
     }
 
     public function create($data)
     {
-        // TODO: Team will implement query logic here
-        // $name  = mysqli_real_escape_string($this->db, $data['name']);
-        // $email = mysqli_real_escape_string($this->db, $data['email']);
-        // mysqli_query($this->db, "INSERT INTO guests (name, email, ...) VALUES ('$name', '$email', ...)");
-        // return mysqli_insert_id($this->db);
+        $supportedColumns = array_flip($this->getExistingColumns());
+        $allowedColumns = ['name', 'email', 'phone', 'national_id', 'nationality', 'date_of_birth', 'referred_by'];
+        $columns = [];
+        $values = [];
+
+        foreach ($allowedColumns as $column) {
+            if (!isset($supportedColumns[$column]) || !array_key_exists($column, $data)) {
+                continue;
+            }
+
+            if ($column === 'referred_by') {
+                if ($data[$column] === '' || $data[$column] === null || !is_numeric($data[$column])) {
+                    continue;
+                }
+
+                $columns[] = $column;
+                $values[] = (string) ((int) $data[$column]);
+                continue;
+            }
+
+            if ($column === 'date_of_birth') {
+                $columns[] = $column;
+                $values[] = !empty($data[$column])
+                    ? "'" . mysqli_real_escape_string($this->db, $data[$column]) . "'"
+                    : "NULL";
+                continue;
+            }
+
+            $columns[] = $column;
+            $values[] = "'" . mysqli_real_escape_string($this->db, (string) ($data[$column] ?? '')) . "'";
+        }
+
+        if (!in_array('name', $columns, true) || !in_array('email', $columns, true)) {
+            die("Insert Failed: guests table is missing required columns.");
+        }
+
+        $query = "
+        INSERT INTO guests (" . implode(', ', $columns) . ")
+        VALUES (" . implode(', ', $values) . ") ";
+
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+           die("Insert Failed: " . mysqli_error($this->db));
+        }
+
+        return mysqli_insert_id($this->db);
+    }
+
+    public function getExistingColumns()
+    {
+        if ($this->columnCache !== null) {
+            return $this->columnCache;
+        }
+
+        $result = mysqli_query($this->db, "SHOW COLUMNS FROM guests");
+
+        if (!$result) {
+            $this->columnCache = ['name', 'email'];
+            return $this->columnCache;
+        }
+
+        $columns = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            if (!empty($row['Field'])) {
+                $columns[] = $row['Field'];
+            }
+        }
+
+        if (empty($columns)) {
+            $columns = ['name', 'email'];
+        }
+
+        $this->columnCache = $columns;
+        return $this->columnCache;
     }
 
     public function update($id, $data)
     {
-        // TODO: Team will implement query logic here
-        // $name = mysqli_real_escape_string($this->db, $data['name']);
-        // $id   = mysqli_real_escape_string($this->db, $id);
-        // mysqli_query($this->db, "UPDATE guests SET name='$name', ... WHERE id = '$id'");
+        $id = (int)$id;
+        $name = mysqli_real_escape_string($this->db, $data['name']);
+        $email = mysqli_real_escape_string($this->db, $data['email']);
+        $phone = mysqli_real_escape_string($this->db, $data['phone'] ?? '');
+        $nationality = mysqli_real_escape_string($this->db, $data['nationality'] ?? '');
+        $date_of_birth = mysqli_real_escape_string($this->db, $data['date_of_birth'] ?? null);
+
+        $query = "
+        UPDATE guests SET
+            name = '$name',
+            email = '$email',
+            phone = '$phone',
+            nationality = '$nationality',
+            date_of_birth = " . ($date_of_birth ? "'$date_of_birth'" : "NULL") . "
+        WHERE id = $id ";
+
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+           die("Update Failed: " . mysqli_error($this->db)); 
+        }
+
+        return true;
     }
 
     public function delete($id)
     {
-        // TODO: Team will implement query logic here
-        // $id = mysqli_real_escape_string($this->db, $id);
-        // mysqli_query($this->db, "DELETE FROM guests WHERE id = '$id'");
+        $id = (int)$id;
+        $query = "DELETE FROM guests WHERE id = $id";
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+          die("Delete Failed: " . mysqli_error($this->db)); 
+        }
+
+        return true;
     }
 
     // ── Relationships ────────────────────────────────────────
 
     public function reservations()
     {
-        // TODO: Return all reservations for this guest
-        // $result = mysqli_query($this->db, "SELECT * FROM reservations WHERE guest_id = '$this->id'");
-        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $guestId = (int)$this->id;
+        $query = "SELECT * FROM reservations WHERE guest_id = $guestId";
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+          die("Query Failed: " . mysqli_error($this->db));
+        }
+
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
+     
     }
 
     public function preferences()
     {
-        // TODO: Return guest preferences
-        // $result = mysqli_query($this->db, "SELECT * FROM guest_preferences WHERE guest_id = '$this->id'");
-        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $guestId = (int)$this->id;
+        $query = "SELECT * FROM guest_preferences WHERE guest_id = $guestId";
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+           die("Query Failed: " . mysqli_error($this->db));
+      }
+
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function corporateAccount()
     {
-        // TODO: Return the corporate account linked to this guest
-        // $sql = "SELECT ca.* FROM corporate_accounts ca
-        //         JOIN guest_corporate gc ON gc.corporate_id = ca.id
-        //         WHERE gc.guest_id = '$this->id'";
-        // $result = mysqli_query($this->db, $sql);
-        // return mysqli_fetch_assoc($result);
+        $guestId = (int)$this->id;
+
+        $sql = "
+        SELECT ca.*
+        FROM corporate_accounts ca
+        JOIN guest_corporate gc ON gc.corporate_id = ca.id
+        WHERE gc.guest_id = $guestId
+        LIMIT 1 ";
+
+       $result = mysqli_query($this->db, $sql);
+
+       if (!$result) {
+          die("Query Failed: " . mysqli_error($this->db));
+        }
+
+        return mysqli_fetch_assoc($result);
     }
 
     public function feedback()
     {
-        // TODO: Return all feedback from this guest
-        // $result = mysqli_query($this->db, "SELECT * FROM feedback WHERE guest_id = '$this->id'");
-        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $guestId = (int)$this->id;
+        $query = "SELECT * FROM feedback WHERE guest_id = $guestId";
+        $result = mysqli_query($this->db, $query);
+
+        if (!$result) {
+           die("Query Failed: " . mysqli_error($this->db));
+        }
+
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     // ── Business Logic Prototypes ────────────────────────────
 
     public function calculateLifetimeValue()
     {
-        // TODO: Sum all folio totals across all reservations for this guest
+        $guestId = (int)$this->id;
+        $query = "
+        SELECT SUM(total_price) AS lifetime_value
+        FROM reservations
+        WHERE guest_id = $guestId ";
+
+       $result = mysqli_query($this->db, $query);
+
+       if (!$result) {
+        die("Query Failed: " . mysqli_error($this->db));
+       }
+
+       $row = mysqli_fetch_assoc($result);
+
+       return $row['lifetime_value'] ?? 0;
     }
 
     public function updateLoyaltyTier()
     {
-        // TODO: Based on lifetime_nights, update loyalty_tier
-        // e.g., 0-9 = standard, 10-24 = silver, 25-49 = gold, 50+ = platinum
+       $guestId = (int)$this->id;
+
+       $query = " SELECT lifetime_nights FROM guests WHERE id = $guestId";
+       $result = mysqli_query($this->db, $query);
+
+       $row = mysqli_fetch_assoc($result);
+       $nights = (int)$row['lifetime_nights'];
+
+       if ($nights >= 50) {
+         $tier = 'platinum';
+       } 
+       elseif ($nights >= 25) {
+         $tier = 'gold';
+       } 
+       elseif ($nights >= 10) {
+         $tier = 'silver';
+       } 
+       else {
+         $tier = 'standard';
+       }
+
+       $update = "
+        UPDATE guests 
+        SET loyalty_tier = '$tier'
+        WHERE id = $guestId";
+
+       mysqli_query($this->db, $update);
     }
 
     public function flagAsVip()
     {
-        // TODO: Set is_vip = 1, log to audit_log
+        $guestId = (int)$this->id;
+
+        mysqli_query($this->db, "
+            UPDATE guests 
+            SET is_vip = 1  WHERE id = $guestId ");
+
+        mysqli_query($this->db, "
+        INSERT INTO audit_log (guest_id, action)
+        VALUES ($guestId, 'Marked as VIP') ");
     }
 
     public function blacklist($reason)
     {
-        // TODO: Set is_blacklisted = 1, blacklist_reason = $reason
+        $guestId = (int)$this->id;
+        $reason = mysqli_real_escape_string($this->db, $reason);
+
+        mysqli_query($this->db, "
+          UPDATE guests 
+          SET is_blacklisted = 1,
+          blacklist_reason = '$reason'
+          WHERE id = $guestId ");
     }
 
     public function anonymize()
     {
-        // TODO: GDPR "Right to be Forgotten" — replace PII with anonymized data
+        $guestId = (int)$this->id;
+
+        mysqli_query($this->db, "
+           UPDATE guests 
+            SET 
+            name = 'ANONYMIZED',
+            email = NULL,
+            phone = NULL,
+            national_id = NULL,
+            nationality = NULL,
+            gdpr_anonymized = 1
+        WHERE id = $guestId");
     }
 
     public function referrals()
     {
-        // TODO: Return all guests referred by this guest
-        // $result = mysqli_query($this->db, "SELECT * FROM guests WHERE referred_by = '$this->id'");
-        // return mysqli_fetch_all($result, MYSQLI_ASSOC);
+        $guestId = (int)$this->id;
+        $query = "SELECT * FROM guests WHERE referred_by = $guestId";
+        $result = mysqli_query($this->db, $query);
+        return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
+
+    public function search($keyword)
+   {
+    $keyword = '%' . mysqli_real_escape_string($this->db, $keyword) . '%';
+
+    $query = "
+        SELECT * FROM guests
+        WHERE name  LIKE '$keyword'
+        OR    email LIKE '$keyword'
+        ORDER BY name
+    ";
+
+    $result = mysqli_query($this->db, $query);
+
+    if (!$result) {
+        die("Search Failed: " . mysqli_error($this->db));
+    }
+
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+
+    public function filterByVip()
+    {
+    $result = mysqli_query($this->db, 
+        "SELECT * FROM guests WHERE is_vip = 1 ORDER BY name");
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+   }
+
+   public function filterByBlacklist()
+   {
+    $result = mysqli_query($this->db, 
+        "SELECT * FROM guests WHERE is_blacklisted = 1 ORDER BY name");
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+   }
 }
+?>

@@ -15,14 +15,81 @@ class CorporateAccount extends Model
     public $contracted_rate;
     public $created_at;
 
-    public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM corporate_accounts") */ }
-    public function find($id) { /* TODO: WHERE id = ? */ }
-    public function create($data) { /* TODO: INSERT INTO corporate_accounts */ }
-    public function update($id, $data) { /* TODO: UPDATE corporate_accounts */ }
-    public function delete($id) { /* TODO: DELETE FROM corporate_accounts */ }
+    public function all()
+    {
+       $query = "SELECT * FROM corporate_accounts";
+       $result = mysqli_query($this->db, $query);
+
+       return mysqli_fetch_all($result, MYSQLI_ASSOC);
+    }
+    
+    public function find($id)
+    {
+       $id = (int)$id;
+
+       $query = "SELECT * FROM corporate_accounts WHERE id = $id";
+       $result = mysqli_query($this->db, $query);
+
+       return mysqli_fetch_assoc($result);
+    }    
+    public function create($data)
+    {
+       $company_name    = mysqli_real_escape_string($this->db, $data['company_name']);
+       $contact_email   = mysqli_real_escape_string($this->db, $data['contact_email'] ?? '');
+       $contact_phone   = mysqli_real_escape_string($this->db, $data['contact_phone'] ?? '');
+       $contracted_rate = (float)$data['contracted_rate'];
+
+       $query = "
+        INSERT INTO corporate_accounts 
+        (company_name, contact_email, contact_phone, contracted_rate)
+        VALUES 
+        ('$company_name', '$contact_email', '$contact_phone', $contracted_rate) ";
+
+       mysqli_query($this->db, $query);
+
+       return mysqli_insert_id($this->db);
+    }
+    public function update($id, $data)
+   { 
+       $id = (int)$id;
+       $company_name    = mysqli_real_escape_string($this->db, $data['company_name']);
+       $contact_email   = mysqli_real_escape_string($this->db, $data['contact_email'] ?? '');
+       $contact_phone   = mysqli_real_escape_string($this->db, $data['contact_phone'] ?? '');
+       $contracted_rate = (float)$data['contracted_rate'];
+
+       $query = "
+        UPDATE corporate_accounts 
+        SET company_name = '$company_name',
+            contact_email = '$contact_email',
+            contact_phone = '$contact_phone',
+            contracted_rate = $contracted_rate
+        WHERE id = $id ";
+
+        mysqli_query($this->db, $query);
+
+    return true;
+    }   
+    public function delete($id)
+   {
+       $id = (int)$id;
+       $query = "DELETE FROM corporate_accounts WHERE id = $id";
+       mysqli_query($this->db, $query);
+
+    return true;
+   }
 
     public function guests() {
-        // TODO: Return all guests linked to this corporate account
-        // JOIN guest_corporate
+        $corpId = (int)$this->id;
+
+        $query = "
+        SELECT g.*
+        FROM guests g
+        JOIN guest_corporate gc ON gc.guest_id = g.id
+        WHERE gc.corporate_id = $corpId ";
+
+        $result = mysqli_query($this->db, $query);
+
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 }
+?>

@@ -1,6 +1,8 @@
 <?php
-$isLoggedIn = !empty($_SESSION['user_id']);
+$isLoggedIn     = !empty($_SESSION['user_id']);
 $currentUserName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES, 'UTF-8');
+$currentRole    = strtolower($_SESSION['user_role'] ?? '');
+$isGuest        = ($currentRole === 'guest' || ($_SESSION['user_role_id'] ?? 0) == 4);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -18,18 +20,19 @@ $currentUserName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES
     <link href="<?= APP_URL ?>/public/assets/css/style.css" rel="stylesheet">
 </head>
 
-<body>
-    <?php if ($isLoggedIn): ?>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="<?= APP_URL ?>">
-                    <i class="bi bi-building"></i> <?= APP_NAME ?>
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="mainNav">
-
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="<?= APP_URL ?>">
+                <i class="bi bi-building"></i> <?= APP_NAME ?>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <?php if ($isLoggedIn && !$isGuest): ?>
+                    <!-- ── Staff Navigation ── -->
+        
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/dashboard">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/reservations">Reservations</a></li>
@@ -48,27 +51,74 @@ $currentUserName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES
                             </span>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?= APP_URL ?>/auth/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=auth/logout">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
                         </li>
                     </ul>
+
+                <?php elseif ($isLoggedIn && $isGuest): ?>
+                    <!-- ── Guest Navigation ── -->
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=rooms/guest">
+                                Rooms
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=home/externalServices">
+                                External Services Booking
+                            </a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav ms-auto align-items-center gap-2">
+                        <!-- Profile Icon -->
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center gap-2"
+                               href="<?= APP_URL ?>/?url=Home/guestprofile"
+                               title="My Profile">
+                                <div style="
+                                    width:34px;height:34px;border-radius:50%;
+                                    background:linear-gradient(135deg,#9A3F3F,#D4B483);
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:13px;font-weight:600;color:#fff;
+                                    border:2px solid rgba(255,255,255,0.25);
+                                ">
+                                    <?= strtoupper(substr($_SESSION['user_name'] ?? 'G', 0, 1)) ?>
+                                </div>
+                                <span class="text-white" style="font-size:14px"><?= $currentUserName ?></span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=auth/logout">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                <?php else: ?>
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link" href="<?= APP_URL ?>/auth/login">Login</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=rooms/guest">Rooms</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=auth/login">Login</a>
+                        </li>
                     </ul>
                 <?php endif; ?>
-                </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
-        <main class="container-fluid py-4">
-            <?= $content ?? '' ?>
-        </main>
+    <main class="container-fluid py-4 flex-grow-1">
+        <?= $content ?? '' ?>
+    </main>
 
-        <footer class="bg-dark text-white text-center py-3 mt-auto">
-            <small>&copy; <?= date('Y') ?> <?= APP_NAME ?> - SE Project</small>
-        </footer>
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
+        <small>&copy; <?= date('Y') ?> <?= APP_NAME ?> - SE Project</small>
+    </footer>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="<?= APP_URL ?>/public/assets/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="<?= APP_URL ?>/public/assets/js/app.js"></script>
 </body>
 
 </html>

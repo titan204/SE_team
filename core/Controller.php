@@ -37,10 +37,10 @@ class Controller
      *   $this->redirect('reservations');
      */
     protected function redirect(string $path): void
-    {
-        header('Location: ' . APP_URL . '/' . ltrim($path, '/'));
-        exit;
-    }
+   {
+    header('Location: ' . APP_URL . '/index.php?url=' . ltrim($path, '/'));
+    exit;
+   }
 
     /**
      * Checks whether the current user is logged in.
@@ -59,13 +59,25 @@ class Controller
      * Usage:
      *   $this->requireRole('manager');
      */
-    protected function requireRole(string $role): void
+    protected function requireRole(string $role)
     {
         $this->requireLogin();
 
         if ($_SESSION['user_role'] !== $role) {
-        $this->view("forbidden/index");
-        die('Access denied. Required role: ' . $role);
+
+            $this->redirect('forbidden/index');
+            die();
+        }
+    }
+
+    protected function requireRoles(array $roles)
+    {
+        $this->requireLogin();
+
+        if (!in_array($_SESSION['user_role'], $roles)) {
+            $this->redirect('forbidden/index');
+            die();
         }
     }
 }
+?>
