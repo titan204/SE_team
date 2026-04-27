@@ -61,6 +61,11 @@ $isGuest        = ($currentRole === 'guest' || ($_SESSION['user_role_id'] ?? 0) 
                     <!-- ── Guest Navigation ── -->
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=rooms/guest">
+                                Rooms
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="<?= APP_URL ?>/?url=home/externalServices">
                                 External Services Booking
                             </a>
@@ -92,6 +97,9 @@ $isGuest        = ($currentRole === 'guest' || ($_SESSION['user_role_id'] ?? 0) 
                     </ul>
                 <?php else: ?>
                     <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?= APP_URL ?>/?url=rooms/guest">Rooms</a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="<?= APP_URL ?>/?url=auth/login">Login</a>
                         </li>

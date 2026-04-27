@@ -240,13 +240,13 @@ setTimeout(function(){
 <div class="hotel-explore-grid">
     <?php
     $sections = [
-        ['Rooms',      '32 rooms available', 'rooms',      'room.jpg'],
-        ['Restaurant', 'Fine dining',         'restaurant', 'restaurant.jpg'],
-        ['Pool & Spa', 'Relax daily',         'pool',       'pool.jpg'],
-        ['Wellness',   'Gym & yoga',          'wellness',   'wellness.jpg'],
+        ['Rooms',      'Browse available rooms', APP_URL . '/?url=rooms/guest', 'room.jpg'],
+        ['Restaurant', 'Fine dining',            '',                           'restaurant.jpg'],
+        ['Pool & Spa', 'Relax daily',            '',                           'pool.jpg'],
+        ['Wellness',   'Gym & yoga',             '',                           'wellness.jpg'],
     ];
     foreach ($sections as $s): ?>
-    <a href="javascript:void(0)" sytel="hover: " class="hotel-ex-card disabled-link">
+    <a href="<?= $s[2] !== '' ? $s[2] : 'javascript:void(0)' ?>" class="hotel-ex-card <?= $s[2] === '' ? 'disabled-link' : '' ?>">
         <img src="<?= APP_URL ?>/public/assets/images/<?= $s[3] ?>" alt="<?= htmlspecialchars($s[0]) ?>">
         <div class="hotel-ex-overlay"></div>
         <div class="hotel-ex-arrow">↗</div>

@@ -47,7 +47,11 @@ class Room extends Model
     {
         $stmt = mysqli_prepare(
             $this->db,
-            "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
+            "SELECT rooms.*,
+                    room_types.name AS type_name,
+                    room_types.base_price AS base_price,
+                    room_types.description AS type_description,
+                    room_types.capacity AS capacity
              FROM   rooms
              JOIN   room_types ON rooms.room_type_id = room_types.id
              ORDER BY rooms.room_number ASC"
@@ -259,7 +263,11 @@ class Room extends Model
      */
     public function findAvailable($checkIn, $checkOut, $typeId = null)
     {
-        $sql = "SELECT rooms.*, room_types.name AS type_name, room_types.base_price AS base_price
+        $sql = "SELECT rooms.*,
+                        room_types.name AS type_name,
+                        room_types.base_price AS base_price,
+                        room_types.description AS type_description,
+                        room_types.capacity AS capacity
                  FROM   rooms
                  JOIN   room_types ON rooms.room_type_id = room_types.id
                  WHERE  rooms.status = 'available'";
