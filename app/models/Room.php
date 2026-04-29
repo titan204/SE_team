@@ -345,4 +345,20 @@ class Room extends Model
 
         return false;
     }
+
+
+    public function getBestRoomsForClient($data)
+    {
+        $checkIn  = $data['check_in'] ?? date('Y-m-d');
+        $checkOut = $data['check_out'] ?? date('Y-m-d', strtotime('+1 day'));
+        $typeId   = $data['room_type_id'] ?? null;
+
+        $availableRooms = $this->findAvailable($checkIn, $checkOut, $typeId);
+
+        usort($availableRooms, function($a, $b) {
+            return $a['base_price'] <=> $b['base_price'];
+        });
+
+        return $availableRooms;
+    }
 }
