@@ -43,11 +43,41 @@ class GuestsController extends Controller
             return;
         }
 
+        // ── Reservation history — use Reservation model so room names are joined ──
+        // Guest::reservations() returns raw room_id integers; Reservation::findByGuest()
+        // runs the proper JOIN and returns room_number + room_type_name.
+        try {
+            $reservationModel = new Reservation();
+            $reservations = $reservationModel->findByGuest((int) $guest['id']);
+            if (!is_array($reservations)) $reservations = [];
+        } catch (\Throwable $e) {
+            $reservations = [];
+        }
+
+        // ── Preferences — guard against missing table or unexpected return type ──
         $guestModel->id = $id;
-        $reservations = $guestModel->reservations();
-        $preferences  = $guestModel->preferences();
-        $feedback     = $guestModel->feedback();
-        $ltv          = $guestModel->calculateLifetimeValue();
+        try {
+            $raw = $guestModel->preferences();
+            $preferences = is_array($raw) ? $raw : [];
+        } catch (\Throwable $e) {
+            $preferences = [];
+        }
+
+        // ── Feedback ──────────────────────────────────────────────────────────────
+        try {
+            $raw = $guestModel->feedback();
+            $feedback = is_array($raw) ? $raw : [];
+        } catch (\Throwable $e) {
+            $feedback = [];
+        }
+
+        // ── Lifetime value ────────────────────────────────────────────────────────
+        try {
+            $ltv = $guestModel->calculateLifetimeValue() ?? 0;
+            if (!is_numeric($ltv)) $ltv = 0;
+        } catch (\Throwable $e) {
+            $ltv = 0;
+        }
 
         $this->view('guests/show', [
             'guest'        => $guest,
