@@ -185,35 +185,6 @@ class ReservationsController extends Controller
         ]);
     }
 
-    public function recommendRooms()
-    {
-        $this->requireLogin();
-
-        $requestData = $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : $_GET;
-        $roomModel = new Room();
-
-        header('Content-Type: application/json; charset=utf-8');
-
-        try {
-            $rooms = $roomModel->getBestRoomsForClient($requestData);
-
-            echo json_encode([
-                'success' => true,
-                'count' => count($rooms),
-                'rooms' => $rooms,
-            ]);
-        } catch (Exception $e) {
-            http_response_code(422);
-
-            echo json_encode([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'rooms' => [],
-            ]);
-        }
-
-        exit;
-    }
 
     public function store()
     {
