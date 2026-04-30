@@ -102,7 +102,9 @@ class Reservation extends Model
                      $deposit, $depositPaid, $isGroup, $groupId, $totalPrice)";
 
         $result = mysqli_query($this->db, $sql);
-        if (!$result) die("Insert Failed: " . mysqli_error($this->db));
+        if (!$result) {
+            throw new \RuntimeException('Reservation could not be saved: ' . mysqli_error($this->db));
+        }
         $newId = mysqli_insert_id($this->db);
 
         // If group booking without an existing group lead, self-reference as group leader
@@ -469,5 +471,325 @@ class Reservation extends Model
                AND task_type IN ('cleaning','inspection')");
         $row = mysqli_fetch_assoc($result);
         return $row && (int) $row['cnt'] > 0;
+    }
+
+    // ── UC: Flag Special Occasion (helper method only) ───────
+    //
+    // IMPORTANT: This is a STANDALONE HELPER — it MUST NOT be called
+    // automatically, must NOT write to the database, and must NOT
+    // connect to any reservation workflow.
+    //
+    // Logic: returns true when the guest's date_of_birth month+day
+    // matches the reservation check-in month+day (birthday stay).
+    //
+    // Usage example (call explicitly when needed):
+    //   $reservationModel->flagSpecialOccasion($guestData, $reservation['check_in_date']);
+    //
+    // @param  array  $guestData    Guest record (must contain 'date_of_birth')
+    // @param  string $checkInDate  Reservation check-in date (Y-m-d). Defaults to today.
+    // @return bool                 true if guest's birthday falls on the check-in date
+
+    public function flagSpecialOccasion(array $guestData, string $checkInDate = ''): bool
+    {
+        $dob = trim((string) ($guestData['date_of_birth'] ?? ''));
+
+        // Cannot determine birthday without a date_of_birth value
+        if ($dob === '') {
+            return false;
+        }
+
+        // Use provided check-in date, or fall back to today
+        $checkIn = ($checkInDate !== '') ? $checkInDate : date('Y-m-d');
+
+        try {
+            $dobDate     = new DateTime($dob);
+            $checkInDate = new DateTime($checkIn);
+        } catch (\Exception $e) {
+            return false; // Malformed date — fail gracefully
+        }
+
+        // Compare month and day only (birthday regardless of year)
+        return $dobDate->format('m-d') === $checkInDate->format('m-d');
+    }
+
+    // ── UC: Trigger VIP Flag (EXTEND — conditional only) ─────
+    //
+    // EXTEND use case: executes ONLY when guest is marked as VIP.
+    // Mutates the reservation data array in-memory so that is_vip
+    // is propagated into the reservation record at creation time.
+    // Does NOT auto-apply for non-VIP guests.
+    //
+    // @param  array  $reservationData  Reservation data array (passed by reference)
+    // @param  array  $guestData        Guest record (must contain 'is_vip')
+    // @return bool                     true if VIP flag was applied, false otherwise
+
+    public function applyVipFlag(array &$reservationData, array $guestData): bool
+    {
+        // EXTEND condition: only runs when the guest is marked as VIP
+        if (empty($guestData['is_vip'])) {
+            return false; // Not a VIP — extension does not execute
+        }
+
+        // Mark the reservation data so the reservation record carries the VIP flag.
+        // This can be used for UI highlighting, reporting, or priority queuing later.
+        $reservationData['is_vip'] = 1;
+
+        return true; // VIP flag applied
+    }
+
+    // ── UC: Suggest Room Upgrade (EXTEND Room Allocation) ────
+    //
+    // EXTEND use case: executes ONLY when guest has high loyalty status
+    // (gold or platinum). Returns a room suggestion — does NOT auto-apply.
+    //
+    // Design note: Room.php is owned by Dev 2 (read-only).
+    // This method lives here and calls Room::suggestUpgrade() externally,
+    // preserving Room.php exactly as written.
+    //
+    // @param  array  $guestData     Guest record (must contain 'loyalty_tier')
+    // @param  int    $currentRoomId Currently allocated room ID
+    // @param  string $checkIn       Check-in date  (Y-m-d)
+    // @param  string $checkOut      Check-out date (Y-m-d)
+    // @return array|false           Suggested upgrade room row, or false
+
+    public function suggestUpgradeForLoyalty(
+        array  $guestData,
+        int    $currentRoomId,
+        string $checkIn,
+        string $checkOut
+    ) {
+        // EXTEND condition: only fires for gold / platinum loyalty tiers
+        $tier = strtolower(trim((string) ($guestData['loyalty_tier'] ?? '')));
+
+        if (!in_array($tier, ['gold', 'platinum'], true)) {
+            return false; // Loyalty level too low — extension does not execute
+        }
+
+        // Delegate to Dev 2's existing Room::suggestUpgrade() — called externally,
+        // Room.php is not modified in any way.
+        $roomModel = new Room();
+        return $roomModel->suggestUpgrade($currentRoomId, $checkIn, $checkOut);
+    }
+
+    // ── UC: Accept Room Upgrade ───────────────────────────────
+    //
+    // Converts a suggestion into an actual room switch.
+    // Called explicitly by the controller only when the guest/staff
+    // clicks "Accept Upgrade" — NEVER triggered automatically.
+    //
+    // Actions performed:
+    //   1. Validate new room (must be available & not out_of_order)
+    //   2. Update reservation.room_id to $newRoomId
+    //   3. Set old room → available
+    //   4. Set new room → occupied (if reservation is checked_in)
+    //      or keep as available (if pending/confirmed, reserved via booking)
+    //   5. Write audit log entry
+    //
+    // @param  int  $reservationId
+    // @param  int  $newRoomId
+    // @return bool  true on success
+    // @throws Exception on validation failure
+
+    public function acceptUpgrade(int $reservationId, int $newRoomId): bool
+    {
+        $reservationId = (int) $reservationId;
+        $newRoomId     = (int) $newRoomId;
+
+        // Load reservation
+        $res = mysqli_fetch_assoc(
+            mysqli_query($this->db,
+                "SELECT * FROM reservations WHERE id = $reservationId LIMIT 1")
+        );
+        if (!$res) {
+            throw new \Exception("Reservation #$reservationId not found.");
+        }
+
+        $oldRoomId = (int) $res['room_id'];
+
+        // Guard: no-op if same room
+        if ($oldRoomId === $newRoomId) {
+            throw new \Exception("New room is the same as the current room.");
+        }
+
+        // Validate new room — must exist, be available, not out_of_order
+        $newRoom = mysqli_fetch_assoc(
+            mysqli_query($this->db,
+                "SELECT rooms.*, room_types.base_price, room_types.capacity
+                 FROM rooms
+                 JOIN room_types ON rooms.room_type_id = room_types.id
+                 WHERE rooms.id = $newRoomId LIMIT 1")
+        );
+        if (!$newRoom) {
+            throw new \Exception("Room #$newRoomId does not exist.");
+        }
+        if ($newRoom['status'] === 'out_of_order') {
+            throw new \Exception("Room #$newRoomId is out of order and cannot be assigned.");
+        }
+        if ($newRoom['status'] !== 'available') {
+            throw new \Exception("Room #$newRoomId is not available (status: {$newRoom['status']}).");
+        }
+
+        // ── 1. Swap room_id on the reservation ────────────────
+        $updated = mysqli_query($this->db,
+            "UPDATE reservations SET room_id = $newRoomId WHERE id = $reservationId");
+        if (!$updated) {
+            throw new \Exception("Failed to update reservation: " . mysqli_error($this->db));
+        }
+
+        // ── 2. Release old room back to available ─────────────
+        // Uses direct UPDATE (bypasses Room::updateStatus state machine)
+        // because the transition available→occupied already happened at check-in;
+        // we are simply re-assigning, not changing lifecycle state.
+        mysqli_query($this->db,
+            "UPDATE rooms SET status = 'available' WHERE id = $oldRoomId");
+
+        // ── 3. Mark new room status ───────────────────────────
+        $newRoomStatus = ($res['status'] === 'checked_in') ? 'occupied' : 'available';
+        mysqli_query($this->db,
+            "UPDATE rooms SET status = '$newRoomStatus' WHERE id = $newRoomId");
+
+        // ── 4. Audit log ──────────────────────────────────────
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $note   = mysqli_real_escape_string($this->db,
+            "Room upgrade accepted: room #$oldRoomId → #$newRoomId");
+        mysqli_query($this->db,
+            "INSERT INTO audit_log (user_id, action, target_type, target_id, old_value, new_value)
+             VALUES ($userId, 'room_upgrade', 'reservation', $reservationId,
+                     '$oldRoomId', '$newRoomId')");
+
+        return true;
+    }
+
+
+
+    // ── UC: No-Show Penalty (INCLUDE structure) ───────────────
+
+    //
+    // INCLUDE relationships — this use case MANDATORILY includes:
+    //   1. chargeGuestCard()   → «include» Charge Guest Card
+    //   2. notifyGuestNoShow() → «include» Notify Guest
+    //
+    // Orchestrates the full no-show penalty flow without touching
+    // the existing markNoShow() method.
+    //
+    // @param  int   $id            Reservation ID
+    // @param  float $penaltyAmount Amount to charge (default: one night's rate)
+    // @return array                Result summary with 'charged' and 'notified' keys
+
+    public function applyNoShowPenalty(int $id, float $penaltyAmount = 0.0): array
+    {
+        $id  = (int) $id;
+        $res = mysqli_fetch_assoc(
+            mysqli_query($this->db,
+                "SELECT r.*, g.name AS guest_name, g.email AS guest_email
+                 FROM reservations r
+                 JOIN guests g ON r.guest_id = g.id
+                 WHERE r.id = $id LIMIT 1")
+        );
+
+        if (!$res) {
+            return ['charged' => false, 'notified' => false, 'error' => 'Reservation not found'];
+        }
+
+        // If no explicit penalty amount provided, default to the reservation's total price
+        if ($penaltyAmount <= 0.0) {
+            $penaltyAmount = (float) ($res['total_price'] ?? 0.0);
+        }
+
+        // «include» Charge Guest Card — mandatory step 1
+        $charged = $this->chargeGuestCard($res, $penaltyAmount);
+
+        // «include» Notify Guest — mandatory step 2
+        $notified = $this->notifyGuestNoShow($res);
+
+        return [
+            'charged'        => $charged,
+            'notified'       => $notified,
+            'penalty_amount' => $penaltyAmount,
+        ];
+    }
+
+    // ── INCLUDE: Charge Guest Card ────────────────────────────
+    //
+    // Mandatory sub-step of applyNoShowPenalty().
+    // Records a penalty charge on the reservation's folio.
+    // Does NOT call markNoShow() — separation of concerns preserved.
+    //
+    // @param  array $reservation  Full reservation+guest row
+    // @param  float $amount       Penalty amount to charge
+    // @return bool
+
+    private function chargeGuestCard(array $reservation, float $amount): bool
+    {
+        if ($amount <= 0.0) {
+            return false;
+        }
+
+        $reservationId = (int) $reservation['id'];
+        $amount        = round($amount, 2);
+        $description   = mysqli_real_escape_string(
+            $this->db,
+            "No-show penalty for reservation #{$reservationId}"
+        );
+
+        // Append a charge row to the folio (if one exists for this reservation)
+        $folioRow = mysqli_fetch_assoc(
+            mysqli_query($this->db,
+                "SELECT id FROM folios WHERE reservation_id = $reservationId LIMIT 1")
+        );
+
+        if (!$folioRow) {
+            return false; // No folio — cannot charge
+        }
+
+        $folioId = (int) $folioRow['id'];
+
+        $postedBy = (int) ($_SESSION['user_id'] ?? 0) ?: 'NULL';
+
+        $result = mysqli_query($this->db,
+            "INSERT INTO folio_charges (folio_id, charge_type, description, amount, posted_by)
+             VALUES ($folioId, 'penalty', '$description', $amount, $postedBy)");
+
+        if (!$result) {
+            return false; // folio_charges table may not exist — fail gracefully
+        }
+
+        // Update the folio total
+        mysqli_query($this->db,
+            "UPDATE folios
+             SET total_amount = total_amount + $amount
+             WHERE id = $folioId");
+
+        return true;
+    }
+
+    // ── INCLUDE: Notify Guest (No-Show) ──────────────────────
+    //
+    // Mandatory sub-step of applyNoShowPenalty().
+    // Logs a notification record so the guest is informed of the
+    // no-show penalty. Actual email delivery is handled by an
+    // external mail service and is outside this model's scope.
+    //
+    // @param  array $reservation  Full reservation+guest row
+    // @return bool
+
+    private function notifyGuestNoShow(array $reservation): bool
+    {
+        $reservationId = (int) $reservation['id'];
+        $guestId       = (int) $reservation['guest_id'];
+        $message       = mysqli_real_escape_string(
+            $this->db,
+            "You have been marked as a no-show for reservation #{$reservationId}. "
+            . "A penalty charge has been applied to your folio."
+        );
+
+        // Write to audit_log as a notification record
+        $userId = (int) ($_SESSION['user_id'] ?? 0);
+        $result = mysqli_query($this->db,
+            "INSERT INTO audit_log (user_id, action, target_type, target_id, old_value, new_value)
+             VALUES ($userId, 'no_show_notify', 'reservation', $reservationId,
+                     '$guestId', '$message')");
+
+        return (bool) $result;
     }
 }

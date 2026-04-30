@@ -1,6 +1,16 @@
 <?php $pageTitle = 'New Reservation'; ?>
 <?php ob_start(); ?>
 
+<?php
+// Safe defaults — the controller always passes these via extract(),
+// but static analysers cannot trace through extract() so we define
+// fallbacks here to prevent undefined-variable warnings.
+$guests       = $guests       ?? [];
+$rooms        = $rooms        ?? [];
+$isGuestUser  = $isGuestUser  ?? false;
+$currentGuest = $currentGuest ?? null;
+?>
+
 <style>
   :root { --bg:#FFF8F0; --accent:#C08552; --accent2:#8C5A3C; --dark:#4B2E2B; }
   body { background-color: var(--bg) !important; }

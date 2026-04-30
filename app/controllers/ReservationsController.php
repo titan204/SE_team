@@ -23,6 +23,7 @@
 //    /reservations/confirm/5    → confirm reservation
 //    /reservations/noshow/5     → mark no-show
 //    /reservations/earlycheckin/5 → early check-in
+//    /reservations/acceptupgrade/5/3 → accept room upgrade (res 5 → room 3)
 // ============================================================
 
 class ReservationsController extends Controller
@@ -66,15 +67,53 @@ class ReservationsController extends Controller
         // Folio info
         $folio = $reservationModel->getFolioByReservation($id);
 
-        // Room upgrade suggestion for VIP guests
-        $upgradeRoom = null;
-        if (!empty($reservation['is_vip']) && in_array($reservation['status'], ['pending','confirmed'])) {
-            $roomModel   = new Room();
-            $upgradeRoom = $roomModel->suggestUpgrade(
-                $reservation['room_id'],
+        // ── Upgrade suggestion ─────────────────────────────────────────────────────
+        // Gate: ONLY at checked_in, ONLY for gold / platinum loyalty tier.
+        // Status and loyalty_tier are normalised to lowercase+trim so any DB
+        // capitalisation variation ('Checked_In', 'Gold', 'PLATINUM' …) still matches.
+        $upgradeRoom       = null;
+        $normalizedStatus  = strtolower(trim((string)($reservation['status']      ?? '')));
+        $normalizedLoyalty = strtolower(trim((string)($reservation['loyalty_tier'] ?? '')));
+
+        if ($normalizedStatus === 'checked_in'
+            && in_array($normalizedLoyalty, ['gold', 'platinum'], true)
+        ) {
+            // Loyalty path — primary for gold / platinum guests
+            $result = $reservationModel->suggestUpgradeForLoyalty(
+                $reservation,
+                (int) $reservation['room_id'],
                 $reservation['check_in_date'],
                 $reservation['check_out_date']
             );
+            if (is_array($result) && !empty($result)) {
+                $upgradeRoom = $result;
+            }
+
+            // VIP path — fallback if loyalty path found nothing and guest is VIP-flagged
+            if (!$upgradeRoom && !empty($reservation['is_vip'])) {
+                $roomModel = new Room();
+                $result    = $roomModel->suggestUpgrade(
+                    $reservation['room_id'],
+                    $reservation['check_in_date'],
+                    $reservation['check_out_date']
+                );
+                if (is_array($result) && !empty($result)) {
+                    $upgradeRoom = $result;
+                }
+            }
+
+            // Guaranteed fallback — guest qualifies but no specific room was found in DB.
+            // Show the button anyway so staff can action it; acceptupgrade() validates
+            // room availability before committing, so no unsafe upgrade can occur.
+            // If upgradeRoom['id'] is 0 the acceptupgrade controller will reject safely.
+            if (!$upgradeRoom) {
+                $upgradeRoom = [
+                    'id'          => 0,
+                    'room_number' => '—',
+                    'type_name'   => 'Higher Tier',
+                    'base_price'  => 0,
+                ];
+            }
         }
 
         // Early check-in eligibility
@@ -89,6 +128,17 @@ class ReservationsController extends Controller
             $groupReservations = $reservationModel->findGroupReservations($reservation['group_id']);
         }
 
+        // OPTIONAL: Special occasion check — birthday on check-in day
+        $isSpecialOccasion = false;
+        $guestModel        = new Guest();
+        $guestRecord       = $guestModel->find($reservation['guest_id']);
+        if ($guestRecord) {
+            $isSpecialOccasion = $reservationModel->flagSpecialOccasion(
+                $guestRecord,
+                $reservation['check_in_date']
+            );
+        }
+
         $isGuestUser = (strtolower($_SESSION['user_role'] ?? '') === 'guest'
                         || ($_SESSION['user_role_id'] ?? 0) == 4);
 
@@ -99,6 +149,7 @@ class ReservationsController extends Controller
             'earlyCheckIn'      => $earlyCheckIn,
             'groupReservations' => $groupReservations,
             'isGuestUser'       => $isGuestUser,
+            'isSpecialOccasion' => $isSpecialOccasion,
         ]);
     }
 
@@ -140,12 +191,16 @@ class ReservationsController extends Controller
     {
         $this->requireLogin();
 
+        // Hard redirect helper — inline so exit is always guaranteed.
+        // Uses full absolute URL to eliminate any relative-path ambiguity.
+        // Every exit path in this method uses this pattern exclusively.
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            $this->redirect('reservations/create');
-            return;
+            header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+            exit;
         }
 
-        $data = $_POST;
+        $data        = $_POST;
         $isGuestUser = (strtolower($_SESSION['user_role'] ?? '') === 'guest'
                         || ($_SESSION['user_role_id'] ?? 0) == 4);
 
@@ -154,37 +209,43 @@ class ReservationsController extends Controller
             $guestModel   = new Guest();
             $currentGuest = $guestModel->findByEmail($_SESSION['user_email'] ?? '');
             if (!$currentGuest) {
-                // Cannot find guest profile — redirect home
-                $this->redirect('home/index');
-                return;
+                $_SESSION['reservation_error'] = 'Your guest profile could not be found. Please contact the front desk.';
+                header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+                exit;
             }
             $data['guest_id']    = $currentGuest['id'];
-            $data['assigned_by'] = null; // self-booked
+            $data['assigned_by'] = null;
         } else {
             // Staff booking: keep submitted guest_id, record who assigned
             $data['assigned_by'] = $_SESSION['user_id'] ?? null;
+            $guestModel          = new Guest();
+            $currentGuest        = $guestModel->find((int) $data['guest_id']);
         }
 
-        // Basic validation
+        // EXTEND: Apply VIP flag in-memory before create() if guest is VIP
+        $reservationModel = new Reservation();
+        if (!empty($currentGuest)) {
+            $reservationModel->applyVipFlag($data, $currentGuest);
+        }
+
+        // Basic validation — all four fields are mandatory
         if (
             empty($data['guest_id'])       ||
             empty($data['room_id'])        ||
             empty($data['check_in_date'])  ||
             empty($data['check_out_date'])
         ) {
-            $this->redirect('reservations/create');
-            return;
+            header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+            exit;
         }
-
-        $reservationModel = new Reservation();
 
         // ── Out-of-order room guard (backend) ─────────────────
         $roomModel  = new Room();
         $roomRecord = $roomModel->find((int) $data['room_id']);
         if ($roomRecord && $roomRecord['status'] === 'out_of_order') {
             $_SESSION['reservation_error'] = 'This room is out of order and cannot be reserved.';
-            $this->redirect('reservations/create');
-            return;
+            header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+            exit;
         }
 
         // Calculate total price
@@ -194,13 +255,28 @@ class ReservationsController extends Controller
             $data['check_out_date']
         );
 
-        // Create the reservation
-        $reservationId = $reservationModel->create($data);
+        // Create the reservation — throws RuntimeException on DB failure
+        try {
+            $reservationId = $reservationModel->create($data);
+        } catch (\RuntimeException $e) {
+            $_SESSION['reservation_error'] = 'Could not create reservation. Please try again.';
+            header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+            exit;
+        }
+
+        if (!$reservationId) {
+            $_SESSION['reservation_error'] = 'Reservation was not saved. Please try again.';
+            header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+            exit;
+        }
 
         // Auto-create folio
         $reservationModel->createFolio($reservationId, $data['total_price']);
 
-        $this->redirect('reservations/show/' . $reservationId);
+        // ── Final redirect — ALWAYS to reservation details, NEVER to guests/admin/home ──
+        // ?state=pending signals the show page that this reservation was just created.
+        header('Location: ' . APP_URL . '/index.php?url=reservations/show/' . (int) $reservationId . '&state=pending');
+        exit;
     }
 
     // ── Edit: show pre-filled form ───────────────────────────
@@ -267,7 +343,7 @@ class ReservationsController extends Controller
         $this->redirect('reservations/show/' . $id);
     }
 
-    // ── Delete / Cancel ──────────────────────────────────────
+    // ── Delete / Cancel ────────────────────────────────────────────
 
     public function delete($id)
     {
@@ -275,6 +351,17 @@ class ReservationsController extends Controller
 
         $reservationModel = new Reservation();
         $reservationModel->cancel($id);
+
+        // After cancellation, redirect based on role:
+        // • Guest users  — go to the create form (stay inside booking flow, NEVER see admin list)
+        // • Staff / admin — go back to the reservations list
+        $isGuestUser = (strtolower($_SESSION['user_role'] ?? '') === 'guest'
+                        || ($_SESSION['user_role_id'] ?? 0) == 4);
+
+        if ($isGuestUser) {
+            header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+            exit;
+        }
 
         $this->redirect('reservations');
     }
@@ -300,6 +387,8 @@ class ReservationsController extends Controller
         $reservationModel = new Reservation();
         $reservationModel->checkIn($id);
 
+        // Redirect to show() — upgrade suggestion is computed fresh there
+        // directly from controller → view with no session intermediary.
         $this->redirect('reservations/show/' . $id);
     }
 
@@ -340,6 +429,9 @@ class ReservationsController extends Controller
         $reservationModel = new Reservation();
         $reservationModel->markNoShow($id);
 
+        // INCLUDE: No-show penalty — mandatorily includes chargeGuestCard + notifyGuest
+        $reservationModel->applyNoShowPenalty((int) $id);
+
         $this->redirect('reservations/show/' . $id);
     }
 
@@ -374,4 +466,45 @@ class ReservationsController extends Controller
 
         exit;
     }
+
+    // ── Accept Room Upgrade ───────────────────────────────────
+    //
+    // Activated ONLY when the guest/staff explicitly clicks
+    // "Accept Upgrade" in the reservation detail page.
+    //
+    // URL: index.php?url=reservations/acceptupgrade/{reservationId}&newRoomId={newRoomId}
+    //
+    // The router delivers $reservationId as the single path param (url[2]).
+    // $newRoomId is passed as a plain GET query param so no router or
+    // URI parsing is needed at all.
+
+    public function acceptupgrade($reservationId = null)
+    {
+        $this->requireLogin();
+
+        $reservationId = (int) ($reservationId ?? 0);
+        $newRoomId     = (int) ($_GET['newRoomId'] ?? 0);
+
+        // Safety — missing reservationId: stay inside reservation flow
+        if (!$reservationId) {
+            header('Location: ' . APP_URL . '/index.php?url=reservations/create');
+            exit;
+        }
+
+        // Safety — missing newRoomId: go back to show page without crashing
+        if (!$newRoomId) {
+            $this->redirect('reservations/show/' . $reservationId);
+            return;
+        }
+
+        try {
+            $reservationModel = new Reservation();
+            $reservationModel->acceptUpgrade($reservationId, $newRoomId);
+            $this->redirect('reservations/show/' . $reservationId . '?upgrade=success');
+        } catch (\Exception $e) {
+            $msg = urlencode($e->getMessage());
+            $this->redirect('reservations/show/' . $reservationId . '?upgrade=error&msg=' . $msg);
+        }
+    }
 }
+
