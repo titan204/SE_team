@@ -91,8 +91,13 @@ class Router
      */
     private function toControllerName(string $slug): string
     {
-        // Convert slug to PascalCase then append "Controller"
-        return ucfirst(strtolower($slug)) . 'Controller';
+        // Support single-word, snake_case, kebab-case, and camelCase controller slugs.
+        $normalized = trim($slug);
+        $normalized = preg_replace('/([a-z])([A-Z])/', '$1 $2', $normalized);
+        $normalized = str_replace(['-', '_'], ' ', $normalized);
+        $normalized = preg_replace('/\s+/', ' ', strtolower($normalized));
+
+        return str_replace(' ', '', ucwords($normalized)) . 'Controller';
     }
 
     /**
