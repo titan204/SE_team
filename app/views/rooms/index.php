@@ -8,9 +8,11 @@ ob_start();
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2><i class="bi bi-door-open"></i> All Rooms</h2>
+        <?php if (($_SESSION['user_role'] ?? '') === 'manager'): ?>
         <a href="<?= APP_URL ?>/rooms/create" class="btn btn-primary">
             <i class="bi bi-plus-circle"></i> Add Room
         </a>
+        <?php endif; ?>
     </div>
 
     <!-- Flash: success -->
@@ -105,18 +107,20 @@ ob_start();
                             </td>
 
                             <td>
-                                <a href="<?= APP_URL ?>/rooms/show/<?= $room['id'] ?>"
+                                <a href="<?= APP_URL ?>/?url=rooms/show/<?= $room['id'] ?>"
                                    class="btn btn-sm btn-outline-secondary">View</a>
 
-                                <a href="<?= APP_URL ?>/rooms/edit/<?= $room['id'] ?>"
+                                <?php if (($_SESSION['user_role'] ?? '') === 'manager'): ?>
+                                <a href="<?= APP_URL ?>/?url=rooms/edit/<?= $room['id'] ?>"
                                    class="btn btn-sm btn-outline-primary">Edit</a>
 
                                 <form method="POST"
-                                      action="<?= APP_URL ?>/rooms/delete/<?= $room['id'] ?>"
+                                      action="<?= APP_URL ?>/?url=rooms/delete/<?= $room['id'] ?>"
                                       class="d-inline"
                                       onsubmit="return confirm('Delete room <?= htmlspecialchars($room['room_number']) ?>?')">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                 </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>

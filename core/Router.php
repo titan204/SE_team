@@ -13,8 +13,8 @@
 class Router
 {
     // Default controller and method when no URL is given
-    private string $defaultController = 'AuthController';
-    private string $defaultMethod     = 'login';
+    private string $defaultController = 'HomeController';
+    private string $defaultMethod     = 'index';
 
     /**
      * Reads the ?url= query string, splits it into parts,
@@ -34,9 +34,35 @@ class Router
             : $this->defaultController;
 
         $method = isset($url[1]) && $url[1] !== ''
-        ? $url[1]
+            ? $url[1]
             : (isset($url[0]) && $url[0] !== '' ? 'index' : $this->defaultMethod);
         $param = $url[2] ?? null;
+
+        // UC06 nested billing routes:
+        // /billing/group/{group_id}/invoice
+        // /billing/group/{group_id}/invoice/pdf
+        // /billing/group/{group_id}/finalize
+        // /billing/group/{group_id}/cancel
+        if (
+            strtolower($url[0] ?? '') === 'billing'
+            && strtolower($url[1] ?? '') === 'group'
+            && isset($url[2], $url[3])
+        ) {
+            $nestedAction = strtolower($url[3]);
+            if ($nestedAction === 'invoice' && strtolower($url[4] ?? '') === 'pdf') {
+                $method = 'groupInvoicePdf';
+                $param  = $url[2];
+            } elseif ($nestedAction === 'invoice') {
+                $method = 'groupInvoice';
+                $param  = $url[2];
+            } elseif ($nestedAction === 'finalize') {
+                $method = 'groupFinalize';
+                $param  = $url[2];
+            } elseif ($nestedAction === 'cancel') {
+                $method = 'groupCancel';
+                $param  = $url[2];
+            }
+        }
 
         // Load the controller file
         $file = APP_PATH . '/controllers/' . $controllerName . '.php';
@@ -106,8 +132,6 @@ class Router
     private function notFound(string $message = ''): void
     {
         http_response_code(404);
-    
-        echo "<h1 style = 'color: red ; fontsize: 20px ; font-weight: bold; '>404 — Page Not Found</h1>";
-   
+        echo "<h1 style='color:red;font-size:20px;font-weight:bold;'>404 — Page Not Found</h1>";
     }
 }

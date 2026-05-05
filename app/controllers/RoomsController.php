@@ -20,7 +20,7 @@ class RoomsController extends Controller
     public function index()
     {
         $this->requireLogin();
-        $this->requireRole("manager"); 
+        $this->requireRoles(['manager', 'front_desk']);
 
         $room  = new Room();
         $rooms = $room->all();
@@ -86,7 +86,7 @@ class RoomsController extends Controller
     public function show($id)
     {
         $this->requireLogin();
-        $this->requireRole("manager"); 
+        $this->requireRoles(['manager', 'front_desk']);
         $room = new Room();
         $data = $room->find($id);
 

@@ -1,318 +1,294 @@
-<?php if (!empty($checkinDate)): ?>
-<div id="checkin-toast" style="
-    position:fixed;
-    top:20px;
-    left:50%;
-    transform:translateX(-50%);
-    width:calc(100% - 40px);
-    max-width:560px;
-    background:#9A3F3F;
-    border:1px solid #C1856D;
-    border-radius:14px;
-    padding:14px 18px;
-    display:flex;
-    align-items:center;
-    gap:14px;
-    box-shadow:0 8px 32px rgba(154,63,63,0.3);
-    z-index:9999;
-    animation:toastSlideDown .5s cubic-bezier(.34,1.56,.64,1) both;
-">
-    <div style="
-        width:38px;height:38px;border-radius:50%;flex-shrink:0;
-        background:linear-gradient(135deg,#C1856D,#E6CFA9);
-        display:flex;align-items:center;justify-content:center;font-size:16px;
-    ">🔔</div>
-    <div style="flex:1">
-        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#FBF9D1;font-weight:500;margin-bottom:3px">
-            Check-in Reminder
-        </div>
-        <div style="font-size:13px;color:rgba(251,249,209,0.85);font-family:'DM Sans',sans-serif">
-            <?= date('D d M · g:i A', strtotime($checkinDate)) ?>
-            <?= $roomNumber ? " &nbsp;·&nbsp; Room $roomNumber" : '' ?>
-        </div>
+<?php
+/* Home Page — Grand Hotel  |  route: home/index */
+$guestName   = $guestName   ?? '';
+$checkinDate = $checkinDate ?? null;
+$roomNumber  = $roomNumber  ?? null;
+$isGuest     = !empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'guest';
+$appUrl      = APP_URL;
+
+$rooms = [
+  ['name'=>'Standard Room','price'=>500,'desc'=>'Cosy and elegantly furnished with all essential amenities for a comfortable stay.','badge'=>'Most Popular','img'=>'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80'],
+  ['name'=>'Deluxe Room','price'=>800,'desc'=>'Spacious deluxe interiors with premium bedding, lounge seating, and city views.','badge'=>'Best Value','img'=>'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80'],
+  ['name'=>'Suite','price'=>1500,'desc'=>'Indulge in our signature suites with a private lounge, jacuzzi, and butler service.','badge'=>'Luxury','img'=>'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=600&q=80'],
+];
+$services=[
+  ['icon'=>'bi-wifi','title'=>'Free Wi-Fi','desc'=>'High-speed fibre in every room and public area.'],
+  ['icon'=>'bi-flower1','title'=>'Spa & Wellness','desc'=>'World-class spa treatments and a heated indoor pool.'],
+  ['icon'=>'bi-airplane','title'=>'Airport Transfer','desc'=>'Luxury vehicle service, available 24/7.'],
+  ['icon'=>'bi-headset','title'=>'24/7 Support','desc'=>'Our concierge team is always here for you.'],
+  ['icon'=>'bi-cup-hot','title'=>'Fine Dining','desc'=>'Award-winning restaurant with international cuisine.'],
+  ['icon'=>'bi-shield-check','title'=>'Secure & Private','desc'=>'Your safety and privacy are our top priority.'],
+];
+$testimonials=[
+  ['stars'=>5,'text'=>'"An unforgettable experience from check-in to check-out. The suite was breathtaking and the staff truly made us feel like royalty."','name'=>'Sarah M.','loc'=>'New York, USA'],
+  ['stars'=>5,'text'=>'"The finest hotel I have stayed at in years. Impeccable service, stunning rooms, and the spa is world-class."','name'=>'James K.','loc'=>'London, UK'],
+  ['stars'=>5,'text'=>'"Every detail was perfect. The food, the ambience, the personalised service — I will definitely return."','name'=>'Layla H.','loc'=>'Dubai, UAE'],
+];
+$gallery=[
+  'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=900&q=80',
+  'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=600&q=80',
+  'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=600&q=80',
+  'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=600&q=80',
+  'https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=600&q=80',
+];
+ob_start();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grand Hotel — Experience Luxury</title>
+<meta name="description" content="Grand Hotel — a world-class luxury experience with premium rooms, fine dining, and personalised service.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+<link rel="stylesheet" href="<?= $appUrl ?>/public/assets/css/home.css">
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader"><div class="loader-ring"></div></div>
+
+<!-- NAV -->
+<nav class="hm-nav" id="mainNav">
+  <div class="inner">
+    <a href="<?= $appUrl ?>/?url=home/index" class="nav-brand"><i class="bi bi-building-fill"></i>Grand Hotel</a>
+    <ul class="nav-links">
+      <li><a href="<?= $appUrl ?>/?url=rooms/guest">Rooms</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-auth">
+      <?php if($isGuest): ?>
+        <a href="<?= $appUrl ?>/?url=home/guestprofile" class="btn-nav-login"><i class="bi bi-person-circle me-1"></i><?= htmlspecialchars($guestName) ?></a>
+        <a href="<?= $appUrl ?>/?url=auth/logout" class="btn-nav-reg">Sign Out</a>
+      <?php else: ?>
+        <a href="<?= $appUrl ?>/?url=auth/login"    class="btn-nav-login">Sign In</a>
+        <a href="<?= $appUrl ?>/?url=auth/register" class="btn-nav-reg">Register</a>
+      <?php endif; ?>
     </div>
-    <span
-        onclick="(function(){var t=document.getElementById('checkin-toast');t.style.transition='all .3s ease';t.style.opacity='0';t.style.transform='translateX(-50%) translateY(-16px)';setTimeout(function(){t.remove()},300);})()"
-        style="cursor:pointer;font-size:20px;color:rgba(251,249,209,0.5);flex-shrink:0;line-height:1"
-    >×</span>
-</div>
-<style>
-@keyframes toastSlideDown {
-    from { opacity:0; transform:translateX(-50%) translateY(-24px); }
-    to   { opacity:1; transform:translateX(-50%) translateY(0); }
-}
-</style>
-<script>
-setTimeout(function(){
-    var t = document.getElementById('checkin-toast');
-    if(t){
-        t.style.transition = 'all .4s ease';
-        t.style.opacity = '0';
-        t.style.transform = 'translateX(-50%) translateY(-16px)';
-        setTimeout(function(){ t.remove(); }, 400);
-    }
-}, 8000);
-</script>
-<?php endif; ?>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap');
-
-:root {
-    --primary:      #9A3F3F;
-    --primary-light:#C1856D;
-    --sand:         #E6CFA9;
-    --cream:        #FBF9D1;
-    --dark:         #3B1F1F;
-    --muted:        #8B6B5E;
-    --border:       rgba(193,133,109,0.25);
-}
-
-.hotel-hero {
-    position:relative; height:480px;
-    border-radius:24px; overflow:hidden; margin-bottom:2rem;
-}
-.hotel-hero img { width:100%;height:100%;object-fit:cover;display:block; }
-.hotel-hero-overlay {
-    position:absolute;inset:0;
-    background:linear-gradient(to top,rgba(58,20,20,.88) 0%,rgba(58,20,20,.2) 50%,transparent 100%);
-}
-.hotel-hero-content { position:absolute;bottom:0;left:0;right:0;padding:2.5rem; }
-.hotel-badge {
-    display:inline-flex;align-items:center;gap:6px;
-    border:1px solid #C1856D; color:#E6CFA9;
-    font-size:10px;letter-spacing:2.5px;text-transform:uppercase;
-    font-family:'DM Sans',sans-serif;
-    padding:6px 16px;border-radius:100px;margin-bottom:16px;
-    background:rgba(154,63,63,0.3);
-}
-.hotel-hero h1 {
-    font-family:'Cormorant Garamond',serif;
-    font-size:48px;font-weight:300;color:#FBF9D1;
-    line-height:1.1;margin-bottom:8px;
-}
-.hotel-hero-sub {
-    font-size:13px;color:rgba(230,207,169,0.8);
-    margin-bottom:22px;letter-spacing:0.5px;font-family:'DM Sans',sans-serif;
-}
-.hotel-pills { display:flex;gap:8px;flex-wrap:wrap; }
-.hotel-pill {
-    background:rgba(154,63,63,0.25);
-    border:1px solid rgba(193,133,109,0.4);
-    border-radius:8px;padding:7px 14px;
-    color:#E6CFA9;font-size:11px;
-    display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;
-}
-
-.hotel-section-lbl {
-    font-size:10px;letter-spacing:3px;text-transform:uppercase;
-    color:var(--primary);font-weight:500;margin-bottom:16px;
-    display:flex;align-items:center;gap:10px;font-family:'DM Sans',sans-serif;
-}
-.hotel-section-lbl::after { content:'';flex:1;height:0.5px;background:var(--border); }
-
-.hotel-explore-grid {
-    display:grid;grid-template-columns:repeat(4,1fr);
-    gap:12px;margin-bottom:2.5rem;
-}
-.hotel-ex-card {
-    border-radius:18px;overflow:hidden;position:relative;
-    height:200px;cursor:pointer;text-decoration:none;display:block;
-}
-.hotel-ex-card img {
-    width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease;
-}
-.hotel-ex-card:hover img { transform:scale(1.08); }
-.hotel-ex-overlay {
-    position:absolute;inset:0;
-    background:linear-gradient(to top,rgba(58,20,20,.75) 0%,transparent 55%);
-    transition:background .3s ease;
-}
-.hotel-ex-card:hover .hotel-ex-overlay {
-    background:linear-gradient(to top,rgba(58,20,20,.88) 0%,rgba(58,20,20,.1) 65%);
-}
-.hotel-ex-label { position:absolute;bottom:0;left:0;right:0;padding:14px 16px; }
-.hotel-ex-name { font-size:13px;font-weight:500;color:#FBF9D1;margin-bottom:2px;font-family:'DM Sans',sans-serif; }
-.hotel-ex-sub  { font-size:10px;color:rgba(230,207,169,0.7);letter-spacing:0.5px;font-family:'DM Sans',sans-serif; }
-.hotel-ex-arrow {
-    position:absolute;top:12px;right:12px;
-    width:30px;height:30px;border-radius:50%;
-    background:rgba(193,133,109,0.25);
-    border:1px solid rgba(193,133,109,0.5);
-    display:flex;align-items:center;justify-content:center;
-    color:#E6CFA9;font-size:13px;
-    opacity:0;transform:translateY(-4px);transition:all .3s ease;
-}
-.hotel-ex-card:hover .hotel-ex-arrow { opacity:1;transform:translateY(0); }
-
-.hotel-info-grid {
-    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:2.5rem;
-}
-.hotel-info-card {
-    background:#fff;border-radius:16px;padding:1.2rem;
-    border:0.5px solid rgba(193,133,109,0.2);
-    position:relative;overflow:hidden;
-}
-.hotel-info-card::before {
-    content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,#9A3F3F,#C1856D);
-}
-.hotel-info-icon { font-size:20px;margin-bottom:10px; }
-.hotel-info-lbl {
-    font-size:10px;color:var(--muted);letter-spacing:1px;
-    text-transform:uppercase;margin-bottom:4px;font-family:'DM Sans',sans-serif;
-}
-.hotel-info-val { font-size:15px;font-weight:500;color:var(--dark);font-family:'DM Sans',sans-serif; }
-
-.hotel-reviews-grid {
-    display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:2.5rem;
-}
-.hotel-rev {
-    background:#fff;border-radius:18px;padding:1.5rem;
-    border:0.5px solid rgba(193,133,109,0.2);position:relative;
-}
-.hotel-rev-quote {
-    font-size:48px;line-height:1;
-    font-family:'Cormorant Garamond',serif;
-    color:#C1856D;opacity:.3;
-    position:absolute;top:12px;right:20px;
-}
-.hotel-rev-stars  { color:#9A3F3F;font-size:12px;letter-spacing:3px;margin-bottom:10px; }
-.hotel-rev-text   { font-size:15px;color:#666;line-height:1.7;font-style:italic;font-family:'Cormorant Garamond',serif; }
-.hotel-rev-author {
-    margin-top:16px;display:flex;align-items:center;gap:10px;
-    padding-top:14px;border-top:0.5px solid rgba(193,133,109,0.15);
-}
-.hotel-rev-avatar {
-    width:34px;height:34px;border-radius:50%;
-    background:linear-gradient(135deg,#9A3F3F,#C1856D);
-    display:flex;align-items:center;justify-content:center;
-    color:#FBF9D1;font-size:11px;font-weight:500;flex-shrink:0;font-family:'DM Sans',sans-serif;
-}
-.hotel-rev-name { font-size:12px;font-weight:500;color:var(--dark);font-family:'DM Sans',sans-serif; }
-.hotel-rev-from { font-size:11px;color:var(--muted);margin-top:1px;font-family:'DM Sans',sans-serif; }
-
-.hotel-footer {
-    border-top:0.5px solid var(--border);padding-top:1.5rem;
-    display:flex;justify-content:space-between;align-items:center;
-}
-.hotel-footer-name  { font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:500;color:var(--dark); }
-.hotel-footer-addr  { font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Sans',sans-serif; }
-.hotel-footer-phone { font-size:12px;color:var(--muted);letter-spacing:0.5px;font-family:'DM Sans',sans-serif; }
-
-.disabled-link {
-    pointer-events: none;
-    cursor: default;
-    opacity: 1;
-}
-
-@media(max-width:768px){
-    .hotel-hero { height:340px; }
-    .hotel-hero h1 { font-size:32px; }
-    .hotel-explore-grid { grid-template-columns:repeat(2,1fr); }
-    .hotel-info-grid    { grid-template-columns:repeat(2,1fr); }
-    .hotel-reviews-grid { grid-template-columns:1fr; }
-}
-@media(max-width:480px){
-    .hotel-explore-grid { grid-template-columns:1fr 1fr; }
-    .hotel-hero-content { padding:1.5rem; }
-}
-</style>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu"><i class="bi bi-list"></i></button>
+  </div>
+  <div id="mobileMenu" style="display:none;" class="mobile-menu">
+    <a href="<?= $appUrl ?>/?url=rooms/guest">Rooms</a><a href="#services">Services</a>
+    <a href="#gallery">Gallery</a><a href="#contact">Contact</a>
+    <?php if($isGuest): ?>
+      <a href="<?= $appUrl ?>/?url=auth/logout">Sign Out</a>
+    <?php else: ?>
+      <a href="<?= $appUrl ?>/?url=auth/login">Sign In</a>
+      <a href="<?= $appUrl ?>/?url=auth/register">Register</a>
+    <?php endif; ?>
+  </div>
+</nav>
 
 <!-- HERO -->
-<div class="hotel-hero">
-    <img src="<?= APP_URL ?>/public/assets/images/hotel.jpg" alt="<?= htmlspecialchars(APP_NAME) ?>">
-    <div class="hotel-hero-overlay"></div>
-    <div class="hotel-hero-content">
-        <div class="hotel-badge">★ ★ ★ ★ ★ &nbsp; 5-Star Luxury</div>
-        <h1><?= htmlspecialchars(APP_NAME) ?></h1>
-        <div class="hotel-hero-sub">Cairo, Egypt · Timeless luxury since 1998</div>
-        <div class="hotel-pills">
-            <div class="hotel-pill">📍 Nile Corniche</div>
-            <div class="hotel-pill">🕐 Open 24/7</div>
-            <div class="hotel-pill">✨ Free Wi-Fi</div>
-        </div>
+<section class="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="hero-badge">✦ Luxury Redefined</div>
+    <h1>Experience <em>Luxury</em><br>Like Never Before</h1>
+    <p>Book your perfect stay with comfort, elegance, and world-class service</p>
+    <div class="hero-btns">
+      <a href="<?= $appUrl ?>/?url=<?= $isGuest ? 'reservations/create' : 'auth/login' ?>" class="btn-gold"><i class="bi bi-calendar-check me-2"></i>Book Now</a>
+      <a href="<?= $appUrl ?>/?url=rooms/guest" class="btn-outline-gold"><i class="bi bi-door-open me-2"></i>Explore Rooms</a>
     </div>
+  </div>
+  <div class="hero-scroll"><span></span>Scroll</div>
+</section>
+
+<!-- ROOMS -->
+<section class="section" id="rooms">
+  <div class="section-inner">
+    <div class="section-hd" data-aos="fade-up">
+      <div class="section-label">Our Accommodations</div>
+      <h2 class="section-title">Rooms &amp; Suites</h2>
+      <p class="section-sub">Each room is thoughtfully designed to provide the utmost comfort and style.</p>
+    </div>
+    <div class="rooms-grid">
+      <?php foreach($rooms as $i=>$r): ?>
+      <div class="room-card" data-aos="fade-up" data-aos-delay="<?= $i*100 ?>">
+        <div class="room-img">
+          <img src="<?= $r['img'] ?>" alt="<?= htmlspecialchars($r['name']) ?>" loading="lazy">
+          <div class="room-badge"><?= $r['badge'] ?></div>
+        </div>
+        <div class="room-body">
+          <h3><?= htmlspecialchars($r['name']) ?></h3>
+          <p><?= htmlspecialchars($r['desc']) ?></p>
+          <div class="room-footer">
+            <div class="room-price">$<?= number_format($r['price']) ?><span>/night</span></div>
+            <a href="<?= $appUrl ?>/?url=<?= $isGuest ? 'reservations/create' : 'auth/login' ?>" class="btn-sm-gold">Book Now</a>
+          </div>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="section services-bg" id="services">
+  <div class="section-inner">
+    <div class="section-hd" data-aos="fade-up">
+      <div class="section-label">What We Offer</div>
+      <h2 class="section-title">Premium Services</h2>
+    </div>
+    <div class="services-grid">
+      <?php foreach($services as $i=>$s): ?>
+      <div class="svc-card" data-aos="fade-up" data-aos-delay="<?= $i*80 ?>">
+        <div class="svc-icon"><i class="bi <?= $s['icon'] ?>"></i></div>
+        <h4><?= htmlspecialchars($s['title']) ?></h4>
+        <p><?= htmlspecialchars($s['desc']) ?></p>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-band">
+  <div class="section-inner">
+    <div class="stats-grid">
+      <div data-aos="zoom-in" data-aos-delay="0"><div class="stat-num" data-target="500">0</div><div class="stat-lbl">Happy Guests</div></div>
+      <div data-aos="zoom-in" data-aos-delay="100"><div class="stat-num" data-target="20">0</div><div class="stat-lbl">Luxury Rooms</div></div>
+      <div data-aos="zoom-in" data-aos-delay="200"><div class="stat-num" data-target="15">0</div><div class="stat-lbl">Years of Excellence</div></div>
+      <div data-aos="zoom-in" data-aos-delay="300"><div class="stat-num" data-target="24">0</div><div class="stat-lbl">Hour Concierge</div></div>
+    </div>
+  </div>
 </div>
 
-<!-- EXPLORE -->
-<p class="hotel-section-lbl">Explore the hotel</p>
-<div class="hotel-explore-grid">
-    <?php
-    $sections = [
-        ['Rooms',      'Browse available rooms', APP_URL . '/?url=rooms/guest', 'room.jpg'],
-        ['Restaurant', 'Fine dining',            '',                           'restaurant.jpg'],
-        ['Pool & Spa', 'Relax daily',            '',                           'pool.jpg'],
-        ['Wellness',   'Gym & yoga',             '',                           'wellness.jpg'],
-    ];
-    foreach ($sections as $s): ?>
-    <a href="<?= $s[2] !== '' ? $s[2] : 'javascript:void(0)' ?>" class="hotel-ex-card <?= $s[2] === '' ? 'disabled-link' : '' ?>">
-        <img src="<?= APP_URL ?>/public/assets/images/<?= $s[3] ?>" alt="<?= htmlspecialchars($s[0]) ?>">
-        <div class="hotel-ex-overlay"></div>
-        <div class="hotel-ex-arrow">↗</div>
-        <div class="hotel-ex-label">
-            <div class="hotel-ex-name"><?= htmlspecialchars($s[0]) ?></div>
-            <div class="hotel-ex-sub"><?= htmlspecialchars($s[1]) ?></div>
+<!-- TESTIMONIALS -->
+<section class="section">
+  <div class="section-inner">
+    <div class="section-hd" data-aos="fade-up">
+      <div class="section-label">Guest Stories</div>
+      <h2 class="section-title">What Our Guests Say</h2>
+    </div>
+    <div class="testi-grid">
+      <?php foreach($testimonials as $i=>$t): ?>
+      <div class="testi-card" data-aos="fade-up" data-aos-delay="<?= $i*100 ?>">
+        <div class="testi-stars"><?= str_repeat('★',$t['stars']) ?></div>
+        <p class="testi-text"><?= htmlspecialchars($t['text']) ?></p>
+        <div class="testi-author">
+          <div class="testi-avatar"><?= strtoupper($t['name'][0]) ?></div>
+          <div><div class="testi-name"><?= htmlspecialchars($t['name']) ?></div><div class="testi-loc"><?= htmlspecialchars($t['loc']) ?></div></div>
         </div>
-    </a>
-    <?php endforeach; ?>
-</div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
 
-<!-- INFO -->
-<p class="hotel-section-lbl">Hotel info</p>
-<div class="hotel-info-grid">
-    <?php
-    $info = [
-        ['🛬', 'Check-in',    '3:00 PM'],
-        ['🛫', 'Check-out',   '12:00 PM'],
-        ['📶', 'Wi-Fi',       APP_NAME . '_Guest'],
-        ['⭐', 'Guest rating', '4.9 / 5'],
-    ];
-    foreach ($info as $i): ?>
-    <div class="hotel-info-card">
-        <div class="hotel-info-icon"><?= $i[0] ?></div>
-        <div class="hotel-info-lbl"><?= htmlspecialchars($i[1]) ?></div>
-        <div class="hotel-info-val" <?= $i[1]==='Wi-Fi' ? 'style="font-size:13px"' : '' ?>>
-            <?= htmlspecialchars($i[2]) ?>
-        </div>
+<!-- GALLERY -->
+<section class="section" style="padding-top:0;" id="gallery">
+  <div class="section-inner">
+    <div class="section-hd" data-aos="fade-up">
+      <div class="section-label">Our Space</div>
+      <h2 class="section-title">Photo Gallery</h2>
     </div>
-    <?php endforeach; ?>
-</div>
+    <div class="gallery-grid">
+      <?php foreach($gallery as $i=>$img): ?>
+      <div class="gallery-item" data-aos="fade" data-aos-delay="<?= $i*70 ?>" onclick="openLightbox('<?= $img ?>')">
+        <img src="<?= $img ?>" alt="Hotel gallery <?= $i+1 ?>" loading="lazy">
+        <div class="overlay"><i class="bi bi-zoom-in"></i></div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
 
-<!-- REVIEWS -->
-<p class="hotel-section-lbl">What guests say</p>
-<div class="hotel-reviews-grid">
-    <div class="hotel-rev">
-        <div class="hotel-rev-quote">"</div>
-        <div class="hotel-rev-stars">★★★★★</div>
-        <div class="hotel-rev-text">Absolutely breathtaking. From the moment we arrived, the staff made us feel like royalty.</div>
-        <div class="hotel-rev-author">
-            <div class="hotel-rev-avatar">SM</div>
-            <div>
-                <div class="hotel-rev-name">Sarah M.</div>
-                <div class="hotel-rev-from">London, UK</div>
-            </div>
-        </div>
-    </div>
-    <div class="hotel-rev">
-        <div class="hotel-rev-quote">"</div>
-        <div class="hotel-rev-stars">★★★★★</div>
-        <div class="hotel-rev-text">Best hotel experience I've had across all of Africa and the Middle East.</div>
-        <div class="hotel-rev-author">
-            <div class="hotel-rev-avatar" style="background:linear-gradient(135deg,#C1856D,#E6CFA9);color:#3B1F1F">JK</div>
-            <div>
-                <div class="hotel-rev-name">James K.</div>
-                <div class="hotel-rev-from">New York, USA</div>
-            </div>
-        </div>
-    </div>
+<!-- LIGHTBOX -->
+<div id="lightbox"><button id="lb-close" onclick="closeLightbox()">×</button><img id="lb-img" src="" alt="Gallery"></div>
+
+<!-- CTA -->
+<div class="cta-banner" data-aos="fade-up">
+  <h2>Ready for an Unforgettable Stay?</h2>
+  <p>Reserve your room today and experience true luxury.</p>
+  <a href="<?= $appUrl ?>/?url=<?= $isGuest ? 'reservations/create' : 'auth/login' ?>" class="btn-gold"><i class="bi bi-calendar-heart me-2"></i>Book Now</a>
 </div>
 
 <!-- FOOTER -->
-<div class="hotel-footer">
-    <div>
-        <div class="hotel-footer-name"><?= htmlspecialchars(APP_NAME) ?></div>
-        <div class="hotel-footer-addr">Nile Corniche, Cairo · info@hotel.com</div>
+<footer class="hm-footer" id="contact">
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand"><i class="bi bi-building-fill me-2"></i>Grand Hotel</div>
+        <p class="footer-desc">A world-class luxury destination where every moment is crafted to perfection.</p>
+        <div class="footer-social">
+          <a href="#" class="social-btn"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-instagram"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="social-btn"><i class="bi bi-linkedin"></i></a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-h">Quick Links</div>
+        <ul class="footer-links">
+          <li><a href="#rooms">Rooms &amp; Suites</a></li>
+          <li><a href="#services">Services</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="<?= $appUrl ?>/?url=auth/login">Guest Login</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-h">Services</div>
+        <ul class="footer-links">
+          <li><a href="#">Spa &amp; Wellness</a></li>
+          <li><a href="#">Fine Dining</a></li>
+          <li><a href="#">Airport Transfer</a></li>
+          <li><a href="#">Event Spaces</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-h">Contact</div>
+        <ul class="footer-links">
+          <li><i class="bi bi-geo-alt me-1"></i>123 Luxury Ave, Cairo</li>
+          <li><a href="tel:+201000000000"><i class="bi bi-telephone me-1"></i>+20 100 000 0000</a></li>
+          <li><a href="mailto:info@grandhotel.com"><i class="bi bi-envelope me-1"></i>info@grandhotel.com</a></li>
+          <li><i class="bi bi-clock me-1"></i>24/7 Concierge</li>
+        </ul>
+      </div>
     </div>
-    <div class="hotel-footer-phone">+20 100 000 0000</div>
-</div>
+    <div class="footer-bottom">© <?= date('Y') ?> Grand Hotel. All rights reserved. Designed with ♥</div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script>
+AOS.init({duration:700,once:true,offset:60});
+// Loader
+window.addEventListener('load',()=>{
+  document.getElementById('heroBg').style.backgroundImage="url('<?= $appUrl ?>/public/assets/images/hero_bg.png')";
+  document.getElementById('heroBg').classList.add('loaded');
+  setTimeout(()=>document.getElementById('loader').classList.add('hidden'),400);
+});
+// Sticky nav
+window.addEventListener('scroll',()=>document.getElementById('mainNav').classList.toggle('scrolled',scrollY>60));
+// Mobile menu
+document.getElementById('navToggle').onclick=function(){
+  const m=document.getElementById('mobileMenu');
+  m.style.display=m.style.display==='none'?'flex':'none';
+};
+// Stats counter
+const counters=document.querySelectorAll('.stat-num[data-target]');
+const runCount=el=>{const t=+el.dataset.target,dur=1400,step=dur/t;let c=0;const i=setInterval(()=>{c=Math.min(c+1,t);el.textContent=c+(t>=100?'+':'');if(c>=t)clearInterval(i);},step);};
+const ob=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){runCount(e.target);ob.unobserve(e.target);}});},{threshold:.5});
+counters.forEach(c=>ob.observe(c));
+// Lightbox
+function openLightbox(src){document.getElementById('lb-img').src=src;document.getElementById('lightbox').classList.add('open');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.getElementById('lb-img').src='';}
+document.getElementById('lightbox').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLightbox();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'});document.getElementById('mobileMenu').style.display='none';}}));
+</script>
+</body>
+</html>
+<?php
+$content = ob_get_clean();
+// Override main layout — homepage has its own full layout
+echo $content;
+?>

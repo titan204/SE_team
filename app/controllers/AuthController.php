@@ -477,7 +477,7 @@ class AuthController extends Controller
         }
 
         if ($roleName === 'front_desk' || $roleName === 'frontdesk' || $roleId === 2) {
-            return 'Frontdesk/index';
+            return 'Dashboard/index';
         }
 
         if ($roleName === 'housekeeper' || $roleId === 3) {
