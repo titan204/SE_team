@@ -5,10 +5,11 @@
 // Safe defaults — the controller always passes these via extract(),
 // but static analysers cannot trace through extract() so we define
 // fallbacks here to prevent undefined-variable warnings.
-$guests       = $guests       ?? [];
-$rooms        = $rooms        ?? [];
-$isGuestUser  = $isGuestUser  ?? false;
-$currentGuest = $currentGuest ?? null;
+$guests          = $guests          ?? [];
+$rooms           = $rooms           ?? [];
+$isGuestUser     = $isGuestUser     ?? false;
+$currentGuest    = $currentGuest    ?? null;
+$preSelectedRoom = $preSelectedRoom ?? null;
 ?>
 
 <style>
@@ -35,9 +36,9 @@ $currentGuest = $currentGuest ?? null;
 
   <div class="page-header d-flex justify-content-between align-items-center">
     <h2><i class="bi bi-calendar-plus me-2"></i>New Reservation</h2>
-    <a href="<?= APP_URL ?>/index.php?url=reservations"
+    <a href="<?= APP_URL ?>/index.php?url=<?= $isGuestUser ? 'rooms/guest' : 'rooms' ?>"
        class="btn btn-outline-secondary" style="border-radius:8px;">
-      <i class="bi bi-arrow-left me-1"></i> Back
+      <i class="bi bi-arrow-left me-1"></i> Back to Rooms
     </a>
   </div>
 
@@ -127,25 +128,67 @@ $currentGuest = $currentGuest ?? null;
       <!-- ── Room Selection ── -->
       <div class="row g-3 mb-3">
         <div class="col-md-6">
-          <label for="room_id">Room <span class="text-danger">*</span></label>
-          <select id="room_id" name="room_id" class="form-select" required>
-            <option value="">— Select a Room —</option>
-            <?php foreach ($rooms as $rm): ?>
-            <?php $isOOO = ($rm['status'] === 'out_of_order'); ?>
-            <option value="<?= $rm['id'] ?>"
-                    data-price="<?= $rm['base_price'] ?>"
-                    data-status="<?= $rm['status'] ?>"
-                    data-ooo="<?= $isOOO ? '1' : '0' ?>"
-                    <?= $isOOO ? 'disabled style="color:#c00;background:#fff0f0;"' : ($rm['status'] !== 'available' ? 'style="color:#aaa;"' : '') ?>>
-              Room <?= htmlspecialchars($rm['room_number']) ?>
-              — <?= htmlspecialchars($rm['type_name']) ?>
-              ($<?= number_format($rm['base_price'],2) ?>/night)
-              [<?= $isOOO ? '⛔ Out of Order' : $rm['status'] ?>]
-            </option>
-            <?php endforeach; ?>
-          </select>
+          <label>Room <span class="text-danger">*</span></label>
+
+          <?php if ($preSelectedRoom): ?>
+            <!-- PRE-SELECTED: came from "Reserve This Room" button — show as card -->
+            <input type="hidden" name="room_id"
+                   id="room_id"
+                   value="<?= (int)$preSelectedRoom['id'] ?>"
+                   data-price="<?= $preSelectedRoom['base_price'] ?>"
+                   data-capacity="<?= (int)($preSelectedRoom['capacity'] ?? 2) ?>"
+                   data-ooo="<?= $preSelectedRoom['status'] === 'out_of_order' ? '1' : '0' ?>">
+            <div style="background:#f0f9f0;border:2px solid #a0d8a0;border-radius:8px;padding:.85rem 1.1rem;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong style="font-size:1.05rem;color:#2d6a2d;">Room <?= htmlspecialchars($preSelectedRoom['room_number']) ?></strong>
+                  <span class="text-muted ms-2"><?= htmlspecialchars($preSelectedRoom['type_name']) ?></span>
+                </div>
+                <span class="badge bg-success">Selected</span>
+              </div>
+              <div class="mt-1" style="font-size:.88rem;color:#555;">
+                <i class="bi bi-people me-1"></i> Max <?= (int)($preSelectedRoom['capacity'] ?? 2) ?> guests
+                &nbsp;&middot;&nbsp;
+                <i class="bi bi-tag me-1"></i> $<?= number_format($preSelectedRoom['base_price'], 2) ?>/night
+                &nbsp;&middot;&nbsp;
+                <i class="bi bi-layers me-1"></i> Floor <?= (int)$preSelectedRoom['floor'] ?>
+                <?php if (!empty($preSelectedRoom['notes'])): ?>
+                  <br><i class="bi bi-info-circle me-1"></i> <?= htmlspecialchars($preSelectedRoom['notes']) ?>
+                <?php endif; ?>
+              </div>
+            </div>
+            <a href="<?= APP_URL ?>/index.php?url=<?= $isGuestUser ? 'rooms/guest' : 'rooms' ?>"
+               class="btn btn-sm btn-outline-secondary mt-2" style="border-radius:6px;font-size:.8rem;">
+              <i class="bi bi-arrow-left me-1"></i> Choose a different room
+            </a>
+
+          <?php else: ?>
+            <!-- NO PRE-SELECTION: staff direct navigation — show dropdown -->
+            <select id="room_id" name="room_id" class="form-select" required>
+              <option value="">— Select a Room —</option>
+              <?php foreach ($rooms as $rm): ?>
+              <?php $isOOO = ($rm['status'] === 'out_of_order'); ?>
+              <option value="<?= $rm['id'] ?>"
+                      data-price="<?= $rm['base_price'] ?>"
+                      data-status="<?= $rm['status'] ?>"
+                      data-ooo="<?= $isOOO ? '1' : '0' ?>"
+                      data-capacity="<?= (int)($rm['capacity'] ?? 2) ?>"
+                      <?= $isOOO ? 'disabled style="color:#c00;background:#fff0f0;"' : ($rm['status'] !== 'available' ? 'style="color:#aaa;"' : '') ?>>
+                Room <?= htmlspecialchars($rm['room_number']) ?>
+                — <?= htmlspecialchars($rm['type_name']) ?>
+                (max <?= (int)($rm['capacity'] ?? 2) ?> guests · $<?= number_format($rm['base_price'],2) ?>/night)
+                [<?= $isOOO ? '⛔ Out of Order' : $rm['status'] ?>]
+              </option>
+              <?php endforeach; ?>
+            </select>
+          <?php endif; ?>
+
           <div id="ooo-error" style="display:none;color:#9e3030;font-size:.85rem;margin-top:.35rem;font-weight:600;">
             ⚠ This room is out of order and cannot be reserved.
+          </div>
+          <div id="capacity-error" style="display:none;background:#fff8e1;border:1px solid #f0c040;border-radius:7px;padding:.65rem 1rem;margin-top:.5rem;font-size:.87rem;color:#7a5800;">
+            <strong>⚠ Capacity Exceeded</strong><br>
+            <span id="capacity-msg"></span>
           </div>
         </div>
         <div class="col-md-6">
@@ -157,26 +200,6 @@ $currentGuest = $currentGuest ?? null;
         </div>
       </div>
 
-      <!-- ── Section: Special Requirements ── -->
-      <div class="section-title mt-3"><i class="bi bi-chat-left-text me-2"></i>Special Requirements</div>
-      <div class="row g-3 mb-3">
-        <div class="col-12">
-          <label for="special_requests">Special Requests</label>
-          <textarea id="special_requests" name="special_requests" class="form-control"
-                    rows="3" placeholder="e.g. extra pillows, late check-in, dietary requirements…"></textarea>
-        </div>
-        <div class="col-md-4">
-          <label for="deposit_amount">Deposit Amount ($)</label>
-          <input id="deposit_amount" type="number" name="deposit_amount" class="form-control"
-                 value="0" min="0" step="0.01">
-        </div>
-        <div class="col-md-4 d-flex align-items-end">
-          <div class="form-check ms-2">
-            <input class="form-check-input" type="checkbox" id="deposit_paid"
-                   name="deposit_paid" value="1" style="border-color:var(--accent);">
-            <label class="form-check-label" for="deposit_paid">Deposit Paid</label>
-          </div>
-        </div>
       </div>
 
       <!-- ── Section: Group Booking ── -->
@@ -192,16 +215,18 @@ $currentGuest = $currentGuest ?? null;
           </div>
         </div>
         <div class="col-md-8" id="groupIdWrap" style="display:none;">
-          <label for="group_id">Existing Group ID (leave blank to start new group)</label>
-          <input id="group_id" type="number" name="group_id" class="form-control"
-                 placeholder="e.g. 6" min="1">
+          <input type="hidden" name="group_id" value="">
+          <div style="background:#f0f9f0;border:1px solid #a0d8a0;border-radius:7px;padding:.6rem 1rem;font-size:.87rem;color:#2d6a2d;">
+            <i class="bi bi-check-circle-fill me-1"></i>
+            A <strong>Group ID will be auto-assigned</strong> by the system when this reservation is created.
+          </div>
         </div>
       </div>
     </div>
 
     <!-- ── Submit Buttons ── -->
     <div class="d-flex gap-3 justify-content-end">
-      <a href="<?= APP_URL ?>/index.php?url=reservations"
+      <a href="<?= APP_URL ?>/index.php?url=<?= $isGuestUser ? 'rooms/guest' : 'rooms' ?>"
          class="btn btn-outline-secondary px-4" style="border-radius:8px;">
         Cancel
       </a>
@@ -215,23 +240,64 @@ $currentGuest = $currentGuest ?? null;
 
 <script>
 (function() {
-  const checkInEl  = document.getElementById('check_in_date');
-  const checkOutEl = document.getElementById('check_out_date');
-  const roomEl     = document.getElementById('room_id');
-  const priceEl    = document.getElementById('priceAmount');
-  const labelEl    = document.getElementById('priceLabel');
-  const isGroupEl  = document.getElementById('is_group');
-  const groupWrap  = document.getElementById('groupIdWrap');
+  const checkInEl   = document.getElementById('check_in_date');
+  const checkOutEl  = document.getElementById('check_out_date');
+  const roomEl      = document.getElementById('room_id');
+  const priceEl     = document.getElementById('priceAmount');
+  const labelEl     = document.getElementById('priceLabel');
+  const isGroupEl   = document.getElementById('is_group');
+  const groupWrap   = document.getElementById('groupIdWrap');
+  const adultsEl    = document.getElementById('adults');
+  const childrenEl  = document.getElementById('children');
+  const capError    = document.getElementById('capacity-error');
+  const capMsg      = document.getElementById('capacity-msg');
 
   isGroupEl.addEventListener('change', function() {
     groupWrap.style.display = this.checked ? '' : 'none';
   });
 
+  // ── Helper: get room data regardless of input type ────────
+  // roomEl can be <select> (staff) or <input type="hidden"> (pre-selected)
+  function getRoomData() {
+    if (roomEl.tagName === 'SELECT') {
+      const opt = roomEl.options[roomEl.selectedIndex];
+      return opt ? opt.dataset : {};
+    }
+    return roomEl.dataset; // hidden input has data-* directly
+  }
+
+  // ── Capacity validation ────────────────────────────────────
+  function checkCapacity() {
+    const d        = getRoomData();
+    const capacity = parseInt(d.capacity || 0);
+    const total    = parseInt(adultsEl.value || 1) + parseInt(childrenEl.value || 0);
+
+    if (capacity > 0 && total > capacity) {
+      const roomsNeeded = Math.ceil(total / capacity);
+      let msg = `This room fits a maximum of <strong>${capacity} guest(s)</strong>. `
+              + `You entered <strong>${total} guest(s)</strong>.<br>`;
+      if (total % capacity === 0) {
+        msg += `💡 Suggestion: Book <strong>${roomsNeeded} room(s)</strong> of this type to accommodate everyone.`;
+      } else {
+        msg += `💡 Suggestion: You would need at least <strong>${roomsNeeded} room(s)</strong> of this type. Please adjust the number of guests or choose a larger room.`;
+      }
+      capMsg.innerHTML = msg;
+      capError.style.display = '';
+      return true;
+    }
+    capError.style.display = 'none';
+    return false;
+  }
+
+  if (roomEl.tagName === 'SELECT') roomEl.addEventListener('change', checkCapacity);
+  adultsEl.addEventListener('input', checkCapacity);
+  childrenEl.addEventListener('input', checkCapacity);
+
   function updatePrice() {
     const checkIn  = checkInEl.value;
     const checkOut = checkOutEl.value;
-    const roomOpt  = roomEl.options[roomEl.selectedIndex];
-    const price    = parseFloat(roomOpt?.dataset?.price || 0);
+    const d        = getRoomData();
+    const price    = parseFloat(d.price || 0);
 
     if (checkIn && checkOut && price > 0) {
       const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
@@ -245,7 +311,7 @@ $currentGuest = $currentGuest ?? null;
     labelEl.textContent = 'Select room & dates';
   }
 
-  roomEl.addEventListener('change', updatePrice);
+  if (roomEl.tagName === 'SELECT') roomEl.addEventListener('change', updatePrice);
   checkInEl.addEventListener('change', updatePrice);
   checkOutEl.addEventListener('change', function() {
     if (checkInEl.value && this.value <= checkInEl.value) {
@@ -274,6 +340,12 @@ $currentGuest = $currentGuest ?? null;
     if (checkOOO()) {
       e.preventDefault();
       if (oooError) oooError.style.display = '';
+      return false;
+    }
+    if (checkCapacity()) {
+      e.preventDefault();
+      capError.style.display = '';
+      capError.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return false;
     }
   });

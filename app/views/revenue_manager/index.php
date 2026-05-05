@@ -3,114 +3,148 @@ $pageTitle = 'Revenue Manager Workspace';
 ob_start();
 ?>
 
-<div class="container mt-4">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="<?= APP_URL ?>/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Revenue Manager</li>
-        </ol>
-    </nav>
+<style>
+  :root {
+    --bg:      #FFF8F0;
+    --accent:  #C08552;
+    --accent2: #8C5A3C;
+    --dark:    #4B2E2B;
+  }
+  body { background-color: var(--bg) !important; }
+  .page-header { border-bottom: 2px solid var(--accent); padding-bottom: .75rem; margin-bottom: 1.5rem; }
+  .page-header h2 { color: var(--dark); font-weight: 700; }
+  .stat-card { background:#fff; border:1px solid #e8d5c0; border-radius:10px;
+               padding:1.2rem 1.5rem; box-shadow:0 2px 8px rgba(192,133,82,.08); }
+  .stat-card small { text-transform:uppercase; font-size:.72rem; color:#888; letter-spacing:.06em; }
+  .stat-card h3 { color: var(--dark); font-weight:700; margin:0; }
+  .action-card { background:#fff; border:1px solid #e8d5c0; border-radius:10px;
+                 padding:1.4rem 1.5rem; box-shadow:0 2px 8px rgba(192,133,82,.08);
+                 height:100%; display:flex; flex-direction:column; }
+  .action-card h6 { color: var(--dark); font-weight:700; margin-bottom:.4rem; }
+  .action-card p { color:#888; font-size:.84rem; flex:1; }
+  .btn-accent { background-color:var(--accent); color:#fff; border:none; border-radius:8px; }
+  .btn-accent:hover { background-color:var(--accent2); color:#fff; }
+  .btn-dark-accent { background-color:var(--dark); color:#fff; border:none; border-radius:8px; }
+  .btn-dark-accent:hover { background-color:var(--accent2); color:#fff; }
+  .btn-outline-accent { border:1.5px solid var(--accent); color:var(--accent); background:transparent; border-radius:8px; }
+  .btn-outline-accent:hover { background:var(--accent); color:#fff; }
+  .section-title { color:var(--dark); font-weight:700; font-size:1rem;
+                   border-left:3px solid var(--accent); padding-left:.6rem; margin-bottom:1rem; }
+</style>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h2 class="mb-1"><i class="bi bi-graph-up-arrow"></i> Revenue Manager Workspace</h2>
-            <p class="text-muted mb-0">Scaffold view for read-only billing summaries, folio aggregation hooks, and reporting placeholders.</p>
-        </div>
-        <a href="<?= APP_URL ?>/revenue_manager/create" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> New Report Preset
+<div class="container-fluid py-3">
+
+  <!-- Page Header -->
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h2><i class="bi bi-graph-up-arrow me-2"></i>Revenue Manager Workspace</h2>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <small>Billing Summary</small>
+        <h3 class="mt-2">$124,500</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <small>Open Folios</small>
+        <h3 class="mt-2">18</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <small>Group Reservations</small>
+        <h3 class="mt-2">5</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <small>Overbooking Alerts</small>
+        <h3 class="mt-2" style="color:#9e3030;">0</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Virtual Inventory Section -->
+  <div class="section-title"><i class="bi bi-grid-3x3 me-1"></i>Virtual Inventory</div>
+  <div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+      <div class="action-card">
+        <h6><i class="bi bi-grid-3x3 me-1"></i>30-Day Grid</h6>
+        <p>Color-coded room availability matrix. Click any cell to adjust the virtual allocation or trigger overbooking checks.</p>
+        <a href="<?= APP_URL ?>/?url=revenue_manager_virtual_inventory/inventoryGrid"
+           class="btn btn-accent w-100" id="btn-inventory-grid">
+          Open Grid
         </a>
+      </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <small class="text-muted text-uppercase">Billing Summary</small>
-                    <h3 class="mt-2 mb-0">$124,500</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <small class="text-muted text-uppercase">Open Folio Hooks</small>
-                    <h3 class="mt-2 mb-0">18</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <small class="text-muted text-uppercase">Upgrade Watch</small>
-                    <h3 class="mt-2 mb-0">5</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <small class="text-muted text-uppercase">Audit Trail Hooks</small>
-                    <h3 class="mt-2 mb-0">Ready</h3>
-                </div>
-            </div>
-        </div>
+    <div class="col-md-4">
+      <div class="action-card">
+        <h6><i class="bi bi-speedometer2 me-1"></i>Inventory Dashboard</h6>
+        <p>Overview of all virtual inventory channels and room type allocations by date range.</p>
+        <a href="<?= APP_URL ?>/?url=revenue_manager_virtual_inventory/index"
+           class="btn btn-outline-accent w-100" id="btn-inv-dashboard">
+          Open Dashboard
+        </a>
+      </div>
     </div>
 
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Reporting Panels</h5>
-            <span class="badge bg-secondary">Read-Only Placeholder</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Panel</th>
-                        <th>Source Hook</th>
-                        <th>Period</th>
-                        <th>Status</th>
-                        <th>Audit Visibility</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Daily Revenue Summary</strong></td>
-                        <td>Billing + Folio</td>
-                        <td>Today</td>
-                        <td><span class="badge bg-success">Snapshot Ready</span></td>
-                        <td>Read-only</td>
-                        <td>
-                            <a href="<?= APP_URL ?>/revenue_manager/show/1" class="btn btn-sm btn-outline-secondary">Details</a>
-                            <a href="<?= APP_URL ?>/revenue_manager/edit/1" class="btn btn-sm btn-outline-primary">Edit</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>VIP Upgrade Monitor</strong></td>
-                        <td>Reservation Signals</td>
-                        <td>Next 48 Hours</td>
-                        <td><span class="badge bg-warning text-dark">Watching</span></td>
-                        <td>Audit hook enabled</td>
-                        <td>
-                            <a href="<?= APP_URL ?>/revenue_manager/show/2" class="btn btn-sm btn-outline-secondary">Details</a>
-                            <a href="<?= APP_URL ?>/revenue_manager/edit/2" class="btn btn-sm btn-outline-primary">Edit</a>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Open Folio Exposure</strong></td>
-                        <td>Folio Aggregation</td>
-                        <td>Month To Date</td>
-                        <td><span class="badge bg-info text-dark">Pending Connection</span></td>
-                        <td>Read-only</td>
-                        <td>
-                            <a href="<?= APP_URL ?>/revenue_manager/show/3" class="btn btn-sm btn-outline-secondary">Details</a>
-                            <a href="<?= APP_URL ?>/revenue_manager/edit/3" class="btn btn-sm btn-outline-primary">Edit</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+    <div class="col-md-4">
+      <div class="action-card">
+        <h6><i class="bi bi-arrow-repeat me-1"></i>Sync Status</h6>
+        <p>Monitor the last sync timestamp per room type. Stale rows are flagged automatically.</p>
+        <a href="<?= APP_URL ?>/?url=revenue_manager_virtual_inventory/syncStatus"
+           class="btn btn-outline-accent w-100" id="btn-sync-status">
+          Check Sync
+        </a>
+      </div>
     </div>
+
+  </div>
+
+  <!-- Billing Section -->
+  <div class="section-title"><i class="bi bi-receipt me-1"></i>Billing</div>
+  <div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+      <div class="action-card">
+        <h6><i class="bi bi-people me-1"></i>Group Billing</h6>
+        <p>View and manage group reservations, per-member breakdowns, and consolidated invoices with group discounts.</p>
+        <a href="<?= APP_URL ?>/?url=billing/group/<?= $firstGroupId ?>"
+           class="btn btn-accent w-100" id="btn-group-billing">
+          Open Group Billing
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="action-card">
+        <h6><i class="bi bi-scissors me-1"></i>Split Billing</h6>
+        <p>Split group invoices per member with proportional tax calculation. Supports partial splits and dispute handling.</p>
+        <a href="<?= APP_URL ?>/?url=billing/splitBill/<?= $firstGroupId ?>"
+           class="btn btn-outline-accent w-100" id="btn-split-billing">
+          Open Split Preview
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="action-card">
+        <h6><i class="bi bi-receipt me-1"></i>Guest Bill</h6>
+        <p>Full individual billing lifecycle: add charges, apply discounts, redeem loyalty points, and finalize the bill.</p>
+        <a href="<?= APP_URL ?>/?url=billing/guestBill/<?= $firstResId ?>"
+           class="btn btn-outline-accent w-100" id="btn-guest-bill">
+          Open Guest Bill
+        </a>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <?php

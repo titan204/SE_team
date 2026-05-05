@@ -1,12 +1,16 @@
 <?php
 $pageTitle = 'Revenue Impact Report';
 ob_start();
+
+// Impact classification per room type
+$impactMap = [
+    'Standard' => ['Healthy',          'bg-success'],
+    'Deluxe'   => ['Stable',           'bg-info text-dark'],
+    'Suite'    => ['Monitor — Near Cap','bg-warning text-dark'],
+];
 ?>
 
 <div class="container mt-4">
-    <!-- Billing System: future folio-only reading can drive summary cards in this report. -->
-    <!-- Housekeeping System: future operational cost references can appear as impact contributors. -->
-    <!-- Reservation System: future booking volume influence can be reflected in revenue variance rows. -->
 
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
@@ -23,12 +27,14 @@ ob_start();
         </a>
     </div>
 
+    <!-- KPI Cards -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <small class="text-muted text-uppercase">Gross Virtual Revenue</small>
-                    <h3 class="mt-2 mb-0">$86,250</h3>
+                    <small class="text-muted text-uppercase">Gross Revenue This Month</small>
+                    <h3 class="mt-2 mb-0 text-success">$<?= number_format($revenueMonth, 0) ?></h3>
+                    <small class="text-muted"><?= (int)$totalOccupied ?> occupied rooms · actual payments</small>
                 </div>
             </div>
         </div>
@@ -36,7 +42,8 @@ ob_start();
             <div class="card h-100">
                 <div class="card-body">
                     <small class="text-muted text-uppercase">Cost Pressure</small>
-                    <h3 class="mt-2 mb-0">$21,980</h3>
+                    <h3 class="mt-2 mb-0 text-danger">$<?= number_format($costPool, 0) ?></h3>
+                    <small class="text-muted">← Room Cost Watch (<?= (int)$totalRooms ?> rooms × 20% rate)</small>
                 </div>
             </div>
         </div>
@@ -44,64 +51,88 @@ ob_start();
             <div class="card h-100">
                 <div class="card-body">
                     <small class="text-muted text-uppercase">Margin Signal</small>
-                    <h3 class="mt-2 mb-0">74%</h3>
+                    <h3 class="mt-2 mb-0 text-primary"><?= $marginPct ?>%</h3>
+                    <small class="text-muted">
+                        ($<?= number_format($revenueMonth, 0) ?> − $<?= number_format($costPool, 0) ?>)
+                        ÷ $<?= number_format($revenueMonth, 0) ?>
+                    </small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card h-100">
+            <div class="card h-100 <?= $openAlerts > 0 ? 'border-warning' : '' ?>">
                 <div class="card-body">
-                    <small class="text-muted text-uppercase">Alerts</small>
-                    <h3 class="mt-2 mb-0">3 Active</h3>
+                    <small class="text-muted text-uppercase">Active Alerts</small>
+                    <h3 class="mt-2 mb-0 <?= $openAlerts > 0 ? 'text-warning' : 'text-success' ?>">
+                        <?= (int)$openAlerts ?>
+                    </h3>
+                    <small class="text-muted">
+                        <?= $openAlerts > 0 ? 'Property-wide active alerts' : 'No active alerts' ?>
+                    </small>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Per-type Breakdown -->
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-table"></i> Financial Summary Layout</h5>
-            <span class="badge bg-secondary">Report Placeholder</span>
+            <h5 class="mb-0"><i class="bi bi-table"></i> Financial Summary by Room Type</h5>
+            <span class="badge bg-primary">Occupancy: <?= $occupancyPct ?>%</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
                         <th>Segment</th>
+                        <th>Occupied / Total</th>
                         <th>Revenue Signal</th>
                         <th>Cost Reference</th>
                         <th>Impact Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Corporate Rooms</td>
-                        <td>$28,400</td>
-                        <td>$8,500</td>
-                        <td><span class="badge bg-success">Healthy</span></td>
-                    </tr>
-                    <tr>
-                        <td>VIP Inventory</td>
-                        <td>$17,900</td>
-                        <td>$6,200</td>
-                        <td><span class="badge bg-warning text-dark">Monitor</span></td>
-                    </tr>
-                    <tr>
-                        <td>Extended Stay</td>
-                        <td>$22,150</td>
-                        <td>$4,980</td>
-                        <td><span class="badge bg-info text-dark">Stable</span></td>
-                    </tr>
-                    <tr>
-                        <td>Promotional Stock</td>
-                        <td>$9,300</td>
-                        <td>$2,300</td>
-                        <td><span class="badge bg-secondary">Review</span></td>
-                    </tr>
+                <?php foreach ($roomTypes as $rt):
+                    // Revenue signal = base_price × occupied rooms (nightly estimate)
+                    $revSignal = (float)$rt['base_price'] * (int)$rt['occupied_count'];
+                    [$impactText, $impactBadge] = $impactMap[$rt['room_type']] ?? ['Review', 'bg-secondary'];
+                ?>
+                <tr>
+                    <td>
+                        <strong><?= htmlspecialchars($rt['room_type']) ?>
+                        (<?= htmlspecialchars($rt['min_room']) ?>–<?= htmlspecialchars($rt['max_room']) ?>)</strong>
+                    </td>
+                    <td><?= (int)$rt['occupied_count'] ?> / <?= (int)$rt['room_count'] ?></td>
+                    <td>$<?= number_format($revSignal, 0) ?></td>
+                    <td>
+                        $<?= number_format($rt['cost_ref'], 0) ?>
+                        <small class="text-muted">
+                            (<?= (int)$rt['room_count'] ?> × $<?= number_format($rt['base_price'] * 0.20, 0) ?>)
+                        </small>
+                    </td>
+                    <td><span class="badge <?= $impactBadge ?>"><?= $impactText ?></span></td>
+                </tr>
+                <?php endforeach; ?>
                 </tbody>
+                <tfoot class="table-dark fw-bold">
+                    <tr>
+                        <th>Total</th>
+                        <th><?= (int)$totalOccupied ?> / <?= (int)$totalRooms ?> (<?= $occupancyPct ?>%)</th>
+                        <th>$<?= number_format($revenueMonth, 0) ?> <small class="fw-normal">(this month)</small></th>
+                        <th>$<?= number_format($costPool, 0) ?></th>
+                        <th>Margin: <?= $marginPct ?>%</th>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
+
+    <p class="text-muted small mt-2">
+        <i class="bi bi-info-circle me-1"></i>
+        Revenue signal = base nightly rate × occupied rooms (snapshot estimate).
+        Actual revenue from <strong>payments</strong> table this month: <strong>$<?= number_format($revenueMonth, 0) ?></strong>.
+    </p>
+
 </div>
 
 <?php

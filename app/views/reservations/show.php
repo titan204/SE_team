@@ -366,14 +366,8 @@ $hasRealRoom      = $hasUpgradeRoom && (int)($upgradeRoom['id'] ?? 0) > 0;
       <div class="action-card mb-3">
         <div class="section-label"><i class="bi bi-lightning me-2"></i>Actions</div>
 
-        <!-- PENDING: only Confirm -->
-        <?php if ($status === 'pending'): ?>
-        <a href="<?= APP_URL ?>/index.php?url=reservations/confirm/<?= $rid ?>"
-           class="btn btn-accent w-100 mb-2"
-           onclick="return confirm('Confirm this reservation?')">
-          <i class="bi bi-check-circle me-1"></i> Confirm Reservation
-        </a>
-        <?php endif; ?>
+        <!-- Status: pending — confirmation handled automatically via deposit payment -->
+
 
         <!-- CONFIRMED: only Check In -->
         <?php if ($status === 'confirmed'): ?>
@@ -412,14 +406,15 @@ $hasRealRoom      = $hasUpgradeRoom && (int)($upgradeRoom['id'] ?? 0) > 0;
 
         <?php endif; ?>
 
-        <!-- PENDING / CONFIRMED: No-Show -->
-        <?php if (in_array($status, ['pending','confirmed'])): ?>
+        <!-- PENDING / CONFIRMED: No-Show — staff/front-desk only, never shown to guests -->
+        <?php if (!$isGuestUser && in_array($status, ['pending','confirmed'])): ?>
         <a href="<?= APP_URL ?>/index.php?url=reservations/noshow/<?= $rid ?>"
            class="btn w-100 mb-2" style="background:#777;color:#fff;border-radius:7px;"
            onclick="return confirm('Mark as No-Show?')">
           <i class="bi bi-person-slash me-1"></i> Mark No-Show
         </a>
         <?php endif; ?>
+
 
         <!-- PENDING / CONFIRMED: Cancel -->
         <?php if (!in_array($status, ['checked_in','checked_out','cancelled','no_show'])): ?>

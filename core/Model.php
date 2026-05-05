@@ -15,4 +15,10 @@ class Model
         // Grab the single shared connection from the Database singleton
         $this->db = Database::getConnection();
     }
+
+    /** Expose the DB connection for raw queries in controllers. */
+    public function getDb()
+    {
+        return $this->db;
+    }
 }

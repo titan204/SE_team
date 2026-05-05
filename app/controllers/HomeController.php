@@ -3,15 +3,14 @@ class HomeController extends Controller
 {
     public function index(): void
     {
-        $pageTitle   = 'Welcome to our Hotel';
-        $guestName   = htmlspecialchars($_SESSION['guest_name'] ?? '');
+        $guestName   = htmlspecialchars($_SESSION['user_name']    ?? '');
         $checkinDate = $_SESSION['checkin_date'] ?? null;
-        $roomNumber  = $_SESSION['room_number'] ?? null;
+        $roomNumber  = $_SESSION['room_number']  ?? null;
 
         ob_start();
         require VIEW_PATH . '/home/index.php';
         $content = ob_get_clean();
-        require VIEW_PATH . '/layouts/main.php';
+        echo $content; // standalone page — has its own full layout
     }
 
     public function guestprofile()
