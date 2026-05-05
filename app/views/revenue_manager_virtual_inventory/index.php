@@ -30,8 +30,8 @@ ob_start();
             <div class="card h-100">
                 <div class="card-body">
                     <small class="text-muted text-uppercase">Room Cost Watch</small>
-                    <h3 class="mt-2 mb-1">$18,400</h3>
-                    <p class="text-muted mb-3">Placeholder virtual cost total by room cluster.</p>
+                    <h3 class="mt-2 mb-1">$<?= number_format($totalPool ?? 0, 0) ?></h3>
+                    <p class="text-muted mb-3"><?= (int)($totalRooms ?? 0) ?> rooms — virtual cost pool (20% of nightly rate).</p>
                     <a href="<?= APP_URL ?>/revenue_manager_virtual_inventory/roomCostAnalysis/101" class="btn btn-sm btn-outline-primary">Open Section</a>
                 </div>
             </div>
@@ -40,8 +40,8 @@ ob_start();
             <div class="card h-100">
                 <div class="card-body">
                     <small class="text-muted text-uppercase">Guest Consumption</small>
-                    <h3 class="mt-2 mb-1">324</h3>
-                    <p class="text-muted mb-3">Placeholder tracked profiles with virtual consumption indicators.</p>
+                    <h3 class="mt-2 mb-1"><?= (int)($totalGuests ?? 0) ?></h3>
+                    <p class="text-muted mb-3">Tracked guest profiles with virtual consumption indicators.</p>
                     <a href="<?= APP_URL ?>/revenue_manager_virtual_inventory/guestConsumption/501" class="btn btn-sm btn-outline-primary">Open Section</a>
                 </div>
             </div>
@@ -60,8 +60,8 @@ ob_start();
             <div class="card h-100">
                 <div class="card-body">
                     <small class="text-muted text-uppercase">Alert Triggers</small>
-                    <h3 class="mt-2 mb-1">5</h3>
-                    <p class="text-muted mb-3">Placeholder threshold checks for cost limits and impact alerts.</p>
+                    <h3 class="mt-2 mb-1"><?= (int)($openAlerts ?? 0) ?></h3>
+                    <p class="text-muted mb-3">Active threshold alerts for cost limits and impact flags.</p>
                     <a href="<?= APP_URL ?>/revenue_manager_virtual_inventory/triggerAlerts" class="btn btn-sm btn-outline-primary">Open Section</a>
                 </div>
             </div>
@@ -88,7 +88,7 @@ ob_start();
                         <td><strong>Dashboard</strong></td>
                         <td>Virtual inventory overview</td>
                         <td>Billing, housekeeping, reservations</td>
-                        <td><a href="<?= APP_URL ?>/revenue_manager_virtual_inventory/dashboard" class="btn btn-sm btn-outline-secondary">Open</a></td>
+                        <td><a href="<?= APP_URL ?>/revenue_manager_virtual_inventory" class="btn btn-sm btn-outline-secondary">Open</a></td>
                     </tr>
                     <tr>
                         <td><strong>Room Cost Analysis</strong></td>

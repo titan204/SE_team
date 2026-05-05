@@ -15,18 +15,39 @@ class UsersController extends Controller
     public function index()
     {
         $this->requireRole('manager');
+        $db = (new Model())->getDb();
 
-        $userModel = new User();
-        $users = $userModel->all();
+        $roleFilter = $_GET['role'] ?? '';
+        $where = '1=1';
+        if ($roleFilter) {
+            $safe = mysqli_real_escape_string($db, $roleFilter);
+            $where .= " AND r.name = '$safe'";
+        }
 
-        $data = [
-            'users' => $users,
-            'message' => $_SESSION['message'] ?? null,
-        ];
+        // Staff only — exclude guests
+        $r = mysqli_query($db,
+            "SELECT u.id, u.name, u.email, u.is_active, u.created_at,
+                    r.name AS role, r.id AS role_id
+             FROM   users u
+             JOIN   roles r ON u.role_id = r.id
+             WHERE  r.name != 'guest' AND $where
+             ORDER  BY FIELD(r.name,'manager','front_desk','housekeeper','revenue_manager'),
+                       u.name ASC");
+        $users = $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
 
+        // Per-role counts for summary cards (staff only)
+        $rCounts = mysqli_query($db,
+            "SELECT r.name AS role, COUNT(*) AS cnt
+             FROM   users u JOIN roles r ON u.role_id = r.id
+             WHERE  r.name != 'guest'
+             GROUP  BY r.name");
+        $roleCounts = [];
+        if ($rCounts) { while ($c = mysqli_fetch_assoc($rCounts)) $roleCounts[$c['role']] = (int)$c['cnt']; }
+
+        $message = $_SESSION['message'] ?? null;
         unset($_SESSION['message']);
 
-        $this->view('users/index', $data);
+        $this->view('users/index', compact('users','roleCounts','roleFilter','message'));
     }
 
     public function create()
@@ -180,10 +201,22 @@ class UsersController extends Controller
 
         // 4. Prepare update data
         $updateData = [
-            'name' => $name,
-            'email' => $email,
-            'role_id' => $role_id,
+            'name'      => $name,
+            'email'     => $email,
+            'role_id'   => (int)$role_id,
+            'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
+
+        // Optional password change
+        $newPassword = trim($_POST['password'] ?? '');
+        if ($newPassword !== '') {
+            if (strlen($newPassword) < 6) {
+                $_SESSION['errors'] = ['password' => 'Password must be at least 6 characters.'];
+                $this->redirect('users/edit/' . $id);
+                return;
+            }
+            $updateData['password'] = hash('sha256', $newPassword);
+        }
 
         // 5. Update user
         $userModel->update($id, $updateData);

@@ -5,7 +5,8 @@
 // ============================================================
 
 // ── Database ────────────────────────────────────────────────
-define('DB_HOST',     'localhost');
+define('DB_HOST',     '127.0.0.1');  // Use IP to force TCP (needed for non-default port)
+define('DB_PORT',     3307);          // XAMPP MySQL port
 define('DB_NAME',     'hotel_management');
 define('DB_USER',     'root');
 define('DB_PASS',     '');
@@ -13,7 +14,7 @@ define('DB_CHARSET',  'utf8mb4');
 
 // ── Application ─────────────────────────────────────────────
 define('APP_NAME',    'Hotel Management System');
-define('APP_URL', 'http://localhost');
+define('APP_URL', 'http://localhost/repo/SE_team');
 define('APP_VERSION', '1.0.0');
 
 // ── Session ──────────────────────────────────────────────────

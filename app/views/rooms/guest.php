@@ -4,9 +4,56 @@ $rooms = $rooms ?? [];
 $filters = $filters ?? [];
 $errors = $errors ?? [];
 $isFilteredByDates = $isFilteredByDates ?? false;
+$isGuest = !empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'guest';
+$isLoggedIn = !empty($_SESSION['user_id']);
+$guestName = htmlspecialchars($_SESSION['user_name'] ?? '');
 
 ob_start();
 ?>
+<link rel="stylesheet" href="<?= APP_URL ?>/public/assets/css/home.css">
+<style>
+/* Offset content below fixed navbar */
+.rooms-page-wrap { padding-top: 80px; }
+</style>
+
+<!-- Luxury Navbar (matches homepage) -->
+<nav class="hm-nav scrolled" id="guestNav">
+  <div class="inner">
+    <a href="<?= APP_URL ?>/?url=home/index" class="nav-brand"><i class="bi bi-building-fill"></i>Grand Hotel</a>
+    <ul class="nav-links">
+      <li><a href="<?= APP_URL ?>/?url=home/index">Home</a></li>
+      <li><a href="<?= APP_URL ?>/?url=rooms/guest" style="color:var(--gold)">Rooms</a></li>
+      <li><a href="<?= APP_URL ?>/?url=home/index#services">Services</a></li>
+      <li><a href="<?= APP_URL ?>/?url=home/index#contact">Contact</a></li>
+    </ul>
+    <div class="nav-auth">
+      <?php if($isGuest): ?>
+        <a href="<?= APP_URL ?>/?url=home/guestprofile" class="btn-nav-login"><i class="bi bi-person-circle me-1"></i><?= $guestName ?></a>
+        <a href="<?= APP_URL ?>/?url=auth/logout" class="btn-nav-reg">Sign Out</a>
+      <?php elseif($isLoggedIn): ?>
+        <a href="<?= APP_URL ?>/?url=Dashboard/index" class="btn-nav-login"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+        <a href="<?= APP_URL ?>/?url=auth/logout" class="btn-nav-reg">Sign Out</a>
+      <?php else: ?>
+        <a href="<?= APP_URL ?>/?url=auth/login"    class="btn-nav-login">Sign In</a>
+        <a href="<?= APP_URL ?>/?url=auth/register" class="btn-nav-reg">Register</a>
+      <?php endif; ?>
+    </div>
+    <button class="nav-toggle" id="gNavToggle"><i class="bi bi-list"></i></button>
+  </div>
+  <div id="gMobileMenu" style="display:none;" class="mobile-menu">
+    <a href="<?= APP_URL ?>/?url=home/index">Home</a>
+    <a href="<?= APP_URL ?>/?url=rooms/guest">Rooms</a>
+    <a href="<?= APP_URL ?>/?url=home/index#services">Services</a>
+    <a href="<?= APP_URL ?>/?url=home/index#contact">Contact</a>
+    <?php if($isLoggedIn): ?>
+      <a href="<?= APP_URL ?>/?url=auth/logout">Sign Out</a>
+    <?php else: ?>
+      <a href="<?= APP_URL ?>/?url=auth/login">Sign In</a>
+    <?php endif; ?>
+  </div>
+</nav>
+
+<div class="rooms-page-wrap">
 
 <style>
 .guest-room-card {
@@ -138,9 +185,9 @@ ob_start();
                             </div>
 
                             <a
-                                href="<?= APP_URL ?>/?url=reservations/create&room_id=<?= (int) $room['id'] ?>"
+                                href="<?= APP_URL ?>/?url=<?= $isGuest ? 'reservations/create&room_id=' . (int)$room['id'] : 'auth/login' ?>"
                                 class="btn btn-primary w-100 mt-3">
-                                Reserve This Room
+                                <?= $isGuest ? 'Reserve This Room' : 'Sign In to Book' ?>
                             </a>
                         </div>
                     </div>
@@ -152,5 +199,14 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
+// Close the rooms-page-wrap div
+$content .= '</div>';
+// Mobile menu toggle script
+$content .= "<script>
+document.getElementById('gNavToggle').onclick=function(){
+  var m=document.getElementById('gMobileMenu');
+  m.style.display=m.style.display==='none'?'flex':'none';
+};
+</script>";
 require VIEW_PATH . '/layouts/main.php';
 ?>
