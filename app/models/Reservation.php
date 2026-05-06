@@ -447,8 +447,8 @@ class Reservation extends Model
         }
 
         mysqli_query($this->db,
-            "INSERT INTO folios (reservation_id, total_amount, amount_paid, status)
-             VALUES ($reservationId, $totalAmount, 0.00, 'open')");
+            "INSERT INTO folios (reservation_id, total_amount, amount_paid, balance_due, status)
+             VALUES ($reservationId, $totalAmount, 0.00, $totalAmount, 'open')");
         return mysqli_insert_id($this->db);
     }
 

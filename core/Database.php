@@ -19,8 +19,7 @@ class Database
     public static function getConnection()
     {
         if (self::$instance === null) {
-            self::$instance = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
+            self::$instance = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
             if (!self::$instance) {
                 // TODO: Replace with a proper error page in production
                 die('Database connection failed: ' . mysqli_connect_error());

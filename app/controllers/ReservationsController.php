@@ -165,23 +165,29 @@ class ReservationsController extends Controller
         $guests       = [];
 
         if ($isGuestUser) {
-            // Auto-resolve the logged-in guest — no manual dropdown needed
             $guestModel   = new Guest();
             $currentGuest = $guestModel->findByEmail($_SESSION['user_email'] ?? '');
         } else {
-            // Staff can pick any guest
             $guestModel = new Guest();
             $guests     = $guestModel->all();
         }
 
-        $roomModel = new Room();
-        $rooms     = $roomModel->all();
+        $roomModel       = new Room();
+        $rooms           = $roomModel->all();
+
+        // Pre-selected room — passed from "Reserve This Room" button via GET
+        $preSelectedRoom = null;
+        $preRoomId       = (int) ($_GET['room_id'] ?? 0);
+        if ($preRoomId > 0) {
+            $preSelectedRoom = $roomModel->find($preRoomId);
+        }
 
         $this->view('reservations/create', [
-            'guests'       => $guests,
-            'rooms'        => $rooms,
-            'isGuestUser'  => $isGuestUser,
-            'currentGuest' => $currentGuest,
+            'guests'          => $guests,
+            'rooms'           => $rooms,
+            'isGuestUser'     => $isGuestUser,
+            'currentGuest'    => $currentGuest,
+            'preSelectedRoom' => $preSelectedRoom,
         ]);
     }
 
@@ -272,9 +278,86 @@ class ReservationsController extends Controller
         // Auto-create folio
         $reservationModel->createFolio($reservationId, $data['total_price']);
 
-        // ── Final redirect — ALWAYS to reservation details, NEVER to guests/admin/home ──
-        // ?state=pending signals the show page that this reservation was just created.
-        header('Location: ' . APP_URL . '/index.php?url=reservations/show/' . (int) $reservationId . '&state=pending');
+        // ── Final redirect ──────────────────────────────────────────
+        // Guests → deposit payment page (20% deposit required first)
+        // Staff  → reservation details as usual
+        if ($isGuestUser) {
+            header('Location: ' . APP_URL . '/index.php?url=reservations/deposit/' . (int)$reservationId);
+        } else {
+            header('Location: ' . APP_URL . '/index.php?url=reservations/show/' . (int)$reservationId . '&state=pending');
+        }
+        exit;
+    }
+
+    // ── Deposit Payment: show form ────────────────────────────
+
+    public function deposit($id)
+    {
+        $this->requireLogin();
+
+        $reservationModel = new Reservation();
+        $reservation      = $reservationModel->find($id);
+
+        if (!$reservation) {
+            $this->redirect('reservations');
+            return;
+        }
+
+        // 20% deposit
+        $depositAmount = round((float)$reservation['total_price'] * 0.20, 2);
+
+        $this->view('reservations/deposit', [
+            'reservation'   => $reservation,
+            'depositAmount' => $depositAmount,
+        ]);
+    }
+
+    // ── Deposit Payment: process (simulated) ──────────────────
+
+    public function payDeposit($id)
+    {
+        $this->requireLogin();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('reservations/deposit/' . $id);
+            return;
+        }
+
+        $reservationModel = new Reservation();
+        $reservation      = $reservationModel->find($id);
+
+        if (!$reservation) {
+            $this->redirect('reservations');
+            return;
+        }
+
+        $depositAmount = round((float)$reservation['total_price'] * 0.20, 2);
+
+        $db = (new Model())->getDb();
+
+        // 1. Mark deposit paid + auto-confirm reservation
+        $stmt = mysqli_prepare(
+            $db,
+            "UPDATE reservations
+             SET deposit_amount = ?, deposit_paid = 1, status = 'confirmed'
+             WHERE id = ?"
+        );
+        mysqli_stmt_bind_param($stmt, 'di', $depositAmount, $id);
+        mysqli_stmt_execute($stmt);
+
+        // 2. Update folio: amount_paid += deposit, balance_due -= deposit
+        $stmt2 = mysqli_prepare(
+            $db,
+            "UPDATE folios
+             SET amount_paid  = amount_paid + ?,
+                 balance_due  = GREATEST(0, COALESCE(balance_due, total_amount) - ?)
+             WHERE reservation_id = ?"
+        );
+        mysqli_stmt_bind_param($stmt2, 'ddi', $depositAmount, $depositAmount, $id);
+        mysqli_stmt_execute($stmt2);
+
+        // Redirect back to deposit page with success flag
+        header('Location: ' . APP_URL . '/index.php?url=reservations/deposit/' . (int)$id . '&paid=1');
         exit;
     }
 

@@ -16,9 +16,22 @@ class RevenueManagerController extends Controller
 {
     public function index()
     {
-        // TODO: Require revenue-manager-facing access.
-        // TODO: Load read-only billing summary and reporting placeholders.
-        $this->view('revenue_manager/index');
+        $this->requireLogin();
+        $this->requireRoles(['revenue_manager', 'manager']);
+
+        $db = (new Model())->getDb();
+
+        // Get first available group so workspace buttons always link to real data
+        $r = mysqli_query($db, "SELECT id FROM group_reservations ORDER BY id LIMIT 1");
+        $firstGroup = $r ? mysqli_fetch_assoc($r) : null;
+        $firstGroupId = $firstGroup ? (int)$firstGroup['id'] : 1;
+
+        // Also get first reservation for guestBill demo link
+        $r2 = mysqli_query($db, "SELECT id FROM reservations WHERE status NOT IN ('cancelled','no_show') ORDER BY id LIMIT 1");
+        $firstRes = $r2 ? mysqli_fetch_assoc($r2) : null;
+        $firstResId = $firstRes ? (int)$firstRes['id'] : 1;
+
+        $this->view('revenue_manager/index', compact('firstGroupId', 'firstResId'));
     }
 
     public function create()
