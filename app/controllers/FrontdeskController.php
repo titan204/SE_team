@@ -1,15 +1,4 @@
 <?php
-// ============================================================
-//  FrontdeskController - Front desk landing page + UC37 L&F
-//  Routes:
-//    /frontdesk              → index
-//    /frontdesk/lostFound    → UC37 L&F queue
-//    /frontdesk/lostReport   → POST guest report
-//    /frontdesk/matchItem    → POST confirm match
-//    /frontdesk/returnItem   → POST arrange return
-//    /frontdesk/disposeItem  → POST disposal
-// ============================================================
-
 class FrontdeskController extends Controller
 {
     /** Restrict to front-desk staff and managers only. */

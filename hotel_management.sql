@@ -3168,6 +3168,51 @@ ALTER TABLE `work_orders`
 ALTER TABLE `work_order_logs`
   ADD CONSTRAINT `fk_wol_user` FOREIGN KEY (`performed_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_wol_wo` FOREIGN KEY (`work_order_id`) REFERENCES `work_orders` (`id`) ON DELETE CASCADE;
+-- --------------------------------------------------------
+-- Table structure for table `feedback`
+-- Guest post-stay feedback and ratings
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `feedback` (
+  `id`                 int(10) unsigned  NOT NULL AUTO_INCREMENT,
+  `reservation_id`     int(10) unsigned  NOT NULL,
+  `guest_id`           int(10) unsigned  NOT NULL,
+  `guest_name`         varchar(120)      DEFAULT NULL,
+  `overall_rating`     tinyint(4)        NOT NULL DEFAULT 1,
+  `cleanliness_rating` tinyint(4)        NOT NULL DEFAULT 1,
+  `staff_rating`       tinyint(4)        NOT NULL DEFAULT 1,
+  `food_rating`        tinyint(4)        NOT NULL DEFAULT 1,
+  `facilities_rating`  tinyint(4)        NOT NULL DEFAULT 1,
+  `comment`            text              DEFAULT NULL,
+  `recommend_hotel`    tinyint(1)        NOT NULL DEFAULT 1,
+  `is_resolved`        tinyint(1)        NOT NULL DEFAULT 0,
+  `resolved_at`        timestamp         NULL DEFAULT NULL,
+  `resolved_by`        int(10) unsigned  DEFAULT NULL,
+  `created_at`         timestamp         NOT NULL DEFAULT current_timestamp(),
+  -- Legacy columns (kept for backwards compatibility)
+  `rating`             tinyint(3) unsigned NOT NULL DEFAULT 1,
+  `comments`           text              DEFAULT NULL,
+  `submitted_at`       timestamp         NOT NULL DEFAULT current_timestamp(),
+  `overall_score`      tinyint(3) unsigned DEFAULT NULL,
+  `flagged_for_qa`     tinyint(1)        NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_feedback_guest`   (`guest_id`),
+  KEY `idx_feedback_rating`  (`overall_rating`),
+  KEY `idx_feedback_created` (`created_at`),
+  KEY `idx_feedback_status`  (`is_resolved`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Constraints for table `feedback`
+--
+ALTER TABLE `feedback`
+  ADD CONSTRAINT `fk_feedback_guest`
+    FOREIGN KEY (`guest_id`)       REFERENCES `guests` (`id`)       ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_feedback_reservation`
+    FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_feedback_resolver`
+    FOREIGN KEY (`resolved_by`)    REFERENCES `users` (`id`)        ON DELETE SET NULL;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

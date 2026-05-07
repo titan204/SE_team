@@ -1,9 +1,4 @@
 <?php
-// ============================================================
-//  GuestBilling Model — UC38: Manage Guest Billing
-//  Tables: billing_items, billing_adjustments, final_invoices
-//  Caller: BillingController (front desk actor)
-// ============================================================
 
 class GuestBilling extends Model
 {
@@ -11,9 +6,6 @@ class GuestBilling extends Model
 
     // ── Step 1: Load full billing state ──────────────────────
 
-    /**
-     * Load reservation + guest info for a billing page.
-     */
     public function getReservationWithGuest(int $reservationId): ?array
     {
         $id = (int) $reservationId;

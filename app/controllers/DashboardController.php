@@ -1,10 +1,5 @@
 <?php
-// ============================================================
-//  DashboardController — Live statistics dashboard
-//  Routes:
-//    /dashboard          → index  (HTML page, role-filtered)
-//    /dashboard/stats    → stats  (JSON, for AJAX auto-refresh)
-// ============================================================
+
 
 class DashboardController extends Controller
 {

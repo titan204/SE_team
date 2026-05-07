@@ -1,10 +1,4 @@
 <?php
-// ============================================================
-//  GuestPreference Model — Stores guest-specific preferences
-//  Table: guest_preferences
-//
-//  Usage: $pref = new GuestPreference();
-// ============================================================
 
 class GuestPreference extends Model
 {
@@ -31,13 +25,15 @@ class GuestPreference extends Model
     }
 
     public function findByGuest($guestId)
-    {
-        $guestId = (int)$guestId;
-        $query = "SELECT * FROM guest_preferences WHERE guest_id = $guestId";
-        $result = mysqli_query($this->db, $query);
+{
+    $guestId = (int)$guestId;
+    $query = "SELECT pref_key AS preference_type, pref_value AS preference_value 
+              FROM guest_preferences 
+              WHERE guest_id = $guestId";
+    $result = mysqli_query($this->db, $query);
 
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
-    }
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
 
     public function create($data)
     {

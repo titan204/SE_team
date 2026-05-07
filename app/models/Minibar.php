@@ -1,9 +1,5 @@
 <?php
-// ============================================================
-//  Minibar Model — UC29: Log Minibar Consumption
-//  Tables: minibar_items, minibar_inventory, minibar_logs,
-//          billing_items, billing_retry_queue
-// ============================================================
+
 
 class Minibar extends Model
 {
