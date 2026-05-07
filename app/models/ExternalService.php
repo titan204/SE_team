@@ -4,8 +4,14 @@
 //  Table: external_services
 // ============================================================
 
-class ExternalService extends Model
+class ExternalService extends AbstractModel
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('bookings', ServiceBooking::class);
+    }
+
     public function all()
     {
         $result = mysqli_query(

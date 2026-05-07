@@ -1,15 +1,23 @@
 <?php
 
 
-class LostAndFound extends Model
+class LostAndFound extends AbstractModel
 {
-    public $id;
-    public $guest_id;
-    public $room_id;
-    public $found_by;
-    public $description;
-    public $status;       // found, claimed, donated, discarded
-    public $found_at;
+    protected $id;
+    protected $guest_id;
+    protected $room_id;
+    protected $found_by;
+    protected $description;
+    protected $status;       // found, claimed, donated, discarded
+    protected $found_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('guest', Guest::class);
+        $this->registerAggregate('room', Room::class);
+        $this->registerAggregate('foundByStaff', User::class);
+    }
 
     public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM lost_and_found") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }

@@ -1,17 +1,26 @@
 <?php
 
-class Supervisor extends Model
+class Supervisor extends AbstractStaffWorkspace
 {
-    public $id;
-    public $reviewer_id;
-    public $room_id;
-    public $task_id;
-    public $approval_status;
-    public $quality_status;
-    public $maintenance_status;
-    public $notes;
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $reviewer_id;
+    protected $room_id;
+    protected $task_id;
+    protected $approval_status;
+    protected $quality_status;
+    protected $maintenance_status;
+    protected $notes;
+    protected $created_at;
+    protected $updated_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->setAssignmentContext(['reviewer_id', 'room_id', 'task_id']);
+        $this->registerAggregate('rooms', Room::class);
+        $this->registerAggregate('tasks', HousekeepingTask::class);
+        $this->registerAggregate('maintenanceOrders', MaintenanceOrder::class);
+    }
 
     public function all() { /* TODO: Load supervisor oversight rows. */ }
     public function find($id) { /* TODO: Load a single oversight record. */ }

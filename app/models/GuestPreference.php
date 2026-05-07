@@ -1,11 +1,17 @@
 <?php
 
-class GuestPreference extends Model
+class GuestPreference extends AbstractModel
 {
-    public $id;
-    public $guest_id;
-    public $pref_key;
-    public $pref_value;
+    protected $id;
+    protected $guest_id;
+    protected $pref_key;
+    protected $pref_value;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('guest', Guest::class);
+    }
 
     public function all()
     {

@@ -1,26 +1,35 @@
 <?php
 
-class Reservation extends Model
+class Reservation extends AbstractReservation
 {
-    public $id;
-    public $guest_id;
-    public $room_id;
-    public $assigned_by;
-    public $check_in_date;
-    public $check_out_date;
-    public $actual_check_in;
-    public $actual_check_out;
-    public $status;         // pending, confirmed, checked_in, checked_out, cancelled, no_show
-    public $adults;
-    public $children;
-    public $special_requests;
-    public $deposit_amount;
-    public $deposit_paid;
-    public $is_group;
-    public $group_id;
-    public $total_price;
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $guest_id;
+    protected $room_id;
+    protected $assigned_by;
+    protected $check_in_date;
+    protected $check_out_date;
+    protected $actual_check_in;
+    protected $actual_check_out;
+    protected $status;         // pending, confirmed, checked_in, checked_out, cancelled, no_show
+    protected $adults;
+    protected $children;
+    protected $special_requests;
+    protected $deposit_amount;
+    protected $deposit_paid;
+    protected $is_group;
+    protected $group_id;
+    protected $total_price;
+    protected $created_at;
+    protected $updated_at;
+
+    public function __construct($db = null, $reservationDetails = null, array $aggregates = [])
+    {
+        parent::__construct($db, $reservationDetails, $aggregates);
+        $this->registerAggregate('guest', Guest::class);
+        $this->registerAggregate('room', Room::class);
+        $this->registerAggregate('folio', Folio::class);
+        $this->registerAggregate('serviceBookings', ServiceBooking::class);
+    }
 
     // ── CRUD ─────────────────────────────────────────────────
 
@@ -74,6 +83,7 @@ class Reservation extends Model
 
     public function create($data)
     {
+        $this->hydrateReservationDetails($data);
         $guestId     = (int) $data['guest_id'];
         $roomId      = (int) $data['room_id'];
         $assignedBy  = !empty($data['assigned_by']) ? (int) $data['assigned_by'] : 'NULL';
@@ -113,6 +123,7 @@ class Reservation extends Model
 
     public function update($id, $data)
     {
+        $this->hydrateReservationDetails($data);
         $id          = (int) $id;
         $guestId     = (int) $data['guest_id'];
         $roomId      = (int) $data['room_id'];
@@ -216,7 +227,7 @@ class Reservation extends Model
         if (!$result) die("Check-in Failed: " . mysqli_error($this->db));
 
         // Update room → occupied
-        $roomModel = new Room();
+        $roomModel = $this->getAggregate('room') ?: new Room($this->db);
         try { $roomModel->updateStatus($res['room_id'], 'occupied'); } catch (Exception $e) {}
 
         // Audit log
@@ -244,7 +255,7 @@ class Reservation extends Model
         if (!$result) die("Check-out Failed: " . mysqli_error($this->db));
 
         // Update room → dirty
-        $roomModel = new Room();
+        $roomModel = $this->getAggregate('room') ?: new Room($this->db);
         try { $roomModel->updateStatus($res['room_id'], 'dirty'); } catch (Exception $e) {}
 
         // Create housekeeping task
@@ -566,7 +577,7 @@ class Reservation extends Model
 
         // Delegate to Dev 2's existing Room::suggestUpgrade() — called externally,
         // Room.php is not modified in any way.
-        $roomModel = new Room();
+        $roomModel = $this->getAggregate('room') ?: new Room($this->db);
         return $roomModel->suggestUpgrade($currentRoomId, $checkIn, $checkOut);
     }
 

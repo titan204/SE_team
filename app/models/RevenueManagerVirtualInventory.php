@@ -1,8 +1,18 @@
 <?php
 
 
-class RevenueManagerVirtualInventory extends Model
+class RevenueManagerVirtualInventory extends AbstractReport
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->setReportScope('virtual_inventory');
+        $this->setReportInputs(['room_type_id', 'date', 'days']);
+        $this->registerAggregate('rooms', Room::class);
+        $this->registerAggregate('roomTypes', RoomType::class);
+        $this->registerAggregate('reservations', Reservation::class);
+    }
+
     public function getRoomVirtualCost($roomId) {}
 
     public function getGuestVirtualConsumption($guestId) {}

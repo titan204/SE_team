@@ -7,16 +7,25 @@
 //    $folio = new Folio();
 // ============================================================
 
-class Folio extends Model
+class Folio extends AbstractBilling
 {
-    public $id;
-    public $reservation_id;
-    public $total_amount;
-    public $amount_paid;
-    public $balance_due;    // computed column
-    public $status;         // open, settled, refunded
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $reservation_id;
+    protected $total_amount;
+    protected $amount_paid;
+    protected $balance_due;    // computed column
+    protected $status;         // open, settled, refunded
+    protected $created_at;
+    protected $updated_at;
+
+    public function __construct($db = null, $invoice = null, array $aggregates = [])
+    {
+        parent::__construct($db, $invoice, $aggregates);
+        $this->setBillingSubject('reservation_folio');
+        $this->registerAggregate('reservation', Reservation::class);
+        $this->registerAggregate('charges', FolioCharge::class);
+        $this->registerAggregate('payments', Payment::class);
+    }
 
     // ── CRUD ─────────────────────────────────────────────────
 

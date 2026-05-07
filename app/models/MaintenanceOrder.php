@@ -1,18 +1,26 @@
 <?php
 
 
-class MaintenanceOrder extends Model
+class MaintenanceOrder extends AbstractModel
 {
-    public $id;
-    public $room_id;
-    public $reported_by;
-    public $assigned_to;
-    public $description;
-    public $priority;      // low, medium, high, critical
-    public $status;        // open, in_progress, resolved, escalated
-    public $resolved_at;
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $room_id;
+    protected $reported_by;
+    protected $assigned_to;
+    protected $description;
+    protected $priority;      // low, medium, high, critical
+    protected $status;        // open, in_progress, resolved, escalated
+    protected $resolved_at;
+    protected $created_at;
+    protected $updated_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('room', Room::class);
+        $this->registerAggregate('reporter', User::class);
+        $this->registerAggregate('assignedStaff', User::class);
+    }
 
     public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM maintenance_orders") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }

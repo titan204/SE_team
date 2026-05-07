@@ -1,16 +1,23 @@
 <?php
 
-class HousekeepingTask extends Model
+class HousekeepingTask extends AbstractModel
 {
-    public $id;
-    public $room_id;
-    public $assigned_to;
-    public $task_type;      // cleaning, turndown, inspection, deep_clean, minibar_check
-    public $status;         // pending, in_progress, done, skipped
-    public $notes;
-    public $quality_score;  // 1-5
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $room_id;
+    protected $assigned_to;
+    protected $task_type;      // cleaning, turndown, inspection, deep_clean, minibar_check
+    protected $status;         // pending, in_progress, done, skipped
+    protected $notes;
+    protected $quality_score;  // 1-5
+    protected $created_at;
+    protected $updated_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('room', Room::class);
+        $this->registerAggregate('assignedStaff', Housekeeper::class);
+    }
 
     public function all() { /* TODO: mysqli_query($this->db, "SELECT * FROM housekeeping_tasks") */ }
     public function find($id) { /* TODO: WHERE id = ? */ }

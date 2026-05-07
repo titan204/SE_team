@@ -5,8 +5,16 @@
 //  RULE: INSERT-ONLY. update() and delete() throw exceptions.
 // ============================================================
 
-class AuditLog extends Model
+class AuditLog extends AbstractReport
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->setReportScope('audit_log');
+        $this->setReportInputs(['user_id', 'action', 'target_type', 'start', 'end']);
+        $this->registerAggregate('users', User::class);
+    }
+
     // ── Query helpers ─────────────────────────────────────────
 
     /**

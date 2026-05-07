@@ -1,25 +1,34 @@
 <?php
 
-class Guest extends Model
+class Guest extends AbstractUser
 {
-    public $id;
-    public $name;
-    public $email;
-    public $phone;
-    public $national_id;
-    public $nationality;
-    public $date_of_birth;
-    public $loyalty_tier;
-    public $lifetime_nights;
-    public $lifetime_value;
-    public $is_blacklisted;
-    public $blacklist_reason;
-    public $is_vip;
-    public $gdpr_anonymized;
-    public $referred_by;
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $name;
+    protected $email;
+    protected $phone;
+    protected $national_id;
+    protected $nationality;
+    protected $date_of_birth;
+    protected $loyalty_tier;
+    protected $lifetime_nights;
+    protected $lifetime_value;
+    protected $is_blacklisted;
+    protected $blacklist_reason;
+    protected $is_vip;
+    protected $gdpr_anonymized;
+    protected $referred_by;
+    protected $created_at;
+    protected $updated_at;
     private $columnCache = null;
+
+    public function __construct($db = null, $profileData = null, array $aggregates = [])
+    {
+        parent::__construct($db, $profileData, $aggregates);
+        $this->registerAggregate('reservations', Reservation::class);
+        $this->registerAggregate('preferences', GuestPreference::class);
+        $this->registerAggregate('corporateAccount', CorporateAccount::class);
+        $this->registerAggregate('feedback', Feedback::class);
+    }
 
     public function all()
     {
@@ -49,6 +58,7 @@ class Guest extends Model
 
     public function create($data)
     {
+        $this->hydrateProfileData($data);
         $supportedColumns = array_flip($this->getExistingColumns());
         $allowedColumns = ['name', 'email', 'phone', 'national_id', 'nationality', 'date_of_birth', 'referred_by'];
         $columns = [];
@@ -371,6 +381,7 @@ $preferences = $r2 ? mysqli_fetch_all($r2, MYSQLI_ASSOC) : [];
 
     public function updateProfile(int $guestId, array $data): array
     {
+        $this->hydrateProfileData($data);
         $guestId = (int)$guestId;
         $errors  = [];
         $name    = trim($data['name']  ?? '');

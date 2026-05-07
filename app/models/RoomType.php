@@ -1,12 +1,18 @@
 <?php
 
-class RoomType extends Model
+class RoomType extends AbstractModel
 {
-    public $id;
-    public $name;
-    public $description;
-    public $base_price;
-    public $capacity;
+    protected $id;
+    protected $name;
+    protected $description;
+    protected $base_price;
+    protected $capacity;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('rooms', Room::class);
+    }
 
     // ── CRUD ─────────────────────────────────────────────────
 

@@ -7,15 +7,21 @@
 //    $charge = new FolioCharge();
 // ============================================================
 
-class FolioCharge extends Model
+class FolioCharge extends AbstractModel
 {
-    public $id;
-    public $folio_id;
-    public $charge_type;   // room_rate, service, minibar, spa, restaurant, penalty, tax, other
-    public $description;
-    public $amount;
-    public $posted_by;
-    public $posted_at;
+    protected $id;
+    protected $folio_id;
+    protected $charge_type;   // room_rate, service, minibar, spa, restaurant, penalty, tax, other
+    protected $description;
+    protected $amount;
+    protected $posted_by;
+    protected $posted_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('folio', Folio::class);
+    }
 
     // ── CRUD ─────────────────────────────────────────────────
 

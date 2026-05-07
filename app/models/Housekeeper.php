@@ -1,17 +1,26 @@
 <?php
 
-class Housekeeper extends Model
+class Housekeeper extends AbstractStaffWorkspace
 {
-    public $id;
-    public $user_id;
-    public $room_id;
-    public $task_id;
-    public $shift_code;
-    public $readiness_status;
-    public $inspection_status;
-    public $notes;
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $user_id;
+    protected $room_id;
+    protected $task_id;
+    protected $shift_code;
+    protected $readiness_status;
+    protected $inspection_status;
+    protected $notes;
+    protected $created_at;
+    protected $updated_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->setAssignmentContext(['room_id', 'task_id', 'user_id']);
+        $this->registerAggregate('rooms', Room::class);
+        $this->registerAggregate('tasks', HousekeepingTask::class);
+        $this->registerAggregate('maintenanceOrders', MaintenanceOrder::class);
+    }
 
     public function all() { /* TODO: Load housekeeper workspace rows. */ }
     public function find($id) { /* TODO: Load a single housekeeper workspace row. */ }

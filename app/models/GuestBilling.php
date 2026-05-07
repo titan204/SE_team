@@ -1,7 +1,16 @@
 <?php
 
-class GuestBilling extends Model
+class GuestBilling extends AbstractBilling
 {
+    public function __construct($db = null, $invoice = null, array $aggregates = [])
+    {
+        parent::__construct($db, $invoice, $aggregates);
+        $this->setBillingSubject('guest_reservation');
+        $this->registerAggregate('reservation', Reservation::class);
+        $this->registerAggregate('guest', Guest::class);
+        $this->registerAggregate('paymentProcessor', PaymentService::class);
+    }
+
     const TAX_RATE = 0.10; // 10% — configurable
 
     // ── Step 1: Load full billing state ──────────────────────
@@ -256,7 +265,7 @@ class GuestBilling extends Model
             return ['success' => false, 'errors' => ['Payment total must equal grand total.']];
         }
 
-        $svc    = new PaymentService();
+        $svc    = $this->getAggregate('paymentProcessor') ?: new PaymentService($this->db);
         $errors = [];
         foreach ($payments as $p) {
             $method = $p['method'] ?? 'card';
