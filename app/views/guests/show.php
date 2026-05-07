@@ -1,4 +1,6 @@
-<?php $pageTitle = 'Guest Details'; 
+<?php
+$pageTitle = 'Guest Details';
+$guest = $guest ?? [];
 ob_start(); ?>
 
 <style>
