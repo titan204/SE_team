@@ -1,10 +1,4 @@
 <?php
-// ============================================================
-//  Payment Model — Payments against folios
-//  Table: payments
-//
-//  Usage: $payment = new Payment();
-// ============================================================
 
 class Payment extends Model
 {

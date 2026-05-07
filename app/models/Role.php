@@ -1,11 +1,4 @@
 <?php
-// ============================================================
-//  Role Model — Access roles (manager, front_desk, housekeeper)
-//  Table: roles
-//
-//  Usage: $role = new Role();
-// ============================================================
-
 class Role extends Model
 {
     public $id;

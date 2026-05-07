@@ -208,6 +208,42 @@ ob_start();
      </div>
     </div>
 
+    <!-- ── Personal Information ──────────────────────── -->
+    <div class="auth-section-title"><i class="bi bi-card-person me-1"></i>Personal Information <small style="font-weight:400;text-transform:none;letter-spacing:0;color:#b09080">(optional)</small></div>
+    <div class="row g-2">
+     <div class="col-md-6">
+      <div class="auth-field">
+       <label for="reg-nationality">Nationality</label>
+       <div class="input-icon-wrap">
+        <i class="bi bi-globe fi"></i>
+        <input type="text" id="reg-nationality" name="nationality"
+               class="auth-input<?= !empty($errors['nationality']) ? ' is-invalid' : '' ?>"
+               placeholder="e.g. Egyptian, British…"
+               value="<?= htmlspecialchars($old['nationality'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+               maxlength="80" autocomplete="country-name">
+       </div>
+       <?php if (!empty($errors['nationality'])): ?>
+       <div class="field-error"><i class="bi bi-x-circle-fill"></i><?= htmlspecialchars($errors['nationality'], ENT_QUOTES, 'UTF-8') ?></div>
+       <?php endif; ?>
+      </div>
+     </div>
+     <div class="col-md-6">
+      <div class="auth-field">
+       <label for="reg-dob">Date of Birth</label>
+       <div class="input-icon-wrap">
+        <i class="bi bi-calendar3 fi"></i>
+        <input type="date" id="reg-dob" name="date_of_birth"
+               class="auth-input<?= !empty($errors['date_of_birth']) ? ' is-invalid' : '' ?>"
+               value="<?= htmlspecialchars($old['date_of_birth'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+               max="<?= date('Y-m-d') ?>" autocomplete="bday">
+       </div>
+       <?php if (!empty($errors['date_of_birth'])): ?>
+       <div class="field-error"><i class="bi bi-x-circle-fill"></i><?= htmlspecialchars($errors['date_of_birth'], ENT_QUOTES, 'UTF-8') ?></div>
+       <?php endif; ?>
+      </div>
+     </div>
+    </div>
+
     <!-- ── Room Preferences ──────────────────────────── -->
     <div class="auth-section-title"><i class="bi bi-house me-1"></i>Room Preferences <small style="font-weight:400;text-transform:none;letter-spacing:0;color:#b09080">(optional)</small></div>
 

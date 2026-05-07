@@ -1,10 +1,5 @@
 <?php
-// ============================================================
-//  LostAndFound Model — Items found in rooms
-//  Table: lost_and_found
-//
-//  Usage: $item = new LostAndFound();
-// ============================================================
+
 
 class LostAndFound extends Model
 {

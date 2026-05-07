@@ -1,9 +1,5 @@
 <?php
-// ============================================================
-//  StockAlert Model — UC31: Trigger Low-Stock Alert
-//  Tables: supply_items, supply_inventory, low_stock_alerts,
-//          restocking_requisitions
-// ============================================================
+
 
 class StockAlert extends Model
 {

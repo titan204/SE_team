@@ -1,12 +1,5 @@
 <?php
-// ============================================================
-//  WorkOrder Model — UC34: Maintenance Work-Order Base
-//                    UC35: Emergency Repair
-//                    UC36: Preventative Maintenance
-//  Tables: work_orders, work_order_logs, assets,
-//          emergency_flags, property_wide_alerts,
-//          replacement_review_flags, preventative_schedules
-// ============================================================
+
 
 class WorkOrder extends Model
 {

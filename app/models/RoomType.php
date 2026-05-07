@@ -1,10 +1,4 @@
 <?php
-// ============================================================
-//  RoomType Model — Categories of rooms (Standard, Deluxe, Suite)
-//  Table: room_types
-//
-//  Usage: $roomType = new RoomType();
-// ============================================================
 
 class RoomType extends Model
 {

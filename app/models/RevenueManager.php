@@ -1,11 +1,4 @@
 <?php
-// ============================================================
-//  RevenueManager Model - Read-only revenue, folio, and audit
-//  scaffold for reporting integrations.
-//
-//  Usage:
-//    $revenueManager = new RevenueManager();
-// ============================================================
 
 class RevenueManager extends Model
 {

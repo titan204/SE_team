@@ -386,32 +386,61 @@ $roleLabel       = ucfirst(str_replace('_', ' ', $currentRole));
                 <!-- ── GUEST Navigation ── -->
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= APP_URL ?>/?url=rooms/guest">Rooms</a>
+                        <a class="nav-link" href="<?= APP_URL ?>/?url=rooms/guest">
+                            <i class="bi bi-door-open me-1"></i>Rooms
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="<?= APP_URL ?>/?url=home/externalServices">External Services Booking</a>
+                        <a class="nav-link" href="<?= APP_URL ?>/?url=guestProfile/index#reservations">
+                            <i class="bi bi-calendar-check me-1"></i>My Reservations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= APP_URL ?>/?url=home/externalServices">
+                            <i class="bi bi-stars me-1"></i>External Services
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="<?= APP_URL ?>/?url=feedback/create">
+                            <i class="bi bi-star-half me-1"></i>Leave Feedback
+                        </a>
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto align-items-center gap-2">
-                    <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center gap-2"
-                           href="<?= APP_URL ?>/?url=Home/guestprofile" title="My Profile">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                           href="#" data-bs-toggle="dropdown" aria-expanded="false">
                             <div style="
                                 width:34px;height:34px;border-radius:50%;
                                 background:linear-gradient(135deg,#9A3F3F,#D4B483);
                                 display:flex;align-items:center;justify-content:center;
                                 font-size:13px;font-weight:600;color:#fff;
                                 border:2px solid rgba(255,255,255,0.25);
-                            ">
-                                <?= strtoupper(substr($_SESSION['user_name'] ?? 'G', 0, 1)) ?>
-                            </div>
+                                flex-shrink:0;
+                            "><?= strtoupper(substr($_SESSION['user_name'] ?? 'G', 0, 1)) ?></div>
                             <span class="text-white" style="font-size:14px"><?= $currentUserName ?></span>
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= APP_URL ?>/?url=auth/logout">
-                            <i class="bi bi-box-arrow-right"></i> Logout
-                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="<?= APP_URL ?>/?url=guestProfile/index">
+                                <i class="bi bi-person me-1"></i>My Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?= APP_URL ?>/?url=guestProfile/index#reservations">
+                                <i class="bi bi-calendar-check me-1"></i>My Reservations
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?= APP_URL ?>/?url=guestProfile/index#preferences">
+                                <i class="bi bi-sliders me-1"></i>My Preferences
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?= APP_URL ?>/?url=feedback/create">
+                                <i class="bi bi-star-half me-1"></i>Leave Feedback
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?= APP_URL ?>/?url=feedback/myFeedback">
+                                <i class="bi bi-chat-quote me-1"></i>My Reviews
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="<?= APP_URL ?>/?url=auth/logout">
+                                <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+                            </a></li>
+                        </ul>
                     </li>
                 </ul>
 

@@ -1,10 +1,4 @@
 <?php
-// ============================================================
-//  HousekeepingTask Model — Cleaning & inspection tasks
-//  Table: housekeeping_tasks
-//
-//  Usage: $task = new HousekeepingTask();
-// ============================================================
 
 class HousekeepingTask extends Model
 {
