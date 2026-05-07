@@ -1,10 +1,5 @@
 <?php
-// ============================================================
-//  QAInspection Model — UC32: Manage Quality Assurance
-//                        UC33: Submit Quality Score
-//  Tables: qa_inspections, corrective_tasks,
-//          quality_scores, housekeeper_performance
-// ============================================================
+
 
 class QAInspection extends Model
 {

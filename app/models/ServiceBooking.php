@@ -1,8 +1,5 @@
 <?php
-// ============================================================
-//  ServiceBooking Model — Guest bookings for external services
-//  Table: service_bookings
-// ============================================================
+
 
 class ServiceBooking extends Model
 {

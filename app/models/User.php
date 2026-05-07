@@ -1,12 +1,5 @@
 <?php
-// ============================================================
-//  User Model — Staff accounts (Manager, Front-Desk, Housekeeper)
-//  Table: users
-//
-//  Usage:
-//    $user = new User();
-//    $all  = $user->all();
-// ============================================================
+
 
 class User extends Model
 {
@@ -59,7 +52,7 @@ class User extends Model
         $email    = mysqli_real_escape_string($this->db, $data['email']);
         $password = mysqli_real_escape_string($this->db, $data['password']);
         $role_id  = mysqli_real_escape_string($this->db, $data['role_id']);
-        mysqli_query($this->db, "INSERT INTO users (role_id, name, email, password) VALUES ('$role_id', '$name', '$email', '$password')");
+        mysqli_query($this->db, "INSERT INTO users (role_id, name, email, password, is_active) VALUES ('$role_id', '$name', '$email', '$password', 1)");
         return mysqli_insert_id($this->db);
     }
 

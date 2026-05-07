@@ -1,13 +1,4 @@
 <?php
-// ============================================================
-//  BillingController — Folios, charges, payments
-//  Routes:
-//    /billing              → index (list folios)
-//    /billing/show/5       → show folio details
-//    /billing/addCharge/5  → post a charge to folio #5
-//    /billing/payment/5    → record payment on folio #5
-//    /billing/invoice/5    → pro-forma invoice preview
-// ============================================================
 
 class BillingController extends Controller
 {

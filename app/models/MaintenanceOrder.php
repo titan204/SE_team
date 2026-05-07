@@ -1,10 +1,5 @@
 <?php
-// ============================================================
-//  MaintenanceOrder Model — Repair work orders
-//  Table: maintenance_orders
-//
-//  Usage: $order = new MaintenanceOrder();
-// ============================================================
+
 
 class MaintenanceOrder extends Model
 {

@@ -1,11 +1,4 @@
 <?php
-// ============================================================
-//  Housekeeper Model - Role-facing scaffold for room readiness
-//  and task execution hooks.
-//
-//  Usage:
-//    $housekeeper = new Housekeeper();
-// ============================================================
 
 class Housekeeper extends Model
 {

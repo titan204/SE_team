@@ -1,11 +1,4 @@
 <?php
-// ============================================================
-//  AuthController — Login / Logout / Session Management
-//  Routes:
-//    /auth/login   → login form
-//    /auth/doLogin → process login
-//    /auth/logout  → destroy session
-// ============================================================
 
 class AuthController extends Controller
 {
@@ -120,6 +113,8 @@ class AuthController extends Controller
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
+        $nationality = trim($_POST['nationality'] ?? '');
+        $dateOfBirth = trim($_POST['date_of_birth'] ?? '');
         $password = $_POST['password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
         $roomTypeId = trim($_POST['room_type_id'] ?? '');
@@ -213,27 +208,42 @@ class AuthController extends Controller
             $errors['special_notes'] = 'Special notes must be 255 characters or less.';
         }
 
+        // Validate optional personal info
+        if ($nationality !== '' && strlen($nationality) > 80) {
+            $errors['nationality'] = 'Nationality must be 80 characters or fewer.';
+        }
+        if ($dateOfBirth !== '') {
+            $d = DateTime::createFromFormat('Y-m-d', $dateOfBirth);
+            if (!$d || $d->format('Y-m-d') !== $dateOfBirth) {
+                $errors['date_of_birth'] = 'Please enter a valid date (YYYY-MM-DD).';
+            } elseif ($d > new DateTime()) {
+                $errors['date_of_birth'] = 'Date of birth cannot be in the future.';
+            }
+        }
+
         $preferenceOldInput = [
-            'room_type_id' => $roomTypeId,
-            'smoking_preference' => $smokingPreference,
-            'floor_preference' => $floorPreference,
-            'special_requests' => $specialRequests,
-            'quiet_room' => $quietRoom,
-            'near_elevator' => $nearElevator,
+            'nationality'            => $nationality,
+            'date_of_birth'          => $dateOfBirth,
+            'room_type_id'           => $roomTypeId,
+            'smoking_preference'     => $smokingPreference,
+            'floor_preference'       => $floorPreference,
+            'special_requests'       => $specialRequests,
+            'quiet_room'             => $quietRoom,
+            'near_elevator'          => $nearElevator,
             'floor_level_preference' => $floorLevelPreference,
-            'view_preference' => $viewPreference,
-            'extra_pillow' => $extraPillow,
-            'extra_blanket' => $extraBlanket,
-            'baby_crib' => $babyCrib,
-            'accessible_room' => $accessibleRoom,
-            'connecting_room' => $connectingRoom,
+            'view_preference'        => $viewPreference,
+            'extra_pillow'           => $extraPillow,
+            'extra_blanket'          => $extraBlanket,
+            'baby_crib'              => $babyCrib,
+            'accessible_room'        => $accessibleRoom,
+            'connecting_room'        => $connectingRoom,
             'early_check_in_request' => $earlyCheckInRequest,
-            'late_check_in_request' => $lateCheckInRequest,
-            'allergy_free_room' => $allergyFreeRoom,
-            'non_smoking_guarantee' => $nonSmokingGuarantee,
-            'work_desk_needed' => $workDeskNeeded,
-            'balcony_preferred' => $balconyPreferred,
-            'special_notes' => $specialNotes,
+            'late_check_in_request'  => $lateCheckInRequest,
+            'allergy_free_room'      => $allergyFreeRoom,
+            'non_smoking_guarantee'  => $nonSmokingGuarantee,
+            'work_desk_needed'       => $workDeskNeeded,
+            'balcony_preferred'      => $balconyPreferred,
+            'special_notes'          => $specialNotes,
         ];
 
         $guestRole = $roleModel->findByName('guest');
@@ -267,9 +277,11 @@ class AuthController extends Controller
         }
 
         $guestId = $guestModel->create([
-            'name'  => $name,
-            'email' => $email,
-            'phone' => $phone,
+            'name'          => $name,
+            'email'         => $email,
+            'phone'         => $phone,
+            'nationality'   => $nationality,
+            'date_of_birth' => $dateOfBirth,
         ]);
 
         $userId = $userModel->create([

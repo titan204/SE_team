@@ -1,12 +1,5 @@
 <?php
-// ============================================================
-//  Room Model — Individual hotel rooms
-//  Table: rooms
-//
-//  Usage:
-//    $room = new Room();
-//    $all  = $room->all();
-// ============================================================
+
 
 class Room extends Model
 {

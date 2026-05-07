@@ -1,18 +1,5 @@
 <?php
-// ============================================================
-//  PaymentService Model — UC12: Charge Guest Card
-//  Shared automated service called by:
-//    UC10 (no-show penalty), UC04 (checkout), UC37 (shipping)
-//  NOT user-facing — no controller or views.
-//
-//  Tables: transactions, pending_debts, payment_retry_queue,
-//          payment_methods
-//
-//  Usage:
-//    $svc = new PaymentService();
-//    $result = $svc->chargeGuestCard($guestId, $amount, $reason, $reservationId);
-//    // Returns: { success, transactionId } or { error, queued }
-// ============================================================
+
 
 class PaymentService extends Model
 {

@@ -15,21 +15,9 @@ class HomeController extends Controller
 
     public function guestprofile()
     {
-        if (empty($_SESSION['user_id'])) {
-            $this->redirect('auth/login');
-        }
-
-        $userModel = new User();
-        $guest = $userModel->find($_SESSION['user_id']);
-
-        if (!$guest) {
-            $this->redirect('');
-        }
-
-        $this->view('home/guestprofile', [
-            'pageTitle' => 'My Profile',
-            'guest'     => $guest,
-        ]);
+        // Redirect to the full self-service profile controller.
+        // Kept for backward-compatibility with existing bookmarks/links.
+        $this->redirect('guestProfile/index');
     }
 
     public function externalServices()

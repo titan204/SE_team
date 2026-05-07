@@ -1,8 +1,4 @@
 <?php
-// ============================================================
-//  Reservation Model — Bookings / check-in / check-out
-//  Table: reservations
-// ============================================================
 
 class Reservation extends Model
 {
@@ -380,18 +376,21 @@ class Reservation extends Model
     }
 
     public function findByGuest($guestId)
-    {
-        $guestId = (int) $guestId;
-        $sql     = "SELECT r.*, rm.room_number, rt.name AS room_type_name
-                    FROM reservations r
-                    JOIN rooms rm ON r.room_id = rm.id
-                    JOIN room_types rt ON rm.room_type_id = rt.id
-                    WHERE r.guest_id = $guestId
-                    ORDER BY r.check_in_date DESC";
-        $result  = mysqli_query($this->db, $sql);
-        return mysqli_fetch_all($result, MYSQLI_ASSOC);
-    }
-
+{
+    $guestId = (int) $guestId;
+    $sql     = "SELECT r.*,
+                       r.check_in_date  AS check_in,
+                       r.check_out_date AS check_out,
+                       rm.room_number,
+                       rt.name AS room_type_name
+                FROM reservations r
+                JOIN rooms rm ON r.room_id = rm.id
+                JOIN room_types rt ON rm.room_type_id = rt.id
+                WHERE r.guest_id = $guestId
+                ORDER BY r.check_in_date DESC";
+    $result  = mysqli_query($this->db, $sql);
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
     public function findGroupReservations($groupId)
     {
         $groupId = (int) $groupId;

@@ -1,11 +1,4 @@
 <?php
-// ============================================================
-//  Supervisor Model - Oversight scaffold for inspection,
-//  approval, and escalation workflows.
-//
-//  Usage:
-//    $supervisor = new Supervisor();
-// ============================================================
 
 class Supervisor extends Model
 {

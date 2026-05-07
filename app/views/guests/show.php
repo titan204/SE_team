@@ -138,12 +138,11 @@ body { background: #FBF9D1; }
                 </div>
                 <div class="col-md-4 mb-2">
                     <div class="info-label">Date of Birth</div>
-                    <div><?= htmlspecialchars($guest['date_of_birth'] ?? '-') ?></div>
+                    <div><?= !empty($guest['date_of_birth'])
+                        ? htmlspecialchars(date('M j, Y', strtotime($guest['date_of_birth'])))
+                        : '-' ?></div>
                 </div>
-                <div class="col-md-4 mb-2">
-                    <div class="info-label">National ID</div>
-                    <div><?= htmlspecialchars($guest['national_id'] ?? '-') ?></div>
-                </div>
+                
                 <div class="col-md-4 mb-2">
                     <div class="info-label">Member Since</div>
                     <div><?= htmlspecialchars($guest['created_at'] ?? '-') ?></div>
@@ -191,8 +190,8 @@ body { background: #FBF9D1; }
                 <ul class="list-group list-group-flush">
                     <?php foreach ($preferences as $pref): ?>
                         <li class="list-group-item">
-                            <span class="info-label"><?= htmlspecialchars($pref['preference_type']) ?>:</span>
-                            <?= htmlspecialchars($pref['preference_value']) ?>
+                            <span class="info-label"><?= htmlspecialchars($pref['pref_key'] ?? '-') ?>:</span>
+                             <?= htmlspecialchars($pref['pref_value'] ?? '-') ?>
                         </li>
                     <?php endforeach; ?>
                 </ul>
@@ -251,12 +250,23 @@ body { background: #FBF9D1; }
                 <p class="text-muted">No feedback recorded.</p>
             <?php else: ?>
                 <?php foreach ($feedback as $fb): ?>
+                <?php
+                    // Support both new column (overall_rating) and legacy (rating)
+                    $fbRating  = $fb['overall_rating'] ?? $fb['rating'] ?? '-';
+                    // Support both new column (comment) and legacy (comments)
+                    $fbComment = (isset($fb['comment']) && $fb['comment'] !== '')
+                        ? $fb['comment']
+                        : ($fb['comments'] ?? '');
+                    $fbDate = $fb['created_at'] ?? $fb['submitted_at'] ?? '';
+                ?>
                 <div class="border rounded p-3 mb-2">
                     <div class="d-flex justify-content-between">
-                        <span class="info-label">Rating: <?= $fb['rating'] ?? '-' ?>/5</span>
-                        <small class="text-muted"><?= htmlspecialchars($fb['created_at'] ?? '') ?></small>
+                        <span class="info-label">Overall Rating: <?= htmlspecialchars((string)$fbRating) ?>/5</span>
+                        <small class="text-muted"><?= htmlspecialchars($fbDate) ?></small>
                     </div>
-                    <p class="mb-0 mt-1"><?= htmlspecialchars($fb['comment'] ?? '-') ?></p>
+                    <?php if (!empty($fbComment)): ?>
+                    <p class="mb-0 mt-1"><?= htmlspecialchars($fbComment) ?></p>
+                    <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             <?php endif; ?>
