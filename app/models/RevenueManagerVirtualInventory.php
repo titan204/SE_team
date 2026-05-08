@@ -13,19 +13,6 @@ class RevenueManagerVirtualInventory extends AbstractReport
         $this->registerAggregate('reservations', Reservation::class);
     }
 
-    public function getRoomVirtualCost($roomId) {}
-
-    public function getGuestVirtualConsumption($guestId) {}
-
-    public function getDepartmentCosts() {}
-
-    public function calculateRevenueImpact() {}
-
-    public function checkCostLimits() {}
-
-    public function generateFinancialSummary() {}
-
-    public function linkBillingFolio() {}
 
     // ── UC07: Virtual Inventory ──────────────────────────────
 
