@@ -14,7 +14,7 @@ define('DB_CHARSET',  'utf8mb4');
 
 // ── Application ─────────────────────────────────────────────
 define('APP_NAME',    'Hotel Management System');
-define('APP_URL', 'http://localhost/');
+define('APP_URL', 'http://localhost/SE_team');
 define('APP_VERSION', '1.0.0');
 
 // ── Session ──────────────────────────────────────────────────

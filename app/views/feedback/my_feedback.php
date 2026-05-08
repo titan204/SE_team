@@ -94,11 +94,11 @@ ob_start();
           <div class="mfb-meta">
             Stay: <strong><?= $h($fb['check_in_date'] ?? '') ?></strong>
             → <strong><?= $h($fb['check_out_date'] ?? '') ?></strong>
-            &nbsp;·&nbsp; Submitted: <?= $h(date('M j, Y', strtotime($fb['created_at']))) ?>
+            &nbsp;·&nbsp; Submitted: <?= $h(date('M j, Y', strtotime($fb['created_at'] ?? 'now'))) ?>
           </div>
         </div>
-        <span class="<?= $fb['is_resolved'] ? 'badge-resolved' : 'badge-pending' ?>">
-          <?= $fb['is_resolved'] ? '✓ Resolved' : 'Pending Review' ?>
+        <span class="<?= ($fb['is_resolved'] ?? 0) ? 'badge-resolved' : 'badge-pending' ?>">
+          <?= ($fb['is_resolved'] ?? 0) ? '✓ Resolved' : 'Pending Review' ?>
         </span>
       </div>
 
@@ -112,7 +112,7 @@ ob_start();
         ] as $col => $lbl): ?>
           <div class="mfb-rating-box">
             <div class="mfb-rating-lbl"><?= $lbl ?></div>
-            <?= $stars((int)$fb[$col]) ?>
+            <?= $stars((int)($fb[$col] ?? 0)) ?>
           </div>
         <?php endforeach; ?>
       </div>
@@ -122,7 +122,7 @@ ob_start();
       <?php endif; ?>
 
       <div class="mfb-rec">
-        <?php if ($fb['recommend_hotel']): ?>
+        <?php if ($fb['recommend_hotel'] ?? false): ?>
           <i class="bi bi-hand-thumbs-up-fill" style="color:#22c55e;font-size:1.1rem;"></i>
           <span style="color:#15803d;font-weight:600;">Would recommend Grand Hotel</span>
         <?php else: ?>
