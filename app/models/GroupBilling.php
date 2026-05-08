@@ -4,8 +4,18 @@
 //  Tables: group_reservations, group_members, invoices
 // ============================================================
 
-class GroupBilling extends Model
+class GroupBilling extends AbstractBilling
 {
+    public function __construct($db = null, $invoice = null, array $aggregates = [])
+    {
+        parent::__construct($db, $invoice, $aggregates);
+        $this->setBillingSubject('group_reservation');
+        $this->registerAggregate('reservations', Reservation::class);
+        $this->registerAggregate('guests', Guest::class);
+        $this->registerAggregate('folios', Folio::class);
+        $this->registerAggregate('paymentProcessor', PaymentService::class);
+    }
+
     // ── Group Reservation Queries ────────────────────────────
 
     /**

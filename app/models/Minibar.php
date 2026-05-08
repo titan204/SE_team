@@ -1,8 +1,16 @@
 <?php
 
 
-class Minibar extends Model
+class Minibar extends AbstractModel
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('rooms', Room::class);
+        $this->registerAggregate('reservations', Reservation::class);
+        $this->registerAggregate('stockAlerts', StockAlert::class);
+    }
+
     // ── UC29 Step 1: Inventory list for a room ───────────────
 
     /**

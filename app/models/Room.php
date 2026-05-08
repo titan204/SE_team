@@ -1,16 +1,32 @@
 <?php
 
 
-class Room extends Model
+class Room extends AbstractModel
 {
-    public $id;
-    public $room_type_id;
-    public $room_number;
-    public $floor;
-    public $status;       // available, occupied, dirty, cleaning, inspecting, out_of_order
-    public $notes;
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $room_type_id;
+    protected $room_number;
+    protected $floor;
+    protected $status;       // available, occupied, dirty, cleaning, inspecting, out_of_order
+    protected $notes;
+    protected $created_at;
+    protected $updated_at;
+    private $features;
+
+    public function __construct($db = null, $features = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->features = $features ?: new RoomFeatures();
+        $this->registerAggregate('roomType', RoomType::class);
+        $this->registerAggregate('reservations', Reservation::class);
+        $this->registerAggregate('housekeepingTasks', HousekeepingTask::class);
+        $this->registerAggregate('maintenanceOrders', MaintenanceOrder::class);
+    }
+
+    public function getRoomFeatures()
+    {
+        return $this->features;
+    }
 
     /**
      * State machine — only these transitions are valid:

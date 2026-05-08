@@ -1,8 +1,16 @@
 <?php
 
 
-class PaymentService extends Model
+class PaymentService extends AbstractModel
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('guests', Guest::class);
+        $this->registerAggregate('reservations', Reservation::class);
+        $this->registerAggregate('auditLogs', AuditLog::class);
+    }
+
     // ── Public API ────────────────────────────────────────────
 
     /**

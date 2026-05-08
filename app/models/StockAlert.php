@@ -1,8 +1,15 @@
 <?php
 
 
-class StockAlert extends Model
+class StockAlert extends AbstractModel
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('minibar', Minibar::class);
+        $this->registerAggregate('auditLogs', AuditLog::class);
+    }
+
     /**
      * UC31: Check stock levels. If item_id given → check that item only.
      * Otherwise check ALL active items.

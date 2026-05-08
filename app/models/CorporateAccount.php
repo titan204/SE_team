@@ -6,14 +6,20 @@
 //  Usage: $corp = new CorporateAccount();
 // ============================================================
 
-class CorporateAccount extends Model
+class CorporateAccount extends AbstractModel
 {
-    public $id;
-    public $company_name;
-    public $contact_email;
-    public $contact_phone;
-    public $contracted_rate;
-    public $created_at;
+    protected $id;
+    protected $company_name;
+    protected $contact_email;
+    protected $contact_phone;
+    protected $contracted_rate;
+    protected $created_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('guests', Guest::class);
+    }
 
     public function all()
     {

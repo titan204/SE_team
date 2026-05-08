@@ -1,16 +1,23 @@
 <?php
 
 
-class User extends Model
+class User extends AbstractUser implements AuthenticatableInterface
 {
-    public $id;
-    public $role_id;
-    public $name;
-    public $email;
-    public $password;
-    public $is_active;
-    public $created_at;
-    public $updated_at;
+    protected $id;
+    protected $role_id;
+    protected $name;
+    protected $email;
+    protected $password;
+    protected $is_active;
+    protected $created_at;
+    protected $updated_at;
+
+    public function __construct($db = null, $profileData = null, array $aggregates = [])
+    {
+        parent::__construct($db, $profileData, $aggregates);
+        $this->registerAggregate('role', Role::class);
+        $this->registerAggregate('auditLogs', AuditLog::class);
+    }
 
     // ── CRUD ─────────────────────────────────────────────────
 
@@ -48,6 +55,7 @@ class User extends Model
 
     public function create($data)
     {
+        $this->hydrateProfileData($data);
         $name     = mysqli_real_escape_string($this->db, $data['name']);
         $email    = mysqli_real_escape_string($this->db, $data['email']);
         $password = mysqli_real_escape_string($this->db, $data['password']);
@@ -58,6 +66,7 @@ class User extends Model
 
     public function update($id, $data)
     {
+        $this->hydrateProfileData($data);
         $id = mysqli_real_escape_string($this->db, $id);
 
         $updates = [];

@@ -10,10 +10,10 @@ class Model
     // Shared mysqli connection available to all child models
     protected $db;
 
-    public function __construct()
+    public function __construct($db = null)
     {
-        // Grab the single shared connection from the Database singleton
-        $this->db = Database::getConnection();
+        // Allow tests or composed models to inject a connection while keeping the singleton default.
+        $this->db = $db ?: Database::getConnection();
     }
 
     /** Expose the DB connection for raw queries in controllers. */
