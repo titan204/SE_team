@@ -15,12 +15,29 @@ require_once CORE_PATH . '/Model.php';
 require_once CORE_PATH . '/Controller.php';
 require_once CORE_PATH . '/Router.php';
 
-// 3. Load all model files so you can use: new Guest(), new Room(), etc.
+// 3. Load OOP contracts and abstract bases before concrete models.
+foreach (glob(APP_PATH . '/interfaces/*.php') as $interfaceFile) {
+    require_once $interfaceFile;
+}
+
+$abstractBase = CORE_PATH . '/abstracts/AbstractModel.php';
+if (file_exists($abstractBase)) {
+    require_once $abstractBase;
+}
+
+foreach (glob(CORE_PATH . '/abstracts/*.php') as $abstractFile) {
+    if ($abstractFile === $abstractBase) {
+        continue;
+    }
+    require_once $abstractFile;
+}
+
+// 4. Load all model files so you can use: new Guest(), new Room(), etc.
 foreach (glob(APP_PATH . '/models/*.php') as $modelFile) {
     require_once $modelFile;
 }
 
-// 4. Start session
+// 5. Start session
 $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || (!empty($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
 
@@ -29,6 +46,6 @@ ini_set('session.use_strict_mode', '1');
 
 session_start();
 
-// 5. Dispatch the request through the router
+// 6. Dispatch the request through the router
 $router = new Router();
 $router->dispatch();

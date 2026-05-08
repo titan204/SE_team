@@ -1,8 +1,15 @@
 <?php
 
 
-class ServiceBooking extends Model
+class ServiceBooking extends AbstractModel
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('guest', Guest::class);
+        $this->registerAggregate('externalService', ExternalService::class);
+    }
+
     public function create($data)
     {
         $guestId = (int) ($data['guest_id'] ?? 0);

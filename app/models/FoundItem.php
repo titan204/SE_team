@@ -5,8 +5,16 @@
 //          item_returns
 // ============================================================
 
-class FoundItem extends Model
+class FoundItem extends AbstractModel
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('guests', Guest::class);
+        $this->registerAggregate('rooms', Room::class);
+        $this->registerAggregate('auditLogs', AuditLog::class);
+    }
+
     // ── UC30: Housekeeper logs a found item ──────────────────
 
     /**

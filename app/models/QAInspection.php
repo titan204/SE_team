@@ -1,8 +1,18 @@
 <?php
 
 
-class QAInspection extends Model
+class QAInspection extends AbstractReport
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->setReportScope('quality_assurance');
+        $this->setReportInputs(['room_id', 'housekeeper_id', 'days']);
+        $this->registerAggregate('rooms', Room::class);
+        $this->registerAggregate('housekeepers', Housekeeper::class);
+        $this->registerAggregate('feedback', Feedback::class);
+    }
+
     // ── UC32 ─────────────────────────────────────────────────
 
     /**

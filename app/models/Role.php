@@ -1,9 +1,15 @@
 <?php
-class Role extends Model
+class Role extends AbstractModel
 {
-    public $id;
-    public $name;
-    public $created_at;
+    protected $id;
+    protected $name;
+    protected $created_at;
+
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('users', User::class);
+    }
 
     public function all()
     {

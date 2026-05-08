@@ -1,8 +1,16 @@
 <?php
 
 
-class WorkOrder extends Model
+class WorkOrder extends AbstractModel
 {
+    public function __construct($db = null, array $aggregates = [])
+    {
+        parent::__construct($db, $aggregates);
+        $this->registerAggregate('rooms', Room::class);
+        $this->registerAggregate('users', User::class);
+        $this->registerAggregate('auditLogs', AuditLog::class);
+    }
+
     // ── UC34: Shared service functions ───────────────────────
 
     /**
