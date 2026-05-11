@@ -123,10 +123,6 @@ class User extends AbstractUser implements AuthenticatableInterface
             return false;
         }
 
-        if (password_verify($plainPassword, $storedPassword)) {
-            return true;
-        }
-
-        return $plainPassword === $storedPassword;
+        return password_verify($plainPassword, $storedPassword);
     }
 }

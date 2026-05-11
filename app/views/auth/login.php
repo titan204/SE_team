@@ -435,7 +435,6 @@ ob_start();
             <input type="checkbox" name="remember_me" id="remember_me">
             <span>Remember me</span>
           </label>
-          <a href="<?= APP_URL ?>/?url=auth/forgotPassword" class="auth-forgot">Forgot password?</a>
         </div>
 
         <!-- Submit -->
