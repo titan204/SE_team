@@ -359,34 +359,47 @@ INSERT INTO `external_services` (`id`, `name`, `service_type`, `description`, `c
 
 -- --------------------------------------------------------
 
+-- --------------------------------------------------------
+
 --
 -- Table structure for table `feedback`
 --
 
 CREATE TABLE `feedback` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `reservation_id` int(10) UNSIGNED NOT NULL,
-  `guest_id` int(10) UNSIGNED NOT NULL,
-  `rating` tinyint(3) UNSIGNED NOT NULL CHECK (`rating` between 1 and 5),
-  `comments` text DEFAULT NULL,
-  `submitted_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `overall_score` tinyint(3) UNSIGNED DEFAULT NULL,
-  `flagged_for_qa` tinyint(1) NOT NULL DEFAULT 0
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `id`                 int(10) unsigned  NOT NULL AUTO_INCREMENT,
+  `reservation_id`     int(10) unsigned  NOT NULL,
+  `guest_id`           int(10) unsigned  NOT NULL,
+  `guest_name`         varchar(120)      DEFAULT NULL,
+  `overall_rating`     tinyint(4)        NOT NULL DEFAULT 1,
+  `cleanliness_rating` tinyint(4)        NOT NULL DEFAULT 1,
+  `staff_rating`       tinyint(4)        NOT NULL DEFAULT 1,
+  `food_rating`        tinyint(4)        NOT NULL DEFAULT 1,
+  `facilities_rating`  tinyint(4)        NOT NULL DEFAULT 1,
+  `comment`            text              DEFAULT NULL,
+  `recommend_hotel`    tinyint(1)        NOT NULL DEFAULT 1,
+  `is_resolved`        tinyint(1)        NOT NULL DEFAULT 0,
+  `resolved_at`        timestamp         NULL DEFAULT NULL,
+  `resolved_by`        int(10) unsigned  DEFAULT NULL,
+  `created_at`         timestamp         NOT NULL DEFAULT current_timestamp(),
+  `rating`             tinyint(3) unsigned NOT NULL DEFAULT 1,
+  `comments`           text              DEFAULT NULL,
+  `submitted_at`       timestamp         NOT NULL DEFAULT current_timestamp(),
+  `overall_score`      tinyint(3) unsigned DEFAULT NULL,
+  `flagged_for_qa`     tinyint(1)        NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `feedback`
 --
 
-INSERT INTO `feedback` (`id`, `reservation_id`, `guest_id`, `rating`, `comments`, `submitted_at`, `overall_score`, `flagged_for_qa`) VALUES
-(1, 2, 2, 4, 'Great stay overall. Room was clean and the front desk staff were very helpful. WiFi could be faster.', '2026-05-01 21:45:43', NULL, 0),
-(2, 3, 7, 5, 'Absolutely wonderful experience. The spa was exceptional and the room was spotless. Will return!', '2026-05-01 21:45:43', NULL, 0),
-(3, 4, 6, 3, 'Room and food were good, but the late checkout fee was unexpected and not communicated upfront.', '2026-05-01 21:45:43', NULL, 0),
-(4, 9, 1, 5, 'The anniversary surprise exceeded all expectations. Suite was magnificent. Cannot wait to come back.', '2026-05-01 21:45:43', NULL, 0),
-(5, 2, 2, 4, 'Great stay overall. Room was clean and the front desk staff were very helpful. WiFi could be faster.', '2026-05-01 21:53:46', NULL, 0),
-(6, 3, 7, 5, 'Absolutely wonderful experience. The spa was exceptional and the room was spotless. Will return!', '2026-05-01 21:53:46', NULL, 0),
-(7, 4, 6, 3, 'Room and food were good, but the late checkout fee was unexpected and not communicated upfront.', '2026-05-01 21:53:46', NULL, 0),
-(8, 9, 1, 5, 'The anniversary surprise exceeded all expectations. Suite was magnificent. Cannot wait to come back.', '2026-05-01 21:53:46', NULL, 0);
+INSERT INTO `feedback` (`id`, `reservation_id`, `guest_id`, `overall_rating`, `cleanliness_rating`, `staff_rating`, `food_rating`, `facilities_rating`, `comment`, `recommend_hotel`, `rating`, `comments`, `submitted_at`, `flagged_for_qa`) VALUES
+(1, 2, 2, 4, 4, 5, 3, 4, 'Great stay overall. Room was clean and the front desk staff were very helpful. WiFi could be faster.', 1, 4, 'Great stay overall. Room was clean and the front desk staff were very helpful. WiFi could be faster.', '2026-05-01 21:45:43', 0),
+(2, 3, 7, 5, 5, 5, 5, 5, 'Absolutely wonderful experience. The spa was exceptional and the room was spotless. Will return!', 1, 5, 'Absolutely wonderful experience. The spa was exceptional and the room was spotless. Will return!', '2026-05-01 21:45:43', 0),
+(3, 4, 6, 3, 4, 4, 3, 3, 'Room and food were good, but the late checkout fee was unexpected and not communicated upfront.', 0, 3, 'Room and food were good, but the late checkout fee was unexpected and not communicated upfront.', '2026-05-01 21:45:43', 0),
+(4, 9, 1, 5, 5, 5, 5, 5, 'The anniversary surprise exceeded all expectations. Suite was magnificent. Cannot wait to come back.', 1, 5, 'The anniversary surprise exceeded all expectations. Suite was magnificent. Cannot wait to come back.', '2026-05-01 21:45:43', 0);
+
+-- --------------------------------------------------------
 
 -- --------------------------------------------------------
 
@@ -2096,9 +2109,8 @@ ALTER TABLE `external_services`
 -- Indexes for table `feedback`
 --
 ALTER TABLE `feedback`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `fk_feedback_res` (`reservation_id`),
-  ADD KEY `fk_feedback_guest` (`guest_id`);
+  ADD KEY `fk_feedback_res`      (`reservation_id`),
+  ADD KEY `fk_feedback_resolver` (`resolved_by`);
 
 --
 -- Indexes for table `final_invoices`
@@ -2871,12 +2883,8 @@ ALTER TABLE `corrective_tasks`
 ALTER TABLE `emergency_flags`
   ADD CONSTRAINT `fk_ef_wo` FOREIGN KEY (`work_order_id`) REFERENCES `work_orders` (`id`) ON DELETE CASCADE;
 
---
--- Constraints for table `feedback`
---
-ALTER TABLE `feedback`
-  ADD CONSTRAINT `fk_feedback_guest` FOREIGN KEY (`guest_id`) REFERENCES `guests` (`id`),
-  ADD CONSTRAINT `fk_feedback_res` FOREIGN KEY (`reservation_id`) REFERENCES `reservations` (`id`) ON DELETE CASCADE;
+-- NOTE: Feedback FK constraints are declared at the end of this file
+--       (ALTER TABLE `feedback` with fk_feedback_guest, fk_feedback_reservation, fk_feedback_resolver).
 
 --
 -- Constraints for table `final_invoices`
@@ -3168,39 +3176,7 @@ ALTER TABLE `work_orders`
 ALTER TABLE `work_order_logs`
   ADD CONSTRAINT `fk_wol_user` FOREIGN KEY (`performed_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_wol_wo` FOREIGN KEY (`work_order_id`) REFERENCES `work_orders` (`id`) ON DELETE CASCADE;
--- --------------------------------------------------------
--- Table structure for table `feedback`
--- Guest post-stay feedback and ratings
--- --------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS `feedback` (
-  `id`                 int(10) unsigned  NOT NULL AUTO_INCREMENT,
-  `reservation_id`     int(10) unsigned  NOT NULL,
-  `guest_id`           int(10) unsigned  NOT NULL,
-  `guest_name`         varchar(120)      DEFAULT NULL,
-  `overall_rating`     tinyint(4)        NOT NULL DEFAULT 1,
-  `cleanliness_rating` tinyint(4)        NOT NULL DEFAULT 1,
-  `staff_rating`       tinyint(4)        NOT NULL DEFAULT 1,
-  `food_rating`        tinyint(4)        NOT NULL DEFAULT 1,
-  `facilities_rating`  tinyint(4)        NOT NULL DEFAULT 1,
-  `comment`            text              DEFAULT NULL,
-  `recommend_hotel`    tinyint(1)        NOT NULL DEFAULT 1,
-  `is_resolved`        tinyint(1)        NOT NULL DEFAULT 0,
-  `resolved_at`        timestamp         NULL DEFAULT NULL,
-  `resolved_by`        int(10) unsigned  DEFAULT NULL,
-  `created_at`         timestamp         NOT NULL DEFAULT current_timestamp(),
-  -- Legacy columns (kept for backwards compatibility)
-  `rating`             tinyint(3) unsigned NOT NULL DEFAULT 1,
-  `comments`           text              DEFAULT NULL,
-  `submitted_at`       timestamp         NOT NULL DEFAULT current_timestamp(),
-  `overall_score`      tinyint(3) unsigned DEFAULT NULL,
-  `flagged_for_qa`     tinyint(1)        NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`),
-  KEY `idx_feedback_guest`   (`guest_id`),
-  KEY `idx_feedback_rating`  (`overall_rating`),
-  KEY `idx_feedback_created` (`created_at`),
-  KEY `idx_feedback_status`  (`is_resolved`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Constraints for table `feedback`
