@@ -91,6 +91,7 @@ class Feedback extends AbstractReport
              INNER  JOIN reservations r  ON r.id  = f.reservation_id
              LEFT   JOIN rooms rm        ON rm.id = r.room_id
              WHERE  f.guest_id = $guestId
+             GROUP  BY f.id
              ORDER  BY $created DESC");
 
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
