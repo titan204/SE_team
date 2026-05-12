@@ -23,14 +23,25 @@ class User extends AbstractUser implements AuthenticatableInterface
 
     public function all()
     {
-        $result = mysqli_query($this->db, "SELECT * FROM users JOIN roles ON users.role_id = roles.id");
+        $result = mysqli_query(
+            $this->db,
+            "SELECT users.id, users.role_id, users.name, users.email,
+                    users.is_active, users.created_at, users.updated_at,
+                    roles.name AS role_name
+             FROM users
+             JOIN roles ON users.role_id = roles.id"
+        );
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
     public function find($id)
     {
-        $id = mysqli_real_escape_string($this->db, $id);
-        $result = mysqli_query($this->db, "SELECT * FROM users WHERE id = '$id'");
+        $id     = mysqli_real_escape_string($this->db, $id);
+        $result = mysqli_query(
+            $this->db,
+            "SELECT id, role_id, name, email, is_active, created_at, updated_at
+             FROM users WHERE id = '$id'"
+        );
         return mysqli_fetch_assoc($result);
     }
 
@@ -56,14 +67,28 @@ class User extends AbstractUser implements AuthenticatableInterface
     public function create($data)
     {
         $this->hydrateProfileData($data);
-        $name     = mysqli_real_escape_string($this->db, $data['name']);
-        $email    = mysqli_real_escape_string($this->db, $data['email']);
-        $password = mysqli_real_escape_string($this->db, $data['password']);
-        $role_id  = mysqli_real_escape_string($this->db, $data['role_id']);
-        mysqli_query($this->db, "INSERT INTO users (role_id, name, email, password, is_active) VALUES ('$role_id', '$name', '$email', '$password', 1)");
+        $name    = mysqli_real_escape_string($this->db, $data['name']);
+        $email   = mysqli_real_escape_string($this->db, $data['email']);
+        $role_id = mysqli_real_escape_string($this->db, $data['role_id']);
+
+        // Always hash through the central helper — callers MUST pass plaintext here.
+        // This guarantees bcrypt (PASSWORD_DEFAULT) regardless of which controller
+        // creates the user (self-registration, Admin, Front Desk, etc.).
+        $password = mysqli_real_escape_string($this->db, $this->hashPassword($data['password']));
+
+        mysqli_query($this->db,
+            "INSERT INTO users (role_id, name, email, password, is_active)
+             VALUES ('$role_id', '$name', '$email', '$password', 1)"
+        );
         return mysqli_insert_id($this->db);
     }
 
+    /**
+     * Updates allowed profile fields for a user.
+     * To change a password use updatePassword() instead.
+     *
+     * Allowed keys: name, email, role_id, is_active
+     */
     public function update($id, $data)
     {
         $this->hydrateProfileData($data);
@@ -71,8 +96,8 @@ class User extends AbstractUser implements AuthenticatableInterface
 
         $updates = [];
         foreach ($data as $key => $value) {
-            if (in_array($key, ['name', 'email', 'role_id', 'is_active'])) {
-                $value = mysqli_real_escape_string($this->db, $value);
+            if (in_array($key, ['name', 'email', 'role_id', 'is_active'], true)) {
+                $value     = mysqli_real_escape_string($this->db, $value);
                 $updates[] = "`$key` = '$value'";
             }
         }
@@ -83,6 +108,27 @@ class User extends AbstractUser implements AuthenticatableInterface
 
         $query = "UPDATE users SET " . implode(", ", $updates) . " WHERE id = '$id'";
         mysqli_query($this->db, $query);
+    }
+
+    /**
+     * Updates a user's password using the canonical bcrypt hashing workflow.
+     *
+     * Accepts a PLAIN-TEXT password. Never call this with a pre-hashed value.
+     * This is the single source of truth for password changes across every
+     * role: self-registration, Admin, Front Desk, and Manager.
+     *
+     * @param  int|string $id          User ID
+     * @param  string     $plainPassword  Plain-text password (≥ 6 chars expected)
+     * @return bool  true on success, false if the query failed
+     */
+    public function updatePassword($id, $plainPassword): bool
+    {
+        $id   = mysqli_real_escape_string($this->db, $id);
+        $hash = mysqli_real_escape_string($this->db, $this->hashPassword($plainPassword));
+        return (bool) mysqli_query(
+            $this->db,
+            "UPDATE users SET password = '$hash' WHERE id = '$id'"
+        );
     }
 
     public function delete($id)
@@ -104,17 +150,20 @@ class User extends AbstractUser implements AuthenticatableInterface
     public function authenticate($email, $password)
     {
         $email = trim($email);
-        $user = $this->findByEmail($email);
+        $user  = $this->findByEmail($email);
 
-        if (!$user || (int)$user['is_active'] !== 1) {
+        if (!$user || (int) $user['is_active'] !== 1) {
             return false;
         }
 
-        if ($this->passwordMatches($password, $user['password'] ?? '')) {
-            return $user;
+        if (!$this->passwordMatches($password, $user['password'] ?? '')) {
+            return false;
         }
 
-        return false;
+        // Strip the password hash — it must NEVER leave the model layer
+        unset($user['password']);
+
+        return $user;
     }
 
     private function passwordMatches($plainPassword, $storedPassword)

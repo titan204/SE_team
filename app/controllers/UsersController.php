@@ -109,12 +109,13 @@ class UsersController extends Controller
         }
 
         // 4. Create user
+        // Pass plain-text password — User::create() hashes with bcrypt internally.
         $userModel = new User();
         $userId = $userModel->create([
-            'name' => $name,
-            'email' => $email,
+            'name'     => $name,
+            'email'    => $email,
             'password' => $password,
-            'role_id' => $role_id,
+            'role_id'  => $role_id,
         ]);
 
         // 6. Log action
@@ -207,7 +208,7 @@ class UsersController extends Controller
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
 
-        // Optional password change
+        // Optional password change — use the canonical bcrypt workflow (updatePassword)
         $newPassword = trim($_POST['password'] ?? '');
         if ($newPassword !== '') {
             if (strlen($newPassword) < 6) {
@@ -215,7 +216,8 @@ class UsersController extends Controller
                 $this->redirect('users/edit/' . $id);
                 return;
             }
-            $updateData['password'] = hash('sha256', $newPassword);
+            // updatePassword() hashes with bcrypt via hashPassword() — consistent with registration
+            $userModel->updatePassword($id, $newPassword);
         }
 
         // 5. Update user
