@@ -1931,8 +1931,8 @@ INSERT INTO `users` (`id`, `role_id`, `name`, `email`, `password`, `is_active`, 
 (13, 4, 'Pierre Dubois', 'pierre.dubois@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, '2026-05-01 21:45:43', '2026-05-01 21:45:43'),
 (14, 4, 'Priya Sharma', 'priya.sharma@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, '2026-05-01 21:45:43', '2026-05-01 21:45:43'),
 (15, 4, 'David Chen', 'david.chen@gmail.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, '2026-05-01 21:45:43', '2026-05-01 21:45:43'),
-(17, 5, 'Karim Nasser', 'karim.nasser@grandhotel.com', '3fe20d68a85f0ca590301eb12d95603bc1bc3bc42907d22503fe06bc03000782', 1, '2023-09-03 07:00:00', '2026-05-02 00:18:35'),
-(18, 5, 'Lina Youssef', 'lina.youssef@grandhotel.com', '3fe20d68a85f0ca590301eb12d95603bc1bc3bc42907d22503fe06bc03000782', 1, '2024-05-20 06:30:00', '2026-05-02 00:18:35');
+(17, 5, 'Karim Nasser', 'karim.nasser@grandhotel.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, '2023-09-03 07:00:00', '2026-05-02 00:18:35'),
+(18, 5, 'Lina Youssef', 'lina.youssef@grandhotel.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, '2024-05-20 06:30:00', '2026-05-02 00:18:35');
 
 -- --------------------------------------------------------
 

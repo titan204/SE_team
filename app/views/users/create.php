@@ -203,7 +203,7 @@
         <div style="margin-top:1rem;padding-top:.8rem;border-top:1px solid #e8d5c0;">
           <div style="font-size:.82rem;color:#888;">
             <i class="bi bi-shield-check me-1" style="color:var(--accent);"></i>
-            Password is stored securely (SHA-256 hashed).
+            Password is stored securely (bcrypt · PASSWORD_DEFAULT).
           </div>
         </div>
       </div>

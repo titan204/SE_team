@@ -90,35 +90,96 @@ class GuestsController extends Controller
 
     public function create()
     {
-        $this->view('guests/create');
+        // No extra data needed — "Referred By" was removed; password fields are plain inputs.
+        $this->view('guests/create', [
+            'errors' => $_SESSION['errors'] ?? [],
+            'old'    => $_SESSION['old'] ?? [],
+        ]);
+        unset($_SESSION['errors'], $_SESSION['old']);
     }
 
     public function store()
     {
-        $name  = trim($_POST['name']  ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
+        $name    = trim($_POST['name']    ?? '');
+        $email   = trim($_POST['email']   ?? '');
+        $phone   = trim($_POST['phone']   ?? '');
+        $password        = $_POST['password']         ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
 
+        // ── Validation ────────────────────────────────────────
         $errors = [];
-        if (empty($name))                                $errors[] = 'Name is required.';
-        if (empty($email))                               $errors[] = 'Email is required.';
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL))  $errors[] = 'Invalid email.';
+
+        if ($name === '')                                         $errors['name']  = 'Name is required.';
+        if ($email === '')                                        $errors['email'] = 'Email is required.';
+        elseif (!filter_var($email, FILTER_VALIDATE_EMAIL))       $errors['email'] = 'Invalid email address.';
+
+        if ($password === '')                                     $errors['password'] = 'Password is required.';
+        elseif (strlen($password) < 6)                           $errors['password'] = 'Password must be at least 6 characters.';
+
+        if ($confirmPassword === '')                              $errors['confirm_password'] = 'Please confirm your password.';
+        elseif ($password !== '' && $password !== $confirmPassword) $errors['confirm_password'] = 'Passwords do not match.';
+
+        // Check email uniqueness across both tables
+        if (!isset($errors['email'])) {
+            $userModel  = new User();
+            $guestModel = new Guest();
+            if ($userModel->findByEmail($email) || $guestModel->findByEmail($email)) {
+                $errors['email'] = 'This email is already registered.';
+            }
+        }
 
         if (!empty($errors)) {
-            $this->view('guests/create', ['errors' => $errors, 'old' => $_POST]);
+            $_SESSION['errors'] = $errors;
+            $_SESSION['old']    = [
+                'name'  => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'national_id'   => $_POST['national_id']   ?? '',
+                'nationality'   => $_POST['nationality']   ?? '',
+                'date_of_birth' => $_POST['date_of_birth'] ?? '',
+            ];
+            $this->redirect('guests/create');
             return;
         }
 
-        $guestModel = new Guest();
-        $guestModel->create([
+        // ── Persist ───────────────────────────────────────────
+        // 1. Insert into guests table
+        $guestModel  = new Guest();
+        $guestId = $guestModel->create([
             'name'          => $name,
             'email'         => $email,
             'phone'         => $phone,
             'national_id'   => $_POST['national_id']   ?? '',
             'nationality'   => $_POST['nationality']   ?? '',
             'date_of_birth' => $_POST['date_of_birth'] ?? null,
-            'referred_by'   => $_POST['referred_by']   ?? null,
         ]);
+
+        // 2. Resolve guest role ID
+        $guestRole = (new Role())->findByName('guest');
+        if (!$guestRole) {
+            // Roll back and abort if guest role is missing
+            $guestModel->delete($guestId);
+            $_SESSION['errors'] = ['role' => 'Guest role not found in the database. Cannot create account.'];
+            $this->redirect('guests/create');
+            return;
+        }
+
+        // 3. Create the users record — User::create() bcrypt-hashes the password
+        $userModel = new User();
+        $userId = $userModel->create([
+            'name'     => $name,
+            'email'    => $email,
+            'password' => $password,    // plaintext — User::create() hashes with PASSWORD_DEFAULT
+            'role_id'  => $guestRole['id'],
+        ]);
+
+        if ((int) $userId <= 0) {
+            // Roll back guests row and bail
+            $guestModel->delete($guestId);
+            $_SESSION['errors'] = ['db' => 'Could not create login account. Please try again.'];
+            $this->redirect('guests/create');
+            return;
+        }
 
         $this->redirect('guests');
     }

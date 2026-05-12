@@ -56,7 +56,7 @@ ob_start();
 <?php if (!empty($dailyData)): ?>
 <div class="rpt-card mb-4">
   <div class="rpt-hd"><i class="bi bi-graph-up me-2"></i>Daily Occupancy % — Line Chart</div>
-  <div class="p-3"><canvas id="occChart" height="80"></canvas></div>
+  <div class="p-3" style="position:relative;height:300px;"><canvas id="occChart"></canvas></div>
 </div>
 <?php endif; ?>
 
@@ -147,6 +147,7 @@ ob_start();
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return c.parsed.y + '%'; } } } },
       scales: {
         y: { min: 0, max: 100, ticks: { callback: function(v){ return v + '%'; } }, grid: { color: 'rgba(0,0,0,.05)' } },

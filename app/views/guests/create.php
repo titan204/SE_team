@@ -7,8 +7,14 @@ ob_start();  ?>
 
   Fields:
   - name, email, phone, national_id, nationality, date_of_birth
-  - referred_by dropdown
+  - password, confirm_password (bcrypt-hashed before DB insert)
   - Bootstrap validation + error handling
+
+  Security:
+  - "Referred By" field removed (PII reduction).
+  - Password is hashed with PASSWORD_DEFAULT (bcrypt) via User::create().
+  - Guest user account is created alongside the guests record so the
+    new guest can log in immediately with the password entered here.
 ============================================================
 -->
 
@@ -159,18 +165,32 @@ body {
                                value="<?= htmlspecialchars($old['date_of_birth'] ?? '') ?>">
                     </div>
 
-                    <!-- Referred By -->
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label">Referred By</label>
-                        <select name="referred_by" class="form-select">
-                            <option value="">-- Select Guest --</option>
-                            <?php foreach ($guests as $g): ?>
-                                <option value="<?= $g['id'] ?>"
-                                    <?= ($old['referred_by'] ?? '') == $g['id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($g['name']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <!-- Password -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Password <span class="text-danger">*</span></label>
+                        <input type="password" name="password" id="guestPassword"
+                               class="form-control <?= isset($errors['password']) ? 'is-invalid' : '' ?>"
+                               placeholder="Min. 6 characters" required
+                               autocomplete="new-password">
+                        <?php if (isset($errors['password'])): ?>
+                            <div class="invalid-feedback"><?= htmlspecialchars($errors['password']) ?></div>
+                        <?php else: ?>
+                            <div class="form-text">Minimum 6 characters. Stored securely (bcrypt).</div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                        <input type="password" name="confirm_password" id="guestConfirmPassword"
+                               class="form-control <?= isset($errors['confirm_password']) ? 'is-invalid' : '' ?>"
+                               placeholder="Re-enter password" required
+                               autocomplete="new-password">
+                        <?php if (isset($errors['confirm_password'])): ?>
+                            <div class="invalid-feedback"><?= htmlspecialchars($errors['confirm_password']) ?></div>
+                        <?php else: ?>
+                            <div class="form-text">Must match the password above.</div>
+                        <?php endif; ?>
                     </div>
 
                 </div>
