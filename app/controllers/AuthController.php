@@ -48,7 +48,7 @@ class AuthController extends Controller
     {
         $userModel = new User();
 
-        // 1. Collect inputs — NEVER store the password in session or old-input
+        
         $email    = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $errors   = [];
@@ -64,7 +64,7 @@ class AuthController extends Controller
             $errors['password'] = 'Password is required.';
         }
 
-        // Store only the email for form repopulation — password is NEVER stored
+        
         $_SESSION['old'] = ['email' => $email];
 
         if (!empty($errors)) {
@@ -74,11 +74,10 @@ class AuthController extends Controller
             return;
         }
 
-        // 3. Authenticate via database
-        //    authenticate() strips the password hash before returning the user row
+        
         $user = $userModel->authenticate($email, $password);
 
-        // 4. If login failed — generic message prevents email enumeration
+        
         if (!$user) {
             $_SESSION['error']  = 'Invalid email or password.';
             $_SESSION['errors'] = [];
@@ -86,9 +85,7 @@ class AuthController extends Controller
             return;
         }
 
-        // 5. Successful login — regenerate session ID to prevent session fixation.
-        //    session_write_close() releases the file lock first; regenerate(false) avoids
-        //    deleting the old session file which causes deadlocks on Windows file-sessions.
+        
         session_write_close();
         session_start();
         session_regenerate_id(false);
@@ -296,7 +293,7 @@ class AuthController extends Controller
         $userId = $userModel->create([
             'name'     => $name,
             'email'    => $email,
-            'password' => $password,   // plaintext — User::create() hashes with bcrypt
+            'password' => $password,   
             'role_id'  => $guestRole['id'],
         ]);
 

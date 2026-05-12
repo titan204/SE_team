@@ -1,0 +1,168 @@
+<mxfile host="app.diagrams.net" modified="2026-05-09T00:00:00.000Z" agent="AI" version="22.1.0" type="device">
+  <diagram name="ObjectDiagram" id="object-diagram-hotel-checkout">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="0" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="title-label" parent="1" vertex="1" value="Object Diagram — Hotel Management &amp; Reservations Snapshot (_checked-out stay_)"
+                style="text;html=1;strokeColor=none;fillColor=none;spacing=5;spacingTop=-4;whiteSpace=wrap;overflow=hidden;rounded=0;fontFamily=Helvetica;fontSize=14;fontStyle=1">
+          <mxGeometry x="40" y="20" width="780" height="36" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-guest" parent="1" vertex="1"
+                value="&lt;u&gt;guestMohamed : Guest&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 84001&lt;br&gt;firstName = Mohamed&lt;br&gt;lastName = Hassan&lt;br&gt;email = mohamed.hassan@mail.example&lt;br&gt;phone = +20-100-555-0198&lt;br&gt;passportNumber = EG2849102&lt;br&gt;loyaltyPoints = 1250"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="40" y="80" width="260" height="160" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-recep" parent="1" vertex="1"
+                value="&lt;u&gt;receptionistNour : Receptionist&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 1203&lt;br&gt;firstName = Nour&lt;br&gt;lastName = Ibrahim&lt;br&gt;email = nour.ibrahim@grandhotel.example&lt;br&gt;phone = +20-255-884-4410&lt;br&gt;employeeId = EMP-FD-103&lt;br&gt;salary = 18500.00&lt;br&gt;hireDate = 2022-06-01&lt;br&gt;shift = Morning"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="340" y="80" width="260" height="190" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-manager" parent="1" vertex="1"
+                value="&lt;u&gt;managerAhmed : Manager&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 901&lt;br&gt;firstName = Ahmed&lt;br&gt;lastName = Nassar&lt;br&gt;email = ahmed.nassar@grandhotel.example&lt;br&gt;phone = +20-255-884-4401&lt;br&gt;employeeId = EMP-MG-01&lt;br&gt;salary = 48000.00&lt;br&gt;hireDate = 2020-01-15&lt;br&gt;department = Revenue Management"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="640" y="80" width="260" height="190" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-hk" parent="1" vertex="1"
+                value="&lt;u&gt;housekeeperLayla : Housekeeper&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 1207&lt;br&gt;firstName = Layla&lt;br&gt;lastName = Ahmed&lt;br&gt;email = layla.ahmed@grandhotel.example&lt;br&gt;phone = +20-255-884-4412&lt;br&gt;employeeId = EMP-HK-07&lt;br&gt;salary = 9500.00&lt;br&gt;hireDate = 2023-02-10&lt;br&gt;assignedFloor = 3"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="940" y="80" width="260" height="190" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-rt" parent="1" vertex="1"
+                value="&lt;u&gt;deluxeKingType : RoomType&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 702&lt;br&gt;typeName = Deluxe King&lt;br&gt;basePrice = 195.00&lt;br&gt;capacity = 2&lt;br&gt;description = City-view deluxe king with workspace desk"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="40" y="310" width="260" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-room301" parent="1" vertex="1"
+                value="&lt;u&gt;room301 : Room&lt;/u&gt;&lt;br&gt;&lt;br&gt;roomNumber = 301&lt;br&gt;floor = 3&lt;br&gt;status = AVAILABLE"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="340" y="310" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-room302" parent="1" vertex="1"
+                value="&lt;u&gt;room302 : Room&lt;/u&gt;&lt;br&gt;&lt;br&gt;roomNumber = 302&lt;br&gt;floor = 3&lt;br&gt;status = AVAILABLE"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="580" y="310" width="200" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-res" parent="1" vertex="1"
+                value="&lt;u&gt;staySep2026 : Reservation&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 448812&lt;br&gt;bookingDate = 2026-09-02&lt;br&gt;checkInDate = 2026-09-05&lt;br&gt;checkOutDate = 2026-09-09&lt;br&gt;status = CHECKED_OUT&lt;br&gt;totalAmount = 1840.00"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="840" y="290" width="260" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-rr1" parent="1" vertex="1"
+                value="&lt;u&gt;lineRR1 : RoomReservation&lt;/u&gt;&lt;br&gt;&lt;br&gt;actualPrice = 760.00"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="360" y="460" width="200" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-rr2" parent="1" vertex="1"
+                value="&lt;u&gt;lineRR2 : RoomReservation&lt;/u&gt;&lt;br&gt;&lt;br&gt;actualPrice = 820.00"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="600" y="460" width="200" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-inv" parent="1" vertex="1"
+                value="&lt;u&gt;invoiceStaySep : Invoice&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 990044&lt;br&gt;issueDate = 2026-09-09&lt;br&gt;taxAmount = 220.80&lt;br&gt;totalAmount = 1840.00"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="840" y="490" width="240" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-pay1" parent="1" vertex="1"
+                value="&lt;u&gt;: Payment&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = P778811&lt;br&gt;paymentDate = 2026-09-02&lt;br&gt;amount = 500.00&lt;br&gt;paymentMethod = CREDIT_CARD&lt;br&gt;status = PAID"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="1140" y="490" width="230" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-pay2" parent="1" vertex="1"
+                value="&lt;u&gt;finalWire : Payment&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = P778899&lt;br&gt;paymentDate = 2026-09-09&lt;br&gt;amount = 1340.00&lt;br&gt;paymentMethod = BANK_TRANSFER&lt;br&gt;status = PAID"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="1140" y="630" width="230" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-svc" parent="1" vertex="1"
+                value="&lt;u&gt;spaSignature : Service&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 505&lt;br&gt;serviceName = Signature Aromatherapy Massage&lt;br&gt;price = 120.00"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="40" y="590" width="280" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-su" parent="1" vertex="1"
+                value="&lt;u&gt;usageMonday : ServiceUsage&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 880011&lt;br&gt;usageDate = 2026-09-07&lt;br&gt;quantity = 1"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="360" y="600" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="obj-rev" parent="1" vertex="1"
+                value="&lt;u&gt;: Review&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 661002&lt;br&gt;rating = 5&lt;br&gt;comment = Flawless stay; spa team and concierge exceeded expectations.&lt;br&gt;reviewDate = 2026-09-10"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;verticalAlign=top;align=left;spacingLeft=6;spacingTop=6;whiteSpace=wrap;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="640" y="600" width="340" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="l1" edge="1" parent="1" source="obj-guest" target="obj-res" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l2" edge="1" parent="1" source="obj-recep" target="obj-res" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l3" edge="1" parent="1" source="obj-room301" target="obj-rt" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l4" edge="1" parent="1" source="obj-room302" target="obj-rt" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l5" edge="1" parent="1" source="obj-res" target="obj-rr1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l6" edge="1" parent="1" source="obj-res" target="obj-rr2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l7" edge="1" parent="1" source="obj-rr1" target="obj-room301" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l8" edge="1" parent="1" source="obj-rr2" target="obj-room302" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l9" edge="1" parent="1" source="obj-res" target="obj-inv" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l10" edge="1" parent="1" source="obj-inv" target="obj-pay1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l11" edge="1" parent="1" source="obj-inv" target="obj-pay2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l12" edge="1" parent="1" source="obj-res" target="obj-su" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="560"/>
+              <mxPoint x="470" y="560"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l13" edge="1" parent="1" source="obj-svc" target="obj-su" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="l14" edge="1" parent="1" source="obj-guest" target="obj-rev" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="170" y="755"/>
+              <mxPoint x="810" y="755"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="l15" edge="1" parent="1" source="obj-room301" target="obj-rev" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

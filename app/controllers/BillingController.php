@@ -8,14 +8,14 @@ class BillingController extends Controller
         $this->requireRoles(['front_desk', 'manager']);
         $db = (new Model())->getDb();
 
-        // ── Revenue Today (from actual completed payments today) ──
+        
         $r = mysqli_query($db,
             "SELECT COALESCE(SUM(amount), 0) AS revenue_today
              FROM   payments
              WHERE  DATE(processed_at) = CURDATE()");
         $revenueToday = $r ? (float)mysqli_fetch_assoc($r)['revenue_today'] : 0;
 
-        // ── Revenue This Month ──
+        
         $r = mysqli_query($db,
             "SELECT COALESCE(SUM(amount), 0) AS revenue_month
              FROM   payments
@@ -23,7 +23,7 @@ class BillingController extends Controller
                AND  YEAR(processed_at)  = YEAR(CURDATE())");
         $revenueMonth = $r ? (float)mysqli_fetch_assoc($r)['revenue_month'] : 0;
 
-        // ── Folio Counts ──
+        
         $r = mysqli_query($db,
             "SELECT
                 COUNT(*)                                                     AS total,
@@ -34,12 +34,12 @@ class BillingController extends Controller
              FROM folios");
         $folioStats = $r ? mysqli_fetch_assoc($r) : ['total'=>0,'open'=>0,'settled'=>0,'refunded'=>0,'total_outstanding'=>0];
 
-        // ── Open Disputes ──
+        
         $r = mysqli_query($db,
             "SELECT COUNT(*) AS cnt FROM billing_disputes WHERE status='open'");
         $openDisputes = $r ? (int)mysqli_fetch_assoc($r)['cnt'] : 0;
 
-        // ── Payment Method Breakdown ──
+        
         $r = mysqli_query($db,
             "SELECT method,
                     COUNT(*)          AS cnt,
@@ -49,7 +49,7 @@ class BillingController extends Controller
              ORDER  BY total DESC");
         $paymentMethods = $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
 
-        // ── Folios List with Guest + Room ──
+        
         $statusFilter = $_GET['status'] ?? '';
         $where = '1=1';
         if (in_array($statusFilter, ['open','settled','refunded'])) {
@@ -113,10 +113,7 @@ class BillingController extends Controller
         $this->redirect('billing/show/' . (int)$id);
     }
 
-    /**
-     * GET /billing/splitBill/{group_id}
-     * Split preview: per-member breakdown with payment checkboxes.
-     */
+    
     public function splitBill($groupId)
     {
         $this->requireRoles(['front_desk', 'manager', 'revenue_manager']);
@@ -127,12 +124,12 @@ class BillingController extends Controller
             die("Group #$groupId not found.");
         }
 
-        // UC13 error handling: block if open disputes exist
+        
         $disputes = $gb->getOpenDisputes((int)$groupId);
 
         $groupInvoice = $gb->findGroupInvoice($groupId);
 
-        // Validate: invoice must exist and NOT be finalized
+        
         $invoiceBlocked = !$groupInvoice || $groupInvoice['status'] !== 'draft';
 
         $members = $gb->getSplitPreviewMembers($groupId);
@@ -146,10 +143,7 @@ class BillingController extends Controller
         ]);
     }
 
-    /**
-     * POST /billing/splitProcess/{group_id}
-     * UC13 Step 3 — Execute the split for selected member_ids.
-     */
+    
     public function splitProcess($groupId)
     {
         $this->requireRoles(['front_desk', 'manager', 'revenue_manager']);
@@ -163,7 +157,7 @@ class BillingController extends Controller
         $group = $gb->findGroup($groupId);
         if (!$group) die("Group #$groupId not found.");
 
-        // Block if open disputes
+        
         $disputes = $gb->getOpenDisputes((int)$groupId);
         if (!empty($disputes)) {
             $_SESSION['flash_error'] = 'Split is paused: ' . count($disputes) . ' open dispute(s) must be resolved first.';
@@ -171,7 +165,7 @@ class BillingController extends Controller
             return;
         }
 
-        // Validate: group invoice must be draft
+        
         $groupInvoice = $gb->findGroupInvoice($groupId);
         if (!$groupInvoice || $groupInvoice['status'] !== 'draft') {
             $_SESSION['flash_error'] = 'Cannot split: invoice is already finalized or missing.';
@@ -179,7 +173,7 @@ class BillingController extends Controller
             return;
         }
 
-        // Selected reservation IDs to split
+        
         $selectedResIds = array_map('intval', $_POST['member_ids'] ?? []);
         if (empty($selectedResIds)) {
             $_SESSION['flash_error'] = 'Select at least one member to split.';
@@ -189,7 +183,7 @@ class BillingController extends Controller
 
         $allActiveMembers = $gb->getSplitPreviewMembers($groupId);
 
-        // Compute group-level subtotal + tax for proportional tax calculation
+        
         $groupSubtotal = 0;
         $groupTax      = 0;
         foreach ($allActiveMembers as $m) {
@@ -200,7 +194,7 @@ class BillingController extends Controller
         $originalTotal = (float) $groupInvoice['total_amount'];
         $manualQueue   = [];
 
-        // Step 3b: generate individual invoices for selected members
+        
         foreach ($allActiveMembers as $m) {
             if (!in_array((int)$m['reservation_id'], $selectedResIds)) continue;
 
@@ -208,7 +202,7 @@ class BillingController extends Controller
             $gb->finalizeInvoice($invId);
             $gb->markMembersAsIndividual((int)$groupId, [(int)$m['reservation_id']]);
 
-            // Error handling: no email → flag for manual delivery
+            
             if (empty($m['guest_email'])) {
                 $gb->flagManualDelivery($invId, (int)$m['reservation_id'], $m['guest_name']);
                 $manualQueue[] = $m['guest_name'];
@@ -217,10 +211,10 @@ class BillingController extends Controller
             }
         }
 
-        // Steps 3c/d/e: update consolidated invoice
+        
         $result = $gb->updateConsolidatedAfterSplit((int)$groupId, $selectedResIds, $allActiveMembers);
 
-        // Step 3f: log the split
+        
         $gb->logSplit((int)$groupId, $selectedResIds, $originalTotal);
 
         $msg = "Split complete. " . count($selectedResIds) . " individual invoice(s) generated.";
@@ -255,13 +249,7 @@ class BillingController extends Controller
         $this->redirect("billing/splitBill/$groupId");
     }
 
-    // ── UC06: Group Billing ───────────────────────────────────
-
-    /**
-     * GET /billing/group/{group_id}
-     * Displays all reservations in the group with per-member breakdown
-     * and the consolidated total.
-     */
+    
     public function group($groupId)
     {
         $this->requireRoles(['front_desk', 'manager', 'revenue_manager']);
@@ -274,7 +262,7 @@ class BillingController extends Controller
 
         $members = $groupBilling->getMembersWithDetails($groupId);
 
-        // Separate active from cancelled members
+        
         $activeMembers    = [];
         $cancelledMembers = [];
         foreach ($members as $m) {
@@ -285,7 +273,7 @@ class BillingController extends Controller
             }
         }
 
-        // Consolidated totals (active members only, tax counted once)
+        
         $consolidatedSubtotal = 0;
         $consolidatedTax      = 0;
         foreach ($activeMembers as $am) {
@@ -309,22 +297,14 @@ class BillingController extends Controller
         ]);
     }
 
-    /**
-     * GET /billing/group/{group_id}/invoice
-     * Sums all charges, applies group discount, generates an invoice record.
-     * PDF download option available in the view.
-     */
+    
     public function groupInvoice($groupId)
     {
         $this->requireRoles(['front_desk', 'manager', 'revenue_manager']);
         $this->view('billing/group_invoice', $this->buildGroupInvoiceData((int)$groupId));
     }
 
-    /**
-     * POST /billing/group/{group_id}/finalize
-     * Finalizes the consolidated invoice and queues coordinator notification.
-     * Also generates + finalizes individual invoices for split-billing members.
-     */
+    
     public function groupFinalize($groupId)
     {
         $this->requireRoles(['front_desk', 'manager', 'revenue_manager']);
@@ -568,12 +548,7 @@ class BillingController extends Controller
         return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $value);
     }
 
-    // ── UC38: Guest Billing ───────────────────────────────────
-
-    /**
-     * GET /billing/guestBill/{reservation_id}
-     * Full billing view: charges grouped, running totals, adjustments.
-     */
+    
     public function guestBill($reservationId)
     {
         $this->requireLogin();
@@ -597,10 +572,7 @@ class BillingController extends Controller
         ]);
     }
 
-    /**
-     * POST /billing/addBillingItem/{reservation_id}
-     * UC38 Step 2a — Add a charge item.
-     */
+    
     public function addBillingItem($reservationId)
     {
         $this->requireLogin();
@@ -623,10 +595,7 @@ class BillingController extends Controller
         $this->redirect("billing/guestBill/$reservationId");
     }
 
-    /**
-     * POST /billing/voidBillingItem/{item_id}
-     * UC38 Step 2b — Void item (never deleted).
-     */
+    
     public function voidBillingItem($itemId)
     {
         $this->requireLogin();
@@ -645,10 +614,7 @@ class BillingController extends Controller
         $this->redirect("billing/guestBill/$resId");
     }
 
-    /**
-     * POST /billing/applyAdjustment/{reservation_id}
-     * UC38 Step 2c — Apply discount or surcharge.
-     */
+    
     public function applyAdjustment($reservationId)
     {
         $this->requireLogin();
@@ -679,10 +645,7 @@ class BillingController extends Controller
         $this->redirect("billing/guestBill/$reservationId");
     }
 
-    /**
-     * POST /billing/redeemPoints/{reservation_id}
-     * UC38 Step 2d — Loyalty point redemption.
-     */
+    
     public function redeemPoints($reservationId)
     {
         $this->requireLogin();
@@ -701,10 +664,7 @@ class BillingController extends Controller
         $this->redirect("billing/guestBill/$reservationId");
     }
 
-    /**
-     * POST /billing/finalizeBill/{reservation_id}
-     * UC38 Step 3 — Lock bill and generate final invoice.
-     */
+
     public function finalizeBill($reservationId)
     {
         $this->requireLogin();
@@ -727,10 +687,7 @@ class BillingController extends Controller
         $this->redirect("billing/guestBill/$reservationId");
     }
 
-    /**
-     * POST /billing/payBill/{reservation_id}
-     * UC38 Step 4 — Split payment (multi-method).
-     */
+    
     public function payBill($reservationId)
     {
         $this->requireLogin();
@@ -742,7 +699,7 @@ class BillingController extends Controller
         $adjustments = $gb->getAdjustments((int)$reservationId);
         $totals      = $gb->computeTotals($res, $items, $adjustments);
 
-        // Expecting POST payments as JSON string or array
+        
         $payments = json_decode($_POST['payments'] ?? '[]', true) ?: [];
 
         $result = $gb->processSplitPayment(

@@ -1,7 +1,7 @@
 <?php
 class FeedbackController extends Controller
 {
-    // ── Helpers ───────────────────────────────────────────────
+
 
     private function resolveGuest(): ?array
     {
@@ -24,7 +24,7 @@ class FeedbackController extends Controller
         return strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
     }
 
-    // ── Guest: Feedback Form ──────────────────────────────────
+    
 
     public function create(): void
     {
@@ -51,7 +51,7 @@ class FeedbackController extends Controller
         unset($_SESSION['feedback_errors'], $_SESSION['feedback_old'], $_SESSION['feedback_success']);
     }
 
-    // ── Guest: Submit Feedback ────────────────────────────────
+    
 
     public function store(): void
     {
@@ -74,7 +74,7 @@ class FeedbackController extends Controller
         $comment = trim($_POST['comment']             ?? '');
         $rec     = ($_POST['recommend_hotel'] ?? 'no') === 'yes' ? 1 : 0;
 
-        // ── Validation ────────────────────────────────────────
+        
         $errors = [];
         if ($resId <= 0) $errors['reservation_id'] = 'Please select a reservation.';
 
@@ -132,7 +132,7 @@ class FeedbackController extends Controller
         $this->redirect('feedback/create');
     }
 
-    // ── Guest: My Feedback History ────────────────────────────
+    
 
     public function myFeedback(): void
     {
@@ -150,7 +150,7 @@ class FeedbackController extends Controller
         ]);
     }
 
-    // ── Admin: All Feedback ───────────────────────────────────
+    
 
     public function index(): void
     {
@@ -178,7 +178,7 @@ class FeedbackController extends Controller
         unset($_SESSION['feedback_admin_success']);
     }
 
-    // ── Admin: Resolve ────────────────────────────────────────
+    
 
     public function resolve($id): void
     {

@@ -10,13 +10,12 @@ class HomeController extends Controller
         ob_start();
         require VIEW_PATH . '/home/index.php';
         $content = ob_get_clean();
-        echo $content; // standalone page — has its own full layout
+        echo $content; 
     }
 
     public function guestprofile()
     {
-        // Redirect to the full self-service profile controller.
-        // Kept for backward-compatibility with existing bookmarks/links.
+        
         $this->redirect('guestProfile/index');
     }
 

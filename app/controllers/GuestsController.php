@@ -1,15 +1,4 @@
 <?php
-// ============================================================
-//  GuestsController — Guest profile CRUD
-//  Routes:
-//    /guests            → index (list all guests)
-//    /guests/show/5     → show guest #5
-//    /guests/create     → new guest form
-//    /guests/store      → save new guest
-//    /guests/edit/5     → edit guest #5
-//    /guests/update/5   → save edits
-//    /guests/delete/5   → delete guest #5
-// ============================================================
 
 class GuestsController extends Controller
 {
@@ -43,9 +32,7 @@ class GuestsController extends Controller
             return;
         }
 
-        // ── Reservation history — use Reservation model so room names are joined ──
-        // Guest::reservations() returns raw room_id integers; Reservation::findByGuest()
-        // runs the proper JOIN and returns room_number + room_type_name.
+        
         try {
             $reservationModel = new Reservation();
             $reservations = $reservationModel->findByGuest((int) $guest['id']);
@@ -54,7 +41,7 @@ class GuestsController extends Controller
             $reservations = [];
         }
 
-        // ── Preferences — guard against missing table or unexpected return type ──
+        
         $guestModel->id = $id;
         try {
             $raw = $guestModel->preferences();
@@ -63,7 +50,7 @@ class GuestsController extends Controller
             $preferences = [];
         }
 
-        // ── Feedback ──────────────────────────────────────────────────────────────
+        
         try {
             $raw = $guestModel->feedback();
             $feedback = is_array($raw) ? $raw : [];
@@ -71,7 +58,7 @@ class GuestsController extends Controller
             $feedback = [];
         }
 
-        // ── Lifetime value ────────────────────────────────────────────────────────
+    
         try {
             $ltv = $guestModel->calculateLifetimeValue() ?? 0;
             if (!is_numeric($ltv)) $ltv = 0;
@@ -90,7 +77,7 @@ class GuestsController extends Controller
 
     public function create()
     {
-        // No extra data needed — "Referred By" was removed; password fields are plain inputs.
+        
         $this->view('guests/create', [
             'errors' => $_SESSION['errors'] ?? [],
             'old'    => $_SESSION['old'] ?? [],
@@ -106,7 +93,7 @@ class GuestsController extends Controller
         $password        = $_POST['password']         ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
 
-        // ── Validation ────────────────────────────────────────
+        
         $errors = [];
 
         if ($name === '')                                         $errors['name']  = 'Name is required.';
@@ -119,7 +106,7 @@ class GuestsController extends Controller
         if ($confirmPassword === '')                              $errors['confirm_password'] = 'Please confirm your password.';
         elseif ($password !== '' && $password !== $confirmPassword) $errors['confirm_password'] = 'Passwords do not match.';
 
-        // Check email uniqueness across both tables
+        
         if (!isset($errors['email'])) {
             $userModel  = new User();
             $guestModel = new Guest();
@@ -142,8 +129,7 @@ class GuestsController extends Controller
             return;
         }
 
-        // ── Persist ───────────────────────────────────────────
-        // 1. Insert into guests table
+        
         $guestModel  = new Guest();
         $guestId = $guestModel->create([
             'name'          => $name,
@@ -154,27 +140,27 @@ class GuestsController extends Controller
             'date_of_birth' => $_POST['date_of_birth'] ?? null,
         ]);
 
-        // 2. Resolve guest role ID
+        
         $guestRole = (new Role())->findByName('guest');
         if (!$guestRole) {
-            // Roll back and abort if guest role is missing
+            
             $guestModel->delete($guestId);
             $_SESSION['errors'] = ['role' => 'Guest role not found in the database. Cannot create account.'];
             $this->redirect('guests/create');
             return;
         }
 
-        // 3. Create the users record — User::create() bcrypt-hashes the password
+        
         $userModel = new User();
         $userId = $userModel->create([
             'name'     => $name,
             'email'    => $email,
-            'password' => $password,    // plaintext — User::create() hashes with PASSWORD_DEFAULT
+            'password' => $password,    
             'role_id'  => $guestRole['id'],
         ]);
 
         if ((int) $userId <= 0) {
-            // Roll back guests row and bail
+            
             $guestModel->delete($guestId);
             $_SESSION['errors'] = ['db' => 'Could not create login account. Please try again.'];
             $this->redirect('guests/create');
@@ -232,7 +218,7 @@ class GuestsController extends Controller
         $this->redirect('guests');
     }
 
-    // ── Special Actions ──────────────────────────────────────
+    
 
     public function blacklist($id)
     {

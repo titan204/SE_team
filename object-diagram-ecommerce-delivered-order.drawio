@@ -1,0 +1,227 @@
+<mxfile host="app.diagrams.net" modified="2026-05-09T12:00:00.000Z" agent="AI" version="22.1.0" type="device">
+  <diagram name="EcommerceObjectDiagram" id="object-diagram-ecommerce">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="0" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="ttl" parent="1" vertex="1" value="Object Diagram — Order Snapshot (E-commerce Management System)"
+                style="text;html=1;strokeColor=none;fillColor=none;fontFamily=Helvetica;fontSize=14;fontStyle=1;align=left;verticalAlign=middle;spacingLeft=4;">
+          <mxGeometry x="36" y="16" width="820" height="34" as="geometry"/>
+        </mxCell>
+
+        <!-- Department -->
+        <mxCell id="o-dept" parent="1" vertex="1"
+                value="&lt;u&gt;salesDept : Department&lt;/u&gt;&lt;br&gt;&lt;br&gt;deptId = 4401&lt;br&gt;deptName = Consumer Electronics Sales&lt;br&gt;location = Building A · Floor 2 · East Wing"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="36" y="62" width="300" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Manager -->
+        <mxCell id="o-mgr" parent="1" vertex="1"
+                value="&lt;u&gt;mgrRobert : Manager&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 908812&lt;br&gt;firstName = Robert&lt;br&gt;lastName = Brown&lt;br&gt;email = robert.brown@shopapex.example&lt;br&gt;phoneNumber = +44-7700-900321&lt;br&gt;employeeCode = EMP-MGR-042&lt;br&gt;salary = 78650.00&lt;br&gt;hireDate = 2019-03-11&lt;br&gt;managedDepartment = Consumer Electronics Sales&lt;br&gt;annualBonus = 8200.00"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="376" y="62" width="330" height="210" as="geometry"/>
+        </mxCell>
+
+        <!-- Staff -->
+        <mxCell id="o-stf" parent="1" vertex="1"
+                value="&lt;u&gt;supportAna : Staff&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 771205&lt;br&gt;firstName = Ana&lt;br&gt;lastName = Costa&lt;br&gt;email = ana.costa@shopapex.example&lt;br&gt;phoneNumber = +351-913-884-902&lt;br&gt;employeeCode = EMP-STF-188&lt;br&gt;salary = 41220.50&lt;br&gt;hireDate = 2024-06-03&lt;br&gt;shiftType = Morning&lt;br&gt;hourlyRate = 21.75"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="746" y="62" width="320" height="210" as="geometry"/>
+        </mxCell>
+
+        <!-- Customer -->
+        <mxCell id="o-cust" parent="1" vertex="1"
+                value="&lt;u&gt;aliceChen : Customer&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 500441&lt;br&gt;firstName = Alice&lt;br&gt;lastName = Chen&lt;br&gt;email = alice.chen.mail@mailbox.example&lt;br&gt;phoneNumber = +61-431-889-5540&lt;br&gt;shippingAddress = 217 Harbor Lane, Docklands VIC 3008, AU&lt;br&gt;loyaltyPoints = 2840"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="36" y="298" width="340" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- Anonymous Customer -->
+        <mxCell id="o-custanon" parent="1" vertex="1"
+                value="&lt;u&gt;: Customer&lt;/u&gt;&lt;br&gt;&lt;br&gt;id = 509902&lt;br&gt;firstName = Guest&lt;br&gt;lastName = Checkout&lt;br&gt;email = quickbuy-klx9@mailbox.example&lt;br&gt;phoneNumber = +353-83-774-9911&lt;br&gt;shippingAddress = 98 Merrion Rd, Ballsbridge Dublin 4, IE&lt;br&gt;loyaltyPoints = 140"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="406" y="298" width="340" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- Supplier -->
+        <mxCell id="o-sup" parent="1" vertex="1"
+                value="&lt;u&gt;techNovaSupply : Supplier&lt;/u&gt;&lt;br&gt;&lt;br&gt;supplierId = 88301&lt;br&gt;companyName = TechNova Wholesale GmbH&lt;br&gt;contactPerson = Markus Klein&lt;br&gt;phone = +49-89-441-77201"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="36" y="490" width="320" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- Category -->
+        <mxCell id="o-cat" parent="1" vertex="1"
+                value="&lt;u&gt;electronicsCat : Category&lt;/u&gt;&lt;br&gt;&lt;br&gt;categoryId = 120&lt;br&gt;categoryName = Peripherals &amp; Accessories&lt;br&gt;description = Mice, keyboards, docks, chargers, hubs"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="392" y="490" width="330" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Product 1 -->
+        <mxCell id="o-pr1" parent="1" vertex="1"
+                value="&lt;u&gt;mouseAlpha : Product&lt;/u&gt;&lt;br&gt;&lt;br&gt;productId = SKU-P-77821&lt;br&gt;productName = AlphaCurve Wireless Mouse&lt;br&gt;description = Ergonomic 6-button mouse, BLE + 2.4 GHz dongle&lt;br&gt;price = 39.99&lt;br&gt;stockQuantity = 412"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="762" y="470" width="360" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- Product 2 -->
+        <mxCell id="o-pr2" parent="1" vertex="1"
+                value="&lt;u&gt;keyboardForge : Product&lt;/u&gt;&lt;br&gt;&lt;br&gt;productId = SKU-P-99104&lt;br&gt;productName = ForgeLine TKL Mechanical Keyboard&lt;br&gt;description = Hot-swap reds, aluminium frame, backlight&lt;br&gt;price = 119.50&lt;br&gt;stockQuantity = 203"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="762" y="618" width="360" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- Order -->
+        <mxCell id="o-ord" parent="1" vertex="1"
+                value="&lt;u&gt;orderHX992 : Order&lt;/u&gt;&lt;br&gt;&lt;br&gt;orderId = 99244107&lt;br&gt;orderDate = 2026-04-02&lt;br&gt;status = Delivered&lt;br&gt;totalPrice = 159.49"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="36" y="650" width="280" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- OrderItem 1 -->
+        <mxCell id="o-oi1" parent="1" vertex="1"
+                value="&lt;u&gt;lineItemA : OrderItem&lt;/u&gt;&lt;br&gt;&lt;br&gt;orderItemId = 445501&lt;br&gt;quantity = 1&lt;br&gt;unitPrice = 39.99&lt;br&gt;subtotal = 39.99"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="376" y="640" width="240" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- OrderItem 2 -->
+        <mxCell id="o-oi2" parent="1" vertex="1"
+                value="&lt;u&gt;lineItemB : OrderItem&lt;/u&gt;&lt;br&gt;&lt;br&gt;orderItemId = 445502&lt;br&gt;quantity = 1&lt;br&gt;unitPrice = 119.50&lt;br&gt;subtotal = 119.50"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="376" y="772" width="240" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Payment -->
+        <mxCell id="o-pay" parent="1" vertex="1"
+                value="&lt;u&gt;: Payment&lt;/u&gt;&lt;br&gt;&lt;br&gt;paymentId = PAY-CHK-884102&lt;br&gt;paymentDate = 2026-04-03&lt;br&gt;paymentMethod = Credit Card&lt;br&gt;amount = 159.49"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="686" y="790" width="260" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Review -->
+        <mxCell id="o-rev" parent="1" vertex="1"
+                value="&lt;u&gt;: Review&lt;/u&gt;&lt;br&gt;&lt;br&gt;reviewId = REV-8893401&lt;br&gt;rating = 5&lt;br&gt;comment = Keyboard feels precise and silent; Alice uses it daily for remote work.&lt;br&gt;reviewDate = 2026-04-18"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="1020" y="790" width="420" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- Department — Employee (*): Manager -->
+        <mxCell id="e1" edge="1" parent="1" source="o-dept" target="o-mgr" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <!-- Department — Employee (*): Staff -->
+        <mxCell id="e2" edge="1" parent="1" source="o-dept" target="o-stf" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="334" y="117"/>
+              <mxPoint x="810" y="117"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Supplier — Product (*) -->
+        <mxCell id="e3" edge="1" parent="1" source="o-sup" target="o-pr1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="686" y="555"/>
+              <mxPoint x="686" y="535"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="o-sup" target="o-pr2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="700" y="700"/>
+              <mxPoint x="700" y="683"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Category — Product (*) -->
+        <mxCell id="e5" edge="1" parent="1" source="o-cat" target="o-pr1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="o-cat" target="o-pr2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="557" y="630"/>
+              <mxPoint x="557" y="683"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer — Order (*) -->
+        <mxCell id="e7" edge="1" parent="1" source="o-cust" target="o-ord" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Order — Payment (1–1) -->
+        <mxCell id="e8" edge="1" parent="1" source="o-ord" target="o-pay" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Order — OrderItem — Product (association class paths) -->
+        <mxCell id="e9" edge="1" parent="1" source="o-ord" target="o-oi1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" edge="1" parent="1" source="o-oi1" target="o-pr1" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="706" y="695"/>
+              <mxPoint x="906" y="695"/>
+              <mxPoint x="906" y="535"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e11" edge="1" parent="1" source="o-ord" target="o-oi2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" edge="1" parent="1" source="o-oi2" target="o-pr2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="716" y="827"/>
+              <mxPoint x="906" y="827"/>
+              <mxPoint x="906" y="683"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer — Review (*) alice -->
+        <mxCell id="e13" edge="1" parent="1" source="o-cust" target="o-rev" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="206" y="260"/>
+              <mxPoint x="1230" y="260"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="e14" edge="1" parent="1" source="o-pr2" target="o-rev" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="o-rev2" parent="1" vertex="1"
+                value="&lt;u&gt;: Review&lt;/u&gt;&lt;br&gt;&lt;br&gt;reviewId = REV-8893555&lt;br&gt;rating = 4&lt;br&gt;comment = Fast shipping across EU; packaging was recyclable.&lt;br&gt;reviewDate = 2026-04-19"
+                style="shape=mxgraph.uml.object;html=1;fontFamily=Helvetica;fontSize=11;align=left;verticalAlign=top;spacingLeft=6;spacingTop=6;rounded=1;strokeColor=#000000;fillColor=#FFFFFF;">
+          <mxGeometry x="1020" y="920" width="380" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e15" edge="1" parent="1" source="o-custanon" target="o-rev2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e16" edge="1" parent="1" source="o-pr1" target="o-rev2" style="endArrow=none;html=1;rounded=0;strokeWidth=1;fontFamily=Helvetica;fontSize=10;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1150" y="535"/>
+              <mxPoint x="1150" y="975"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,12 +1,9 @@
 <?php
-// ============================================================
-//  Application Configuration
-//  Edit these values to match your local environment
-// ============================================================
 
-// ── Database ────────────────────────────────────────────────
-define('DB_HOST',     '127.0.0.1');  // Use IP to force TCP (needed for non-default port)
-define('DB_PORT',     3307);          // XAMPP MySQL port
+
+
+define('DB_HOST',     '127.0.0.1');  
+define('DB_PORT',     3307);          
 define('DB_NAME',     'hotel_management');
 define('DB_USER',     'root');
 define('DB_PASS',     '');
@@ -14,7 +11,7 @@ define('DB_CHARSET',  'utf8mb4');
 
 // ── Application ─────────────────────────────────────────────
 define('APP_NAME',    'Hotel Management System');
-define('APP_URL', 'http://localhost/repo/SE_team');
+define('APP_URL', 'http://localhost/SE project');
 define('APP_VERSION', '1.0.0');
 
 // ── Session ──────────────────────────────────────────────────
@@ -26,6 +23,6 @@ define('APP_PATH',    ROOT_PATH . '/app');
 define('VIEW_PATH',   APP_PATH  . '/views');
 define('CORE_PATH',   ROOT_PATH . '/core');
 
-// ── Error Reporting (set to 0 in production) ─────────────────
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);

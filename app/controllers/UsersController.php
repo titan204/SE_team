@@ -1,14 +1,5 @@
 <?php
-// ============================================================
-//  UsersController — Staff account management (Manager only)
-//  Routes:
-//    /users            → index
-//    /users/create     → new staff form
-//    /users/store      → save staff
-//    /users/edit/5     → edit staff
-//    /users/update/5   → save edits
-//    /users/delete/5   → deactivate staff
-// ============================================================
+
 
 class UsersController extends Controller
 {
@@ -24,7 +15,7 @@ class UsersController extends Controller
             $where .= " AND r.name = '$safe'";
         }
 
-        // Staff only — exclude guests
+        
         $r = mysqli_query($db,
             "SELECT u.id, u.name, u.email, u.is_active, u.created_at,
                     r.name AS role, r.id AS role_id
@@ -35,7 +26,7 @@ class UsersController extends Controller
                        u.name ASC");
         $users = $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
 
-        // Per-role counts for summary cards (staff only)
+        
         $rCounts = mysqli_query($db,
             "SELECT r.name AS role, COUNT(*) AS cnt
              FROM   users u JOIN roles r ON u.role_id = r.id
@@ -72,14 +63,14 @@ class UsersController extends Controller
     {
         $this->requireRole('manager');
 
-        // 1. Get form data
+        
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
         $role_id = $_POST['role_id'] ?? '';
         $errors = [];
 
-        // 2. Validate
+        
         if ($name === '') {
             $errors['name'] = 'Name is required.';
         }
@@ -108,8 +99,7 @@ class UsersController extends Controller
             $this->redirect('users/create');
         }
 
-        // 4. Create user
-        // Pass plain-text password — User::create() hashes with bcrypt internally.
+    
         $userModel = new User();
         $userId = $userModel->create([
             'name'     => $name,
@@ -118,7 +108,7 @@ class UsersController extends Controller
             'role_id'  => $role_id,
         ]);
 
-        // 6. Log action
+        
         AuditLog::log(
             $_SESSION['user_id'],
             'CREATE',
@@ -132,7 +122,7 @@ class UsersController extends Controller
             ])
         );
 
-        // 7. Redirect with success message
+        
         $_SESSION['message'] = 'User created successfully.';
         $this->redirect('users/index');
     }
@@ -173,13 +163,13 @@ class UsersController extends Controller
             die('User not found');
         }
 
-        // 1. Get form data
+        
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $role_id = $_POST['role_id'] ?? '';
         $errors = [];
 
-        // 2. Validate
+        
         if ($name === '') {
             $errors['name'] = 'Name is required.';
         }
@@ -194,13 +184,13 @@ class UsersController extends Controller
             $errors['role_id'] = 'Role is required.';
         }
 
-        // 3. If validation failed
+        
         if (!empty($errors)) {
             $_SESSION['errors'] = $errors;
             $this->redirect('users/edit/' . $id);
         }
 
-        // 4. Prepare update data
+        
         $updateData = [
             'name'      => $name,
             'email'     => $email,
@@ -208,7 +198,7 @@ class UsersController extends Controller
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
 
-        // Optional password change — use the canonical bcrypt workflow (updatePassword)
+        
         $newPassword = trim($_POST['password'] ?? '');
         if ($newPassword !== '') {
             if (strlen($newPassword) < 6) {
@@ -216,14 +206,14 @@ class UsersController extends Controller
                 $this->redirect('users/edit/' . $id);
                 return;
             }
-            // updatePassword() hashes with bcrypt via hashPassword() — consistent with registration
+            
             $userModel->updatePassword($id, $newPassword);
         }
 
-        // 5. Update user
+        
         $userModel->update($id, $updateData);
 
-        // 6. Log action with old/new values
+        
         AuditLog::log(
             $_SESSION['user_id'],
             'UPDATE',
@@ -237,7 +227,7 @@ class UsersController extends Controller
             json_encode($updateData)
         );
 
-        // 7. Redirect with success message
+        
         $_SESSION['message'] = 'User updated successfully.';
         $this->redirect('users/index');
     }
@@ -253,10 +243,10 @@ class UsersController extends Controller
             die('User not found');
         }
 
-        // 1. Soft delete (set is_active = 0)
+        
         $userModel->update($id, ['is_active' => 0]);
 
-        // 2. Log action
+        
         AuditLog::log(
             $_SESSION['user_id'],
             'DELETE',
@@ -274,7 +264,7 @@ class UsersController extends Controller
             ])
         );
 
-        // 3. Redirect with success message
+        
         $_SESSION['message'] = 'User deactivated successfully.';
         $this->redirect('users/index');
     }

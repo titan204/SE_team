@@ -1,15 +1,7 @@
 <?php
 class GuestProfileController extends Controller
 {
-    // ── Helpers ───────────────────────────────────────────────
-
-    /**
-     * Resolves the logged-in user's guest record.
-     * We look up by email so the users ↔ guests link is email-based,
-     * matching the existing registration flow in AuthController.
-     *
-     * @return array|null
-     */
+    
     private function resolveGuest(): ?array
     {
         $email = trim((string) ($_SESSION['user_email'] ?? ''));
@@ -20,12 +12,7 @@ class GuestProfileController extends Controller
         return $guestModel->findByEmail($email) ?: null;
     }
 
-    /**
-     * Emits a JSON response and terminates.
-     *
-     * @param  int   $status   HTTP status code
-     * @param  array $payload
-     */
+    
     private function json(int $status, array $payload): void
     {
         http_response_code($status);
@@ -34,7 +21,7 @@ class GuestProfileController extends Controller
         exit;
     }
 
-    // ── GET /guestprofile ─────────────────────────────────────
+    
 
     
     public function index(): void
@@ -55,7 +42,7 @@ class GuestProfileController extends Controller
             $this->redirect('home/index');
         }
 
-        // ── Room types for the preferences dropdown ───────────
+        
         try {
             $roomTypeModel = new RoomType();
             $roomTypes     = $roomTypeModel->all();
@@ -78,7 +65,7 @@ class GuestProfileController extends Controller
         unset($_SESSION['profile_errors'], $_SESSION['profile_old'], $_SESSION['profile_success']);
     }
 
-    // ── POST /updateProfile ───────────────────────────────────
+    
 
    
     public function updateProfile(): void
@@ -112,7 +99,7 @@ class GuestProfileController extends Controller
         }
 
         if ($result['ok']) {
-            // Keep session name in sync if name changed
+            
             $_SESSION['user_name']  = trim($_POST['name'] ?? $_SESSION['user_name']);
             $_SESSION['user_email'] = trim($_POST['email'] ?? $_SESSION['user_email']);
             $_SESSION['profile_success'] = 'Your profile has been updated successfully.';
@@ -124,7 +111,7 @@ class GuestProfileController extends Controller
         $this->redirect('guestProfile/index');
     }
 
-    // ── POST /cancelReservation ───────────────────────────────
+    
 
    
     public function cancelReservation(): void
@@ -172,7 +159,7 @@ class GuestProfileController extends Controller
         $this->redirect('guestProfile/index');
     }
 
-    // ── POST /addPreference ───────────────────────────────────
+    
 
     
     public function addPreference(): void
@@ -224,12 +211,7 @@ class GuestProfileController extends Controller
         $this->redirect('guestProfile/index');
     }
 
-    // ── POST /updatePreference ────────────────────────────────
-
-    /**
-     * Updates an existing preference.
-     * Route: ?url=guestProfile/updatePreference
-     */
+    
     public function updatePreference(): void
     {
         $this->requireRole('guest');
@@ -281,7 +263,7 @@ class GuestProfileController extends Controller
         $this->redirect('guestProfile/index');
     }
 
-    // ── POST /deletePreference ────────────────────────────────
+    
 
     
     public function deletePreference(): void
@@ -327,7 +309,7 @@ class GuestProfileController extends Controller
         $this->redirect('guestProfile/index');
     }
 
-    // ── POST /savePreferences ─────────────────────────────────
+    
 
     
     public function savePreferences(): void
@@ -343,7 +325,7 @@ class GuestProfileController extends Controller
             $this->json(403, ['ok' => false, 'message' => 'Unauthorized.']);
         }
 
-        // Whitelist of allowed preference keys
+        
         $allowed = [
             'room_type', 'bed_type', 'smoking', 'floor_level',
             'view', 'dietary', 'special_requests',
@@ -365,12 +347,7 @@ class GuestProfileController extends Controller
         $this->json(200, ['ok' => true, 'message' => 'Preferences saved successfully.']);
     }
 
-    // ── Private utilities ─────────────────────────────────────
-
-    /**
-     * Returns true when the request was sent with the X-Requested-With header
-     * (fetch / XMLHttpRequest) or when the client accepts JSON only.
-     */
+    
     private function isAjax(): bool
     {
         $xhr    = strtolower($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'xmlhttprequest';
@@ -378,13 +355,7 @@ class GuestProfileController extends Controller
         return $xhr || (str_contains($accept, 'application/json') && !str_contains($accept, 'text/html'));
     }
 
-    /**
-     * Sends a JSON response for AJAX callers or redirects for plain form posts.
-     *
-     * @param int    $status
-     * @param array  $payload
-     * @param string $redirectPath
-     */
+    
     private function jsonOrRedirect(int $status, array $payload, string $redirectPath): void
     {
         if ($this->isAjax()) {

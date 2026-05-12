@@ -1,28 +1,15 @@
 <?php
-// ============================================================
-//  MaintenanceController — UC34/UC35/UC36
-//  Routes:
-//    /maintenance                         → index (work-order list)
-//    /maintenance/show/5                  → order details
-//    /maintenance/emergency               → UC35 form / submit
-//    /maintenance/preventative            → UC36 form / submit
-//    /maintenance/workOrders              → GET list (alias)
-//    /maintenance/progress/5              → POST technician progress
-//    /maintenance/complete/5              → POST technician complete
-//    /maintenance/close/5                 → POST supervisor close
-//    /maintenance/reject/5                → POST supervisor reject
-//    /maintenance/availability            → GET conflict check (UC36)
-// ============================================================
+
 
 class MaintenanceController extends Controller
 {
-    /** Restrict to maintenance staff and management only. */
+    
     private function requireMaintenance(): void
     {
         $this->requireRoles(['maintenance_technician', 'maintenance', 'manager', 'supervisor']);
     }
 
-    // ── UC34: Work-order list ─────────────────────────────────
+    
 
     public function index()
     {
@@ -30,7 +17,7 @@ class MaintenanceController extends Controller
         $this->requireMaintenance();
         $wo      = new WorkOrder();
 
-        // UC36: Run overdue escalation on every page load for supervisors/managers
+        
         $role = $_SESSION['user_role'] ?? '';
         if (in_array($role, ['supervisor', 'manager'])) {
             $wo->escalateOverdue();
@@ -61,12 +48,7 @@ class MaintenanceController extends Controller
         $this->view('maintenance/show', compact('order', 'logs'));
     }
 
-    // ── UC35: Emergency Repair ────────────────────────────────
-
-    /**
-     * GET /maintenance/emergency — show the emergency form.
-     * POST /maintenance/emergency — create emergency work order.
-     */
+    
     public function emergency()
     {
         $this->requireLogin();
@@ -106,12 +88,7 @@ class MaintenanceController extends Controller
         ]);
     }
 
-    // ── UC36: Preventative Maintenance ───────────────────────
-
-    /**
-     * GET /maintenance/preventative — show scheduling form.
-     * POST /maintenance/preventative — create preventative work order.
-     */
+    
     public function preventative()
     {
         $this->requireLogin();
@@ -126,7 +103,7 @@ class MaintenanceController extends Controller
                 return;
             }
 
-            // Conflict check before accepting
+            
             $roomId = !empty($_POST['room_id']) ? (int)$_POST['room_id'] : null;
             $date   = $_POST['scheduled_date'] ?? date('Y-m-d');
             if ($roomId && empty($_POST['override_conflict'])) {
@@ -172,14 +149,11 @@ class MaintenanceController extends Controller
         ]);
     }
 
-    /**
-     * GET /maintenance/availability
-     * UC36 conflict check (AJAX-friendly).
-     */
+    
     public function availability()
     {
         $this->requireLogin();
-        // Availability check is also needed by housekeeping supervisors
+        
         $this->requireRoles(['maintenance_technician', 'maintenance', 'manager', 'supervisor', 'housekeeper']);
         $wo     = new WorkOrder();
         $roomId = (int) ($_GET['room_id'] ?? 0);
@@ -189,12 +163,7 @@ class MaintenanceController extends Controller
         exit;
     }
 
-    // ── UC34: Status transitions ──────────────────────────────
-
-    /**
-     * POST /maintenance/progress/{id}
-     * Technician updates progress notes.
-     */
+    
     public function progress($id)
     {
         $this->requireLogin();
@@ -206,10 +175,7 @@ class MaintenanceController extends Controller
         $this->redirect("maintenance/show/$id");
     }
 
-    /**
-     * POST /maintenance/complete/{id}
-     * Technician marks work complete.
-     */
+   
     public function complete($id)
     {
         $this->requireLogin();
@@ -229,10 +195,7 @@ class MaintenanceController extends Controller
         $this->redirect("maintenance/show/$id");
     }
 
-    /**
-     * POST /maintenance/close/{id}
-     * Supervisor closes the work order.
-     */
+    
     public function close($id)
     {
         $this->requireLogin();
@@ -247,10 +210,7 @@ class MaintenanceController extends Controller
         $this->redirect("maintenance/show/$id");
     }
 
-    /**
-     * POST /maintenance/reject/{id}
-     * Supervisor rejects the work order.
-     */
+    
     public function reject($id)
     {
         $this->requireLogin();
@@ -267,17 +227,13 @@ class MaintenanceController extends Controller
         $this->redirect('maintenance/index');
     }
 
-    // Keep legacy aliases for previously linked routes
+    
     public function create()   { $this->redirect('maintenance/emergency'); }
     public function store()    { $this->redirect('maintenance/emergency'); }
     public function resolve($id) { $this->redirect("maintenance/show/$id"); }
     public function escalate($id){ $this->redirect("maintenance/show/$id"); }
 
-    /**
-     * POST /maintenance/decommission/{asset_id}
-     * UC36 Step 4: Decommission an asset — manager only.
-     * Cancels all open/in_progress WOs for that asset and logs cancellation.
-     */
+    
     public function decommission($assetId)
     {
         $this->requireLogin();

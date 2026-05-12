@@ -12,7 +12,7 @@ class DashboardController extends Controller
         $this->view('dashboard/index', $stats);
     }
 
-    /** GET /dashboard/stats — AJAX endpoint for auto-refresh. */
+    
     public function stats()
     {
         $this->requireLogin();
@@ -21,7 +21,7 @@ class DashboardController extends Controller
         exit;
     }
 
-    // ── Private query methods ─────────────────────────────────
+    
 
     private function loadStats(): array
     {
@@ -58,7 +58,7 @@ class DashboardController extends Controller
             ];
         }
 
-        // manager / supervisor / all other staff
+        
         return [
             'reservations_today' => $this->reservationsToday($db),
             'rooms_by_status'    => $this->roomsByStatus($db),
@@ -73,10 +73,7 @@ class DashboardController extends Controller
         ];
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  1. Reservations with activity today
-    //     (check-in OR check-out date = today, not cancelled/no-show)
-    // ─────────────────────────────────────────────────────────
+    
     private function reservationsToday($db): int
     {
         $r = mysqli_query($db,
@@ -86,9 +83,7 @@ class DashboardController extends Controller
         return (int)(mysqli_fetch_assoc($r)['cnt'] ?? 0);
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  2. Room counts grouped by status
-    // ─────────────────────────────────────────────────────────
+    
     private function roomsByStatus($db): array
     {
         $r    = mysqli_query($db, "SELECT status, COUNT(*) AS cnt FROM rooms GROUP BY status");
@@ -99,10 +94,7 @@ class DashboardController extends Controller
         return $data;
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  3. Pending housekeeping tasks
-    //     FIX: enum is ('pending','in_progress','done','skipped')
-    // ─────────────────────────────────────────────────────────
+    
     private function pendingHkTasks($db): int
     {
         $r = mysqli_query($db,
@@ -111,10 +103,7 @@ class DashboardController extends Controller
         return (int)(mysqli_fetch_assoc($r)['cnt'] ?? 0);
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  3b. My HK tasks (housekeeper role)
-    //     FIX: use 'done' not 'completed' for exclusion
-    // ─────────────────────────────────────────────────────────
+    
     private function myHkTasks($db): array
     {
         $uid = (int)($_SESSION['user_id'] ?? 0);
@@ -127,23 +116,17 @@ class DashboardController extends Controller
         return $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  4. Revenue today
-    //     FIX: payments table has folio_id not reservation_id.
-    //     Sum payments joined through folios → reservations.
-    //     Also include amount_paid added to folios today.
-    // ─────────────────────────────────────────────────────────
+    
     private function revenueToday($db): float
     {
-        // Primary: sum payments processed today
+        
         $r = mysqli_query($db,
             "SELECT COALESCE(SUM(p.amount), 0) AS total
              FROM   payments p
              WHERE  DATE(p.processed_at) = CURDATE()");
         $fromPayments = (float)(mysqli_fetch_assoc($r)['total'] ?? 0);
 
-        // Fallback: if no payments today, sum folio amount_paid
-        // updated today (covers cases where payment is direct folio update)
+        
         if ($fromPayments <= 0) {
             $r2 = mysqli_query($db,
                 "SELECT COALESCE(SUM(f.amount_paid), 0) AS total
@@ -157,9 +140,7 @@ class DashboardController extends Controller
         return round($fromPayments, 2);
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  4b. Revenue this calendar month (sum of all payments)
-    // ─────────────────────────────────────────────────────────
+    
     private function revenueMonth($db): float
     {
         $r = mysqli_query($db,
@@ -168,7 +149,7 @@ class DashboardController extends Controller
                AND  MONTH(processed_at) = MONTH(CURDATE())");
         $v = (float)(mysqli_fetch_assoc($r)['total'] ?? 0);
 
-        // Fallback: folios settled/updated this month
+        
         if ($v <= 0) {
             $r2 = mysqli_query($db,
                 "SELECT COALESCE(SUM(amount_paid), 0) AS total
@@ -181,9 +162,7 @@ class DashboardController extends Controller
         return round($v, 2);
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  4c. Revenue previous calendar month
-    // ─────────────────────────────────────────────────────────
+    
     private function revenuePrevMonth($db): float
     {
         $r = mysqli_query($db,
@@ -204,9 +183,7 @@ class DashboardController extends Controller
         return round($v, 2);
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  4d. Occupancy rate
-    // ─────────────────────────────────────────────────────────
+    
     private function occupancyRate($db): float
     {
         $rTotal = mysqli_query($db, "SELECT COUNT(*) AS cnt FROM rooms");
@@ -216,10 +193,7 @@ class DashboardController extends Controller
         return $total > 0 ? round($occ / $total * 100, 1) : 0.0;
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  5. Upcoming check-ins (today + next 3 days with confirmed)
-    //     FIX: also show checked_in status for late check-ins
-    // ─────────────────────────────────────────────────────────
+    
     private function upcomingCheckins($db): array
     {
         $r = mysqli_query($db,
@@ -235,11 +209,7 @@ class DashboardController extends Controller
         return $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  6. Upcoming check-outs
-    //     FIX: widen window to today + 1 day so there's always data
-    //     FIX: include 'checked_in' AND 'confirmed' (pre-departures)
-    // ─────────────────────────────────────────────────────────
+    
     private function upcomingCheckouts($db): array
     {
         $r = mysqli_query($db,
@@ -259,12 +229,7 @@ class DashboardController extends Controller
         return $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  7. VIP arrivals
-    //     FIX: use guests.is_vip = 1 OR loyalty_tier = 'platinum'
-    //     instead of searching special_requests text for 'vip'
-    //     Window: today + next 2 days
-    // ─────────────────────────────────────────────────────────
+    
     private function vipArrivals($db): array
     {
         $r = mysqli_query($db,
@@ -281,21 +246,16 @@ class DashboardController extends Controller
         return $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  8. Open work orders
-    //     FIX: correct status enum for actual work_orders table:
-    //     ('open','in_progress','pending_parts','completed','closed','rejected')
-    //     Also queries maintenance_orders as fallback if work_orders empty
-    // ─────────────────────────────────────────────────────────
+    
     private function openWorkOrders($db): int
     {
-        // Primary: work_orders table (UC-based)
+        
         $r = mysqli_query($db,
             "SELECT COUNT(*) AS cnt FROM work_orders
              WHERE  status IN ('open','in_progress','pending_parts')");
         $count = (int)(mysqli_fetch_assoc($r)['cnt'] ?? 0);
 
-        // Fallback: maintenance_orders (legacy table that has data)
+        
         if ($count === 0) {
             $r2 = mysqli_query($db,
                 "SELECT COUNT(*) AS cnt FROM maintenance_orders
@@ -306,10 +266,7 @@ class DashboardController extends Controller
         return $count;
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  9. Open billing disputes (manager only)
-    //     NEW: surfaces real dispute data for managers
-    // ─────────────────────────────────────────────────────────
+    
     private function openDisputes($db): int
     {
         $r = mysqli_query($db,

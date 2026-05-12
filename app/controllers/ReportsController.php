@@ -1,8 +1,5 @@
 <?php
-// ============================================================
-//  ReportsController — Occupancy, Revenue, Audit Log
-//  Access: manager (all) + revenue_manager (occupancy + revenue)
-// ============================================================
+
 
 class ReportsController extends Controller
 {
@@ -13,7 +10,7 @@ class ReportsController extends Controller
         $this->view('reports/index');
     }
 
-    // ── REPORT 1: OCCUPANCY ───────────────────────────────────
+    
 
     public function occupancy()
     {
@@ -27,11 +24,11 @@ class ReportsController extends Controller
         $startSafe = mysqli_real_escape_string($db, $start);
         $endSafe   = mysqli_real_escape_string($db, $end);
 
-        // Total rooms
+    
         $rTotal = mysqli_query($db, "SELECT COUNT(*) AS total FROM rooms");
         $totalRooms = (int)(mysqli_fetch_assoc($rTotal)['total'] ?? 0);
 
-        // Daily occupancy: count distinct rooms checked_in or checked_out in range
+        
         $rDaily = mysqli_query($db,
             "SELECT DATE(actual_check_in) AS day, COUNT(DISTINCT room_id) AS occupied
              FROM   reservations
@@ -40,7 +37,7 @@ class ReportsController extends Controller
              GROUP  BY day ORDER BY day ASC");
         $dailyData = $rDaily ? mysqli_fetch_all($rDaily, MYSQLI_ASSOC) : [];
 
-        // Per room-type breakdown
+        
         $rTypes = mysqli_query($db,
             "SELECT rt.name AS room_type,
                     COUNT(DISTINCT r.id)      AS nights_occupied,
@@ -54,7 +51,7 @@ class ReportsController extends Controller
              GROUP  BY rt.name");
         $typeData = $rTypes ? mysqli_fetch_all($rTypes, MYSQLI_ASSOC) : [];
 
-        // Overall occupancy %
+        
         $avgOccupied = $totalRooms > 0 && !empty($dailyData)
             ? round(array_sum(array_column($dailyData, 'occupied')) / (count($dailyData) * $totalRooms) * 100, 1)
             : 0;
@@ -64,7 +61,7 @@ class ReportsController extends Controller
         ));
     }
 
-    // ── REPORT 2: REVENUE ─────────────────────────────────────
+    
 
     public function revenue()
     {
@@ -78,7 +75,7 @@ class ReportsController extends Controller
         $startSafe = mysqli_real_escape_string($db, $start);
         $endSafe   = mysqli_real_escape_string($db, $end);
 
-        // ── Total revenue from actual payments ──
+        
         $rTotal = mysqli_query($db,
             "SELECT COALESCE(SUM(amount), 0) AS total
              FROM   payments
@@ -88,7 +85,7 @@ class ReportsController extends Controller
         $days    = max(1, (int)((strtotime($end) - strtotime($start)) / 86400) + 1);
         $avgDaily = round($totalRevenue / $days, 2);
 
-        // ── Daily revenue breakdown ──
+        
         $rDaily = mysqli_query($db,
             "SELECT DATE(processed_at) AS day,
                     COUNT(*)           AS transactions,
@@ -98,7 +95,7 @@ class ReportsController extends Controller
              GROUP  BY day ORDER BY day ASC");
         $dailyData = $rDaily ? mysqli_fetch_all($rDaily, MYSQLI_ASSOC) : [];
 
-        // ── Breakdown by payment method ──
+        
         $rMethods = mysqli_query($db,
             "SELECT method,
                     COUNT(*)    AS tx_count,
@@ -109,7 +106,7 @@ class ReportsController extends Controller
              ORDER  BY subtotal DESC");
         $byMethod = $rMethods ? mysqli_fetch_all($rMethods, MYSQLI_ASSOC) : [];
 
-        // ── Top folios by revenue in period ──
+        
         $rFolios = mysqli_query($db,
             "SELECT f.id AS folio_id, g.name AS guest_name,
                     rm.room_number, f.total_amount, f.amount_paid,
@@ -126,7 +123,7 @@ class ReportsController extends Controller
              LIMIT  10");
         $topFolios = $rFolios ? mysqli_fetch_all($rFolios, MYSQLI_ASSOC) : [];
 
-        // ── Previous period comparison ──
+        
         $periodDays  = max(1, (int)((strtotime($end) - strtotime($start)) / 86400) + 1);
         $prevEnd     = date('Y-m-d', strtotime($start) - 86400);
         $prevStart   = date('Y-m-d', strtotime($prevEnd) - ($periodDays - 1) * 86400);
@@ -150,7 +147,7 @@ class ReportsController extends Controller
     }
 
 
-    // ── REPORT 3: AUDIT LOG ───────────────────────────────────
+    
 
     public function audit()
     {
@@ -168,7 +165,7 @@ class ReportsController extends Controller
         $al      = new AuditLog();
         $entries = $al->all($filters, 500, 0);
 
-        // User list for filter dropdown
+        
         $db  = (new Model())->getDb();
         $rU  = mysqli_query($db, "SELECT id, name FROM users ORDER BY name");
         $users = $rU ? mysqli_fetch_all($rU, MYSQLI_ASSOC) : [];
@@ -176,7 +173,7 @@ class ReportsController extends Controller
         $this->view('reports/audit', compact('entries', 'filters', 'users'));
     }
 
-    /** GET /reports/audit/export — CSV download. */
+    
     public function auditExport()
     {
         $this->requireLogin();

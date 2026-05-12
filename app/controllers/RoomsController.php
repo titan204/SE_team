@@ -1,22 +1,9 @@
 <?php
-// ============================================================
-//  RoomsController — Room inventory management
-//  Routes:
-//    /rooms              → index
-//    /rooms/show/5       → show room details
-//    /rooms/create       → new room form
-//    /rooms/store        → save new room
-//    /rooms/edit/5       → edit room
-//    /rooms/update/5     → save edits
-//    /rooms/delete/5     → delete room
-//    /rooms/updateStatus/5 → change room status
-// ============================================================
+
 
 class RoomsController extends Controller
 {
-    /**
-     * List all rooms.
-     */
+    
     public function index()
     {
         $this->requireLogin();
@@ -28,11 +15,7 @@ class RoomsController extends Controller
         $this->view('rooms/index', ['rooms' => $rooms]);
     }
 
-    /**
-     * Show guest-facing available rooms.
-     * Uses date-range availability logic when dates are provided,
-     * otherwise falls back to rooms currently marked as available.
-     */
+    
     public function guest()
     {
         $roomModel = new Room();
@@ -80,9 +63,7 @@ class RoomsController extends Controller
         ]);
     }
 
-    /**
-     * Show a single room with reservations, housekeeping, maintenance.
-     */
+    
     public function show($id)
     {
         $this->requireLogin();
@@ -105,9 +86,7 @@ class RoomsController extends Controller
         ]);
     }
 
-    /**
-     * Show the create-room form.
-     */
+    
     public function create()
     {
         $this->requireLogin();
@@ -118,9 +97,7 @@ class RoomsController extends Controller
         $this->view('rooms/create', ['roomTypes' => $roomTypes]);
     }
 
-    /**
-     * Validate POST data and insert a new room.
-     */
+   
     public function store()
     {
         $this->requireLogin();
@@ -156,9 +133,7 @@ class RoomsController extends Controller
         $this->redirect("rooms/show/$id");
     }
 
-    /**
-     * Show the edit-room form.
-     */
+    
     public function edit($id)
     {
         $this->requireLogin();
@@ -181,9 +156,7 @@ class RoomsController extends Controller
         ]);
     }
 
-    /**
-     * Validate POST data and update a room.
-     */
+    
     public function update($id)
     {
         $this->requireLogin();
@@ -218,9 +191,7 @@ class RoomsController extends Controller
         $this->redirect("rooms/show/$id");
     }
 
-    /**
-     * Delete a room (only if no active reservations).
-     */
+    
     public function delete($id)
     {
         $this->requireLogin();
@@ -237,9 +208,7 @@ class RoomsController extends Controller
         $this->redirect('rooms');
     }
 
-    /**
-     * Read new status from POST, validate transition, update.
-     */
+
     public function updateStatus($id)
     {
         $this->requireLogin();
@@ -254,7 +223,7 @@ class RoomsController extends Controller
         $room = new Room();
         try {
             $room->updateStatus($id, $newStatus);
-            // Log the status change using the existing AuditLog model
+            
             AuditLog::log($_SESSION['user_id'] ?? null, 'room_status_change', 'room', $id, null, $newStatus);
             $_SESSION['success'] = "Status updated to '$newStatus'.";
         } catch (Exception $e) {

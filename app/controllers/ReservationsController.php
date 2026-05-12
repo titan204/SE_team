@@ -1,34 +1,9 @@
 <?php
-// ============================================================
-//  ReservationsController — Booking & front-desk workflow
-//
-//  NOTE: Models are autoloaded dynamically in index.php via glob().
-//  The @see tags below tell Intelephense where to find these classes
-//  so it stops reporting false "Undefined method" warnings.
-//
-// @see \Reservation
-// @see \Room
-// @see \Guest
-// @see \Folio
-//  Routes:
-//    /reservations              → index
-//    /reservations/show/5       → show details
-//    /reservations/create       → new booking form
-//    /reservations/store        → save booking
-//    /reservations/edit/5       → edit booking
-//    /reservations/update/5     → save edits
-//    /reservations/delete/5     → cancel/delete
-//    /reservations/checkin/5    → check-in action
-//    /reservations/checkout/5   → check-out action
-//    /reservations/confirm/5    → confirm reservation
-//    /reservations/noshow/5     → mark no-show
-//    /reservations/earlycheckin/5 → early check-in
-//    /reservations/acceptupgrade/5/3 → accept room upgrade (res 5 → room 3)
-// ============================================================
+
 
 class ReservationsController extends Controller
 {
-    // ── Index: list + filter ─────────────────────────────────
+    
 
     public function index()
     {
@@ -50,7 +25,7 @@ class ReservationsController extends Controller
         ]);
     }
 
-    // ── Show: reservation detail ─────────────────────────────
+    
 
     public function show($id)
     {
@@ -64,13 +39,10 @@ class ReservationsController extends Controller
             return;
         }
 
-        // Folio info
+        
         $folio = $reservationModel->getFolioByReservation($id);
 
-        // ── Upgrade suggestion ─────────────────────────────────────────────────────
-        // Gate: ONLY at checked_in, ONLY for gold / platinum loyalty tier.
-        // Status and loyalty_tier are normalised to lowercase+trim so any DB
-        // capitalisation variation ('Checked_In', 'Gold', 'PLATINUM' …) still matches.
+        
         $upgradeRoom       = null;
         $normalizedStatus  = strtolower(trim((string)($reservation['status']      ?? '')));
         $normalizedLoyalty = strtolower(trim((string)($reservation['loyalty_tier'] ?? '')));
@@ -78,7 +50,7 @@ class ReservationsController extends Controller
         if ($normalizedStatus === 'checked_in'
             && in_array($normalizedLoyalty, ['gold', 'platinum'], true)
         ) {
-            // Loyalty path — primary for gold / platinum guests
+            
             $result = $reservationModel->suggestUpgradeForLoyalty(
                 $reservation,
                 (int) $reservation['room_id'],
@@ -89,7 +61,7 @@ class ReservationsController extends Controller
                 $upgradeRoom = $result;
             }
 
-            // VIP path — fallback if loyalty path found nothing and guest is VIP-flagged
+            
             if (!$upgradeRoom && !empty($reservation['is_vip'])) {
                 $roomModel = new Room();
                 $result    = $roomModel->suggestUpgrade(
@@ -102,10 +74,7 @@ class ReservationsController extends Controller
                 }
             }
 
-            // Guaranteed fallback — guest qualifies but no specific room was found in DB.
-            // Show the button anyway so staff can action it; acceptupgrade() validates
-            // room availability before committing, so no unsafe upgrade can occur.
-            // If upgradeRoom['id'] is 0 the acceptupgrade controller will reject safely.
+            
             if (!$upgradeRoom) {
                 $upgradeRoom = [
                     'id'          => 0,
@@ -116,19 +85,19 @@ class ReservationsController extends Controller
             }
         }
 
-        // Early check-in eligibility
+        
         $earlyCheckIn = false;
         if (in_array($reservation['status'], ['pending','confirmed'])) {
             $earlyCheckIn = $reservationModel->checkEarlyCheckInEligibility($id);
         }
 
-        // Group reservations
+        
         $groupReservations = [];
         if (!empty($reservation['group_id'])) {
             $groupReservations = $reservationModel->findGroupReservations($reservation['group_id']);
         }
 
-        // OPTIONAL: Special occasion check — birthday on check-in day
+        
         $isSpecialOccasion = false;
         $guestModel        = new Guest();
         $guestRecord       = $guestModel->find($reservation['guest_id']);
@@ -153,7 +122,7 @@ class ReservationsController extends Controller
         ]);
     }
 
-    // ── Create: show form ────────────────────────────────────
+
 
     public function create()
     {
@@ -175,7 +144,7 @@ class ReservationsController extends Controller
         $roomModel       = new Room();
         $rooms           = $roomModel->all();
 
-        // Pre-selected room — passed from "Reserve This Room" button via GET
+        
         $preSelectedRoom = null;
         $preRoomId       = (int) ($_GET['room_id'] ?? 0);
         if ($preRoomId > 0) {
@@ -196,10 +165,7 @@ class ReservationsController extends Controller
     {
         $this->requireLogin();
 
-        // Hard redirect helper — inline so exit is always guaranteed.
-        // Uses full absolute URL to eliminate any relative-path ambiguity.
-        // Every exit path in this method uses this pattern exclusively.
-
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: ' . APP_URL . '/index.php?url=reservations/create');
             exit;
@@ -210,7 +176,7 @@ class ReservationsController extends Controller
                         || ($_SESSION['user_role_id'] ?? 0) == 4);
 
         if ($isGuestUser) {
-            // Guest users: auto-assign their own guest record — ignore any submitted guest_id
+            
             $guestModel   = new Guest();
             $currentGuest = $guestModel->findByEmail($_SESSION['user_email'] ?? '');
             if (!$currentGuest) {
@@ -221,19 +187,19 @@ class ReservationsController extends Controller
             $data['guest_id']    = $currentGuest['id'];
             $data['assigned_by'] = null;
         } else {
-            // Staff booking: keep submitted guest_id, record who assigned
+            
             $data['assigned_by'] = $_SESSION['user_id'] ?? null;
             $guestModel          = new Guest();
             $currentGuest        = $guestModel->find((int) $data['guest_id']);
         }
 
-        // EXTEND: Apply VIP flag in-memory before create() if guest is VIP
+        
         $reservationModel = new Reservation();
         if (!empty($currentGuest)) {
             $reservationModel->applyVipFlag($data, $currentGuest);
         }
 
-        // Basic validation — all four fields are mandatory
+        
         if (
             empty($data['guest_id'])       ||
             empty($data['room_id'])        ||
@@ -244,7 +210,7 @@ class ReservationsController extends Controller
             exit;
         }
 
-        // ── Out-of-order room guard (backend) ─────────────────
+        
         $roomModel  = new Room();
         $roomRecord = $roomModel->find((int) $data['room_id']);
         if ($roomRecord && $roomRecord['status'] === 'out_of_order') {
@@ -253,14 +219,14 @@ class ReservationsController extends Controller
             exit;
         }
 
-        // Calculate total price
+        
         $data['total_price'] = $reservationModel->calculatePrice(
             $data['room_id'],
             $data['check_in_date'],
             $data['check_out_date']
         );
 
-        // Create the reservation — throws RuntimeException on DB failure
+        
         try {
             $reservationId = $reservationModel->create($data);
         } catch (\RuntimeException $e) {
@@ -275,12 +241,10 @@ class ReservationsController extends Controller
             exit;
         }
 
-        // Auto-create folio
+        
         $reservationModel->createFolio($reservationId, $data['total_price']);
 
-        // ── Final redirect ──────────────────────────────────────────
-        // Guests → deposit payment page (20% deposit required first)
-        // Staff  → reservation details as usual
+        
         if ($isGuestUser) {
             header('Location: ' . APP_URL . '/index.php?url=reservations/deposit/' . (int)$reservationId);
         } else {
@@ -289,7 +253,7 @@ class ReservationsController extends Controller
         exit;
     }
 
-    // ── Deposit Payment: show form ────────────────────────────
+    
 
     public function deposit($id)
     {
@@ -303,7 +267,7 @@ class ReservationsController extends Controller
             return;
         }
 
-        // 20% deposit
+        
         $depositAmount = round((float)$reservation['total_price'] * 0.20, 2);
 
         $this->view('reservations/deposit', [
@@ -312,7 +276,7 @@ class ReservationsController extends Controller
         ]);
     }
 
-    // ── Deposit Payment: process (simulated) ──────────────────
+    
 
     public function payDeposit($id)
     {
@@ -335,7 +299,7 @@ class ReservationsController extends Controller
 
         $db = (new Model())->getDb();
 
-        // 1. Mark deposit paid + auto-confirm reservation
+        
         $stmt = mysqli_prepare(
             $db,
             "UPDATE reservations
@@ -345,7 +309,7 @@ class ReservationsController extends Controller
         mysqli_stmt_bind_param($stmt, 'di', $depositAmount, $id);
         mysqli_stmt_execute($stmt);
 
-        // 2. Update folio: amount_paid += deposit, balance_due -= deposit
+        
         $stmt2 = mysqli_prepare(
             $db,
             "UPDATE folios
@@ -356,12 +320,12 @@ class ReservationsController extends Controller
         mysqli_stmt_bind_param($stmt2, 'ddi', $depositAmount, $depositAmount, $id);
         mysqli_stmt_execute($stmt2);
 
-        // Redirect back to deposit page with success flag
+        
         header('Location: ' . APP_URL . '/index.php?url=reservations/deposit/' . (int)$id . '&paid=1');
         exit;
     }
 
-    // ── Edit: show pre-filled form ───────────────────────────
+    
 
     public function edit($id)
     {
@@ -388,7 +352,7 @@ class ReservationsController extends Controller
         ]);
     }
 
-    // ── Update: save edits ───────────────────────────────────
+    
 
     public function update($id)
     {
@@ -413,7 +377,7 @@ class ReservationsController extends Controller
 
         $reservationModel = new Reservation();
 
-        // Recalculate price
+        
         $data['total_price'] = $reservationModel->calculatePrice(
             $data['room_id'],
             $data['check_in_date'],
@@ -425,7 +389,7 @@ class ReservationsController extends Controller
         $this->redirect('reservations/show/' . $id);
     }
 
-    // ── Delete / Cancel ────────────────────────────────────────────
+    
 
     public function delete($id)
     {
@@ -434,9 +398,7 @@ class ReservationsController extends Controller
         $reservationModel = new Reservation();
         $reservationModel->cancel($id);
 
-        // After cancellation, redirect based on role:
-        // • Guest users  — go to the create form (stay inside booking flow, NEVER see admin list)
-        // • Staff / admin — go back to the reservations list
+        
         $isGuestUser = (strtolower($_SESSION['user_role'] ?? '') === 'guest'
                         || ($_SESSION['user_role_id'] ?? 0) == 4);
 
@@ -448,7 +410,7 @@ class ReservationsController extends Controller
         $this->redirect('reservations');
     }
 
-    // ── Confirm ──────────────────────────────────────────────
+    
 
     public function confirm($id)
     {
@@ -460,7 +422,7 @@ class ReservationsController extends Controller
         $this->redirect('reservations/show/' . $id);
     }
 
-    // ── Check-In ─────────────────────────────────────────────
+    
 
     public function checkin($id)
     {
@@ -474,7 +436,7 @@ class ReservationsController extends Controller
         $this->redirect('reservations/show/' . $id);
     }
 
-    // ── Early Check-In ────────────────────────────────────────
+    
 
     public function earlycheckin($id)
     {
@@ -490,7 +452,7 @@ class ReservationsController extends Controller
         $this->redirect('reservations/show/' . $id);
     }
 
-    // ── Check-Out ─────────────────────────────────────────────
+    
 
     public function checkout($id)
     {
@@ -502,7 +464,7 @@ class ReservationsController extends Controller
         $this->redirect('reservations/show/' . $id);
     }
 
-    // ── No-Show ───────────────────────────────────────────────
+    
 
     public function noshow($id)
     {
@@ -511,13 +473,13 @@ class ReservationsController extends Controller
         $reservationModel = new Reservation();
         $reservationModel->markNoShow($id);
 
-        // INCLUDE: No-show penalty — mandatorily includes chargeGuestCard + notifyGuest
+        
         $reservationModel->applyNoShowPenalty((int) $id);
 
         $this->redirect('reservations/show/' . $id);
     }
 
-    // ── Recommend Rooms (AJAX) ────────────────────────────────
+    
 
     public function recommendRooms()
     {
@@ -549,16 +511,7 @@ class ReservationsController extends Controller
         exit;
     }
 
-    // ── Accept Room Upgrade ───────────────────────────────────
-    //
-    // Activated ONLY when the guest/staff explicitly clicks
-    // "Accept Upgrade" in the reservation detail page.
-    //
-    // URL: index.php?url=reservations/acceptupgrade/{reservationId}&newRoomId={newRoomId}
-    //
-    // The router delivers $reservationId as the single path param (url[2]).
-    // $newRoomId is passed as a plain GET query param so no router or
-    // URI parsing is needed at all.
+    
 
     public function acceptupgrade($reservationId = null)
     {
@@ -567,13 +520,13 @@ class ReservationsController extends Controller
         $reservationId = (int) ($reservationId ?? 0);
         $newRoomId     = (int) ($_GET['newRoomId'] ?? 0);
 
-        // Safety — missing reservationId: stay inside reservation flow
+        
         if (!$reservationId) {
             header('Location: ' . APP_URL . '/index.php?url=reservations/create');
             exit;
         }
 
-        // Safety — missing newRoomId: go back to show page without crashing
+        
         if (!$newRoomId) {
             $this->redirect('reservations/show/' . $reservationId);
             return;

@@ -1,17 +1,8 @@
 <?php
-// ============================================================
-//  HousekeepingController — Task management for housekeepers
-//  Routes:
-//    /housekeeping            → index (task board)
-//    /housekeeping/show/5     → task details
-//    /housekeeping/create     → new task form
-//    /housekeeping/store      → save task
-//    /housekeeping/complete/5 → mark task done
-// ============================================================
 
 class HousekeepingController extends Controller
 {
-    /** Allowed roles for housekeeping module. */
+    
     private function requireHousekeeping(): void
     {
         $this->requireRoles(['housekeeper', 'manager', 'supervisor']);
@@ -23,9 +14,9 @@ class HousekeepingController extends Controller
         $this->requireHousekeeping();
 
         $db = (new Model())->getDb();
-        $this->distributeUnassigned($db); // auto-assign new tasks
+        $this->distributeUnassigned($db); 
 
-        // Status/type filters
+        
         $statusFilter = $_GET['status'] ?? '';
         $typeFilter   = $_GET['task_type'] ?? '';
         $where = ['1=1'];
@@ -51,17 +42,14 @@ class HousekeepingController extends Controller
         $counts = ['pending'=>0,'in_progress'=>0,'done'=>0,'skipped'=>0];
         if ($rCounts) { while ($c = mysqli_fetch_assoc($rCounts)) $counts[$c['status']] = (int)$c['cnt']; }
 
-        // Last update timestamp for sync indicator
+        
         $rTs = mysqli_query($db, "SELECT MAX(updated_at) AS ts FROM housekeeping_tasks");
         $lastUpdate = $rTs ? (mysqli_fetch_assoc($rTs)['ts'] ?? '') : '';
 
         $this->view('housekeeping/index', compact('tasks','counts','statusFilter','typeFilter','lastUpdate'));
     }
 
-    /**
-     * GET /housekeeping/myTasks
-     * Personal task board — only tasks assigned to the current logged-in user.
-     */
+    
     public function myTasks()
     {
         $this->requireLogin();
@@ -91,10 +79,7 @@ class HousekeepingController extends Controller
         $this->view('housekeeping/my_tasks', compact('tasks','counts','lastUpdate'));
     }
 
-    /**
-     * GET /housekeeping/boardData
-     * AJAX endpoint: returns JSON snapshot of all tasks for live-sync polling.
-     */
+    
     public function boardData()
     {
         $this->requireLogin();
@@ -125,16 +110,10 @@ class HousekeepingController extends Controller
         exit;
     }
 
-    // ── Private: load-balanced task distribution ──────────────
-
-    /**
-     * Assign all unassigned pending tasks to active housekeepers
-     * using a load-balanced (least-loaded first) strategy.
-     * Safe to call on every page load — only touches NULL assigned_to.
-     */
+    
     private function distributeUnassigned($db): void
     {
-        // Active housekeepers
+        
         $rHK = mysqli_query($db,
             "SELECT u.id FROM users u
              JOIN   roles r ON u.role_id = r.id
@@ -144,7 +123,7 @@ class HousekeepingController extends Controller
         if ($rHK) while ($row = mysqli_fetch_assoc($rHK)) $hkIds[] = (int)$row['id'];
         if (empty($hkIds)) return;
 
-        // Unassigned pending tasks
+        
         $rTasks = mysqli_query($db,
             "SELECT id FROM housekeeping_tasks
              WHERE  assigned_to IS NULL AND status = 'pending'
@@ -153,7 +132,7 @@ class HousekeepingController extends Controller
         if ($rTasks) while ($row = mysqli_fetch_assoc($rTasks)) $taskIds[] = (int)$row['id'];
         if (empty($taskIds)) return;
 
-        // Current pending/in_progress load per housekeeper
+        
         $hkList = implode(',', $hkIds);
         $load   = array_fill_keys($hkIds, 0);
         $rLoad  = mysqli_query($db,
@@ -168,7 +147,7 @@ class HousekeepingController extends Controller
             }
         }
 
-        // Assign each unassigned task to the least-loaded housekeeper
+        
         foreach ($taskIds as $taskId) {
             $assignTo = array_keys($load, min($load))[0];
             mysqli_query($db,
@@ -179,10 +158,7 @@ class HousekeepingController extends Controller
         }
     }
 
-    /**
-     * POST /housekeeping/updateStatus/{id}
-     * Ajax-friendly status update: pending→in_progress, in_progress→done, skip.
-     */
+    
     public function updateStatus($id)
     {
         $this->requireLogin();
@@ -195,7 +171,7 @@ class HousekeepingController extends Controller
             return;
         }
         $db = (new Model())->getDb();
-        // Set completed_at only when marking done
+        
         $completedSql = ($status === 'done') ? ', completed_at = NOW()' : ', completed_at = NULL';
         mysqli_query($db,
             "UPDATE housekeeping_tasks
@@ -210,7 +186,7 @@ class HousekeepingController extends Controller
 
         $_SESSION['hk_success'] = "Task #$id marked as $status.";
 
-        // Return to whichever page called us
+        
         $ref = $_SERVER['HTTP_REFERER'] ?? null;
         if ($ref && str_contains($ref, 'myTasks')) {
             $this->redirect('housekeeping/myTasks');
@@ -244,12 +220,7 @@ class HousekeepingController extends Controller
     }
 
 
-    // ── UC29: Minibar Consumption ─────────────────────────────
-
-    /**
-     * GET /housekeeping/rooms/{id}/minibar
-     * Show minibar inventory + consumption form for a room.
-     */
+    
     public function minibar($id)
     {
         $this->requireLogin();
@@ -259,7 +230,7 @@ class HousekeepingController extends Controller
         $inventory = $mb->getInventoryForRoom($roomId);
         $reservation = $mb->findActiveReservation($roomId);
 
-        // Load room info
+        
         $db   = (new Model())->getDb();
         $rr   = mysqli_query($db, "SELECT * FROM rooms WHERE id = $roomId LIMIT 1");
         $room = $rr ? mysqli_fetch_assoc($rr) : null;
@@ -272,10 +243,7 @@ class HousekeepingController extends Controller
         ]);
     }
 
-    /**
-     * POST /housekeeping/logMinibar/{room_id}
-     * UC29 Step 2: Submit minibar consumption.
-     */
+    
     public function logMinibar($roomId)
     {
         $this->requireLogin();
@@ -291,7 +259,7 @@ class HousekeepingController extends Controller
         $items  = $_POST['items'] ?? [];
         $hkId   = (int) ($_SESSION['user_id'] ?? 0);
 
-        // Manual entry if provided
+        
         if (!empty($_POST['manual_description']) && !empty($_POST['manual_price'])) {
             $res = $mb->findActiveReservation((int)$roomId);
             if ($res) {
@@ -313,7 +281,7 @@ class HousekeepingController extends Controller
             return;
         }
 
-        // UC31: check low stock for flagged items
+        
         foreach ($result['low_stock_items'] as $itemId) {
             $sa->checkStockLevels($itemId);
         }
@@ -327,11 +295,7 @@ class HousekeepingController extends Controller
         $this->redirect("housekeeping/minibar/$roomId");
     }
 
-    /**
-     * GET /housekeeping/minibarLog/{room_id}
-     * UC29 Dispute evidence: minibar_logs for a room with housekeeper + timestamp.
-     * Accessible to: front_desk, manager (dispute resolution) + housekeeper (own logs).
-     */
+    
     public function minibarLog($roomId)
     {
         $this->requireLogin();
@@ -357,12 +321,7 @@ class HousekeepingController extends Controller
         $this->view('housekeeping/minibar_log', compact('room', 'logs'));
     }
 
-    // ── UC30: Found Item ──────────────────────────────────────
-
-    /**
-     * GET /housekeeping/foundItem
-     * Show the log-found-item form.
-     */
+    
     public function foundItem()
     {
         $this->requireLogin();
@@ -373,10 +332,7 @@ class HousekeepingController extends Controller
         $this->view('housekeeping/found_item', ['rooms' => $rooms]);
     }
 
-    /**
-     * POST /housekeeping/logFoundItem
-     * UC30: Submit found item.
-     */
+    
     public function logFoundItem()
     {
         $this->requireLogin();
@@ -389,7 +345,7 @@ class HousekeepingController extends Controller
 
         $fi = new FoundItem();
 
-        // Duplicate detection
+        
         $overrideKey = 'override_duplicate_' . md5(($_POST['room_number'] ?? '') . ($_POST['description'] ?? ''));
         if (empty($_POST['override_duplicate'])) {
             $roomNum = $_POST['room_number'] ?? '';
@@ -402,7 +358,7 @@ class HousekeepingController extends Controller
             }
         }
 
-        // Handle photo upload
+    
         $photoUrl = null;
         if (!empty($_FILES['photo']['name'])) {
             $uploadDir = __DIR__ . '/../../public/uploads/found-items/';
@@ -429,12 +385,7 @@ class HousekeepingController extends Controller
         $this->redirect('housekeeping/foundItem');
     }
 
-    // ── UC32: Quality Assurance ───────────────────────────────
-
-    /**
-     * GET /housekeeping/qa
-     * Tab 1: rooms pending inspection. Tab 2: flagged by low feedback.
-     */
+    
     public function qa()
     {
         $this->requireLogin();
@@ -445,10 +396,7 @@ class HousekeepingController extends Controller
         ]);
     }
 
-    /**
-     * GET /housekeeping/qaInspect/{room_id}
-     * Show the QA checklist form for a room.
-     */
+    
     public function qaInspect($roomId)
     {
         $this->requireLogin();
@@ -458,10 +406,7 @@ class HousekeepingController extends Controller
         $this->view('housekeeping/qa_inspect', $data);
     }
 
-    /**
-     * POST /housekeeping/qaSubmit
-     * UC32 Step 4: Submit QA inspection.
-     */
+    
     public function qaSubmit()
     {
         $this->requireLogin();
@@ -474,8 +419,7 @@ class HousekeepingController extends Controller
         $qa     = new QAInspection();
         $scores = $_POST['checklist'] ?? [];
 
-        // Determine overall result
-        // corrective_action = has failures AND housekeeper assignments were submitted
+        
         $hasFail   = in_array('fail', $scores);
         $hasAssign = !empty(array_filter($_POST['corrective_hk'] ?? []));
         $result    = 'pass';
@@ -511,10 +455,7 @@ class HousekeepingController extends Controller
         $this->redirect('housekeeping/qa');
     }
 
-    /**
-     * GET /housekeeping/qaScore/{inspection_id}
-     * UC33: Score form for a completed inspection.
-     */
+    
     public function qaScore($inspectionId)
     {
         $this->requireLogin();
@@ -522,7 +463,7 @@ class HousekeepingController extends Controller
         $inspection = $qa->findInspection((int)$inspectionId);
         if (!$inspection) die("Inspection #$inspectionId not found.");
 
-        // Load housekeeper list
+        
         $db = (new Model())->getDb();
         $rh = mysqli_query($db,
             "SELECT u.id, u.name FROM users u
@@ -534,10 +475,7 @@ class HousekeepingController extends Controller
         $this->view('housekeeping/qa_score', compact('inspection', 'housekeepers'));
     }
 
-    /**
-     * POST /housekeeping/qaScoreSubmit
-     * UC33 Step 4: Submit quality score.
-     */
+   
     public function qaScoreSubmit()
     {
         $this->requireLogin();
@@ -557,7 +495,7 @@ class HousekeepingController extends Controller
             return;
         }
 
-        // Validate 0–100
+        
         foreach (['cleanliness','presentation','completeness','speed'] as $dim) {
             $v = (int)($_POST[$dim] ?? 0);
             if ($v < 0 || $v > 100) {
@@ -586,11 +524,7 @@ class HousekeepingController extends Controller
         $this->redirect('housekeeping/qa');
     }
 
-    /**
-     * POST /housekeeping/disputeScore/{score_id}
-     * UC33 Step 6a: Supervisor marks a quality_score as disputed.
-     * Roles: supervisor, manager.
-     */
+    
     public function disputeScore($scoreId)
     {
         $this->requireLogin();
@@ -615,11 +549,7 @@ class HousekeepingController extends Controller
         $this->redirect('housekeeping/qa');
     }
 
-    /**
-     * POST /housekeeping/resolveDispute/{score_id}
-     * UC33 Step 6b: Manager resolves dispute with override code.
-     * Roles: manager only.
-     */
+    
     public function resolveDispute($scoreId)
     {
         $this->requireLogin();
@@ -634,7 +564,7 @@ class HousekeepingController extends Controller
             return;
         }
 
-        // Simple validation: override code must match configured constant (default: 'MGR-OVERRIDE')
+        
         $validCode = defined('MANAGER_OVERRIDE_CODE') ? MANAGER_OVERRIDE_CODE : 'MGR-OVERRIDE';
         if ($overrideCode !== $validCode) {
             $_SESSION['hk_error'] = 'Invalid manager override code.';
@@ -661,10 +591,7 @@ class HousekeepingController extends Controller
         $this->redirect('housekeeping/qa');
     }
 
-    /**
-     * GET /housekeeping/qaTrends
-     * UC32 Step 5: QA trends dashboard.
-     */
+    
     public function qaTrends()
     {
         $this->requireLogin();
@@ -673,13 +600,7 @@ class HousekeepingController extends Controller
         $this->view('housekeeping/qa_trends', ['trends' => $qa->getTrends($days), 'days' => $days]);
     }
 
-    // ── UC31: Low-Stock Alerts ────────────────────────────────
-
-    /**
-     * GET /housekeeping/stockAlerts
-     * Dashboard: active low-stock alerts.
-     * Roles: housekeeper, supervisor, manager.
-     */
+    
     public function stockAlerts()
     {
         $this->requireLogin();
@@ -687,12 +608,12 @@ class HousekeepingController extends Controller
 
         $sa = new StockAlert();
 
-        // Run escalation pass on every page load (2-hour rule)
+        
         $sa->escalateOverdue();
 
         $alerts = $sa->getActiveAlerts();
 
-        // Load supply items for the requisition form
+        
         $db = (new Model())->getDb();
         $r  = mysqli_query($db,
             "SELECT si.id, si.name, si.unit,
@@ -707,11 +628,7 @@ class HousekeepingController extends Controller
         $this->view('housekeeping/stock_alerts', compact('alerts', 'supplyItems'));
     }
 
-    /**
-     * POST /housekeeping/acknowledgeAlert/{id}
-     * UC31 Step 3: Acknowledge a low-stock alert.
-     * Roles: housekeeper, supervisor, manager.
-     */
+    
     public function acknowledgeAlert($alertId)
     {
         $this->requireLogin();
@@ -725,11 +642,7 @@ class HousekeepingController extends Controller
         $this->redirect('housekeeping/stockAlerts');
     }
 
-    /**
-     * POST /housekeeping/createRequisition
-     * UC31 Step 4: Submit restocking requisition.
-     * Roles: housekeeper, supervisor, manager.
-     */
+    
     public function createRequisition()
     {
         $this->requireLogin();
@@ -763,11 +676,7 @@ class HousekeepingController extends Controller
         $this->redirect('housekeeping/stockAlerts');
     }
 
-    /**
-     * POST /housekeeping/dismissAlert/{id}
-     * UC31 Error: Supervisor dismisses a false-threshold alert with logged reason.
-     * Roles: supervisor, manager only.
-     */
+    
     public function dismissAlert($alertId)
     {
         $this->requireLogin();
@@ -793,7 +702,7 @@ class HousekeepingController extends Controller
                     dismiss_reason   = '$reason'
              WHERE  id = $alertId");
 
-        // Log the dismissal to audit_log
+        
         AuditLog::log($uid, 'stock_alert.dismissed', 'low_stock_alerts', $alertId);
 
         $_SESSION['hk_success'] = "Alert #$alertId dismissed.";
