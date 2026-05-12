@@ -11,20 +11,7 @@ class PaymentService extends AbstractModel
         $this->registerAggregate('auditLogs', AuditLog::class);
     }
 
-    // ── Public API ────────────────────────────────────────────
-
-    /**
-     * UC12 main entry point.
-     *
-     * @param  int    $guestId
-     * @param  float  $amount          Negative = refund
-     * @param  string $reason          e.g. 'no_show_penalty', 'checkout_balance'
-     * @param  int    $reservationId
-     * @param  string $idempotencyKey  Optional. Auto-built from params if omitted.
-     * @return array  { success: true, transactionId: N }
-     *             or { error: 'NO_CARD_ON_FILE'|'CARD_EXPIRED'|'CARD_DECLINED'|'NETWORK_ERROR',
-     *                  queued?: bool }
-     */
+    
     public function chargeGuestCard(
         int    $guestId,
         float  $amount,
@@ -36,41 +23,41 @@ class PaymentService extends AbstractModel
         $reservationId = (int)   $reservationId;
         $amount        = (float) $amount;
 
-        // Build idempotency key if not provided
+        
         if ($idempotencyKey === '') {
             $idempotencyKey = $reservationId . '_' . $reason . '_' . $amount;
         }
 
-        // ── Idempotency guard: duplicate call = same result, no double charge ──
+        
         $existing = $this->findTransactionByIdempotencyKey($idempotencyKey);
         if ($existing) {
             if ($existing['status'] === 'success') {
                 return ['success' => true, 'transactionId' => (int) $existing['id']];
             }
-            // Previously failed — allow retry
+            
         }
 
-        // ── Step 1: Load guest's default payment method ────────────────────────
+        
         $card = $this->getDefaultPaymentMethod($guestId);
 
-        // ── Step 2: No card on file ────────────────────────────────────────────
+        
         if (!$card) {
             $this->createPendingDebt($guestId, $reservationId, $amount, $reason);
             $this->notifyFrontDesk($guestId, $reservationId, 'NO_CARD_ON_FILE', $reason);
             return ['error' => 'NO_CARD_ON_FILE'];
         }
 
-        // ── Step 3: Card expired ───────────────────────────────────────────────
+        
         if ($this->isCardExpired($card)) {
             $this->notifyFrontDesk($guestId, $reservationId, 'CARD_EXPIRED', $reason);
             return ['error' => 'CARD_EXPIRED'];
         }
 
-        // ── Step 4: Submit to gateway (simulated) ─────────────────────────────
+        
         $type    = $amount < 0 ? 'refund' : 'charge';
         $gateway = $this->submitToGateway($card['gateway_token'], $amount, $idempotencyKey);
 
-        // ── Step 5: SUCCESS ────────────────────────────────────────────────────
+        
         if ($gateway['status'] === 'success') {
             $txId = $this->insertTransaction([
                 'guest_id'        => $guestId,
@@ -87,7 +74,7 @@ class PaymentService extends AbstractModel
             return ['success' => true, 'transactionId' => $txId];
         }
 
-        // ── Step 6: CARD DECLINED ──────────────────────────────────────────────
+        
         if ($gateway['status'] === 'declined') {
             $this->insertTransaction([
                 'guest_id'        => $guestId,
@@ -105,17 +92,12 @@ class PaymentService extends AbstractModel
             return ['error' => 'CARD_DECLINED'];
         }
 
-        // ── Step 7: NETWORK ERROR ──────────────────────────────────────────────
+        
         $this->addToRetryQueue($guestId, $reservationId, $amount, $reason, $idempotencyKey);
         return ['error' => 'NETWORK_ERROR', 'queued' => true];
     }
 
-    // ── Payment Method Helpers ────────────────────────────────
-
-    /**
-     * Returns the guest's default payment method row, or null.
-     * NEVER returns raw card numbers — only gateway_token.
-     */
+    
     public function getDefaultPaymentMethod(int $guestId): ?array
     {
         $guestId = (int) $guestId;
@@ -130,9 +112,7 @@ class PaymentService extends AbstractModel
         return $row ?: null;
     }
 
-    /**
-     * Returns true if the card's expiry date is in the past.
-     */
+    
     private function isCardExpired(array $card): bool
     {
         $expYear  = (int) $card['expiry_year'];
@@ -142,21 +122,10 @@ class PaymentService extends AbstractModel
         return ($expYear < $nowYear) || ($expYear === $nowYear && $expMonth < $nowMonth);
     }
 
-    // ── Gateway Simulation ────────────────────────────────────
-
-    /**
-     * Simulates a gateway call. In production, replace this body
-     * with a real HTTP call to Stripe / Adyen / etc.
-     * Never receives raw card numbers — only the gateway_token.
-     *
-     * @return array { status: 'success'|'declined'|'network_error', gateway_ref, failure_reason }
-     */
+    
     private function submitToGateway(string $gatewayToken, float $amount, string $idempotencyKey): array
     {
-        // Simulation logic:
-        //   Token ending in '0000'  → declined
-        //   Token ending in '9999'  → network error
-        //   All others              → success
+                     → success
         $suffix = substr($gatewayToken, -4);
 
         if ($suffix === '0000') {
@@ -177,12 +146,7 @@ class PaymentService extends AbstractModel
         ];
     }
 
-    // ── Transaction Table ─────────────────────────────────────
-
-    /**
-     * INSERT a transaction record. Returns new transaction ID.
-     * All charges create a record regardless of outcome (CRITICAL RULE).
-     */
+    
     private function insertTransaction(array $d): int
     {
         $guestId        = (int)    $d['guest_id'];
@@ -211,9 +175,7 @@ class PaymentService extends AbstractModel
         return (int) mysqli_insert_id($this->db);
     }
 
-    /**
-     * Lookup a transaction by idempotency key.
-     */
+    
     private function findTransactionByIdempotencyKey(string $key): ?array
     {
         $key    = mysqli_real_escape_string($this->db, $key);
@@ -224,11 +186,7 @@ class PaymentService extends AbstractModel
         return $row ?: null;
     }
 
-    // ── Pending Debts ─────────────────────────────────────────
-
-    /**
-     * Create a pending_debts row when card is unavailable or declined.
-     */
+    
     private function createPendingDebt(int $guestId, int $reservationId, float $amount, string $reason): void
     {
         $guestId       = (int)   $guestId;
@@ -242,12 +200,7 @@ class PaymentService extends AbstractModel
              VALUES ($guestId, $resCol, $amount, '$reason')");
     }
 
-    // ── Retry Queue ───────────────────────────────────────────
-
-    /**
-     * Add to payment_retry_queue on network error.
-     * next_retry_at = 15 minutes from now.
-     */
+    
     private function addToRetryQueue(
         int    $guestId,
         int    $reservationId,
@@ -274,12 +227,7 @@ class PaymentService extends AbstractModel
                  next_retry_at = DATE_ADD(NOW(), INTERVAL 15 MINUTE)");
     }
 
-    // ── Notifications ─────────────────────────────────────────
-
-    /**
-     * Log a front-desk notification to audit_log.
-     * Actual email/push delivery is external to this model.
-     */
+    
     private function notifyFrontDesk(int $guestId, int $reservationId, string $errorCode, string $reason): void
     {
         $guestId       = (int) $guestId;
@@ -296,10 +244,7 @@ class PaymentService extends AbstractModel
                      '$errorCode', '$message')");
     }
 
-    /**
-     * Log a receipt-sent event to audit_log.
-     * Actual email is external to this model.
-     */
+    
     private function sendReceiptEmail(int $guestId, float $amount, string $reason, string $gatewayRef): void
     {
         $guestId    = (int)   $guestId;
@@ -315,11 +260,7 @@ class PaymentService extends AbstractModel
              VALUES ($userId, 'receipt_sent', 'guest', $guestId, '$gatewayRef', '$message')");
     }
 
-    // ── Convenience: Resolve a Pending Debt ──────────────────
-
-    /**
-     * Mark a pending_debt as resolved after successful manual payment.
-     */
+    
     public function resolvePendingDebt(int $debtId): bool
     {
         $debtId = (int) $debtId;

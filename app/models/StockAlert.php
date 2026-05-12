@@ -10,12 +10,7 @@ class StockAlert extends AbstractModel
         $this->registerAggregate('auditLogs', AuditLog::class);
     }
 
-    /**
-     * UC31: Check stock levels. If item_id given → check that item only.
-     * Otherwise check ALL active items.
-     * Inserts low_stock_alerts for new low-stock items not already alerted.
-     * Returns array of newly created alert records.
-     */
+   
     public function checkStockLevels(?int $itemId = null): array
     {
         if ($itemId !== null) {
@@ -42,14 +37,14 @@ class StockAlert extends AbstractModel
             $curr = (int)    $row['current_stock'];
             $min  = (int)    $row['min_threshold'];
 
-            // Check if an active alert already exists for this item+location
+            
             $existing = mysqli_query($this->db,
                 "SELECT id FROM low_stock_alerts
                  WHERE  item_id = $iid AND location = '$loc' AND status = 'active'
                  LIMIT  1");
             if ($existing && mysqli_num_rows($existing) > 0) continue;
 
-            // Create the alert
+            
             mysqli_query($this->db,
                 "INSERT INTO low_stock_alerts (item_id, location, current_stock, min_threshold)
                  VALUES ($iid, '$loc', $curr, $min)");
@@ -60,10 +55,7 @@ class StockAlert extends AbstractModel
         return $newAlerts;
     }
 
-    /**
-     * Also check minibar_inventory against minibar_items.reorder_threshold.
-     * Called from UC29 for specific item after stock deduction.
-     */
+    
     public function checkMinibarStock(int $minibarItemId): bool
     {
         $id = (int) $minibarItemId;
@@ -78,9 +70,7 @@ class StockAlert extends AbstractModel
         return $row && (int)$row['current_stock'] < (int)$row['reorder_threshold'];
     }
 
-    /**
-     * GET /alerts — return all active low-stock alerts with item names.
-     */
+    
     public function getActiveAlerts(): array
     {
         $r = mysqli_query($this->db,
@@ -93,9 +83,7 @@ class StockAlert extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * PUT /alerts/{id}/acknowledge
-     */
+    
     public function acknowledge(int $alertId): bool
     {
         $id  = (int) $alertId;
@@ -107,9 +95,7 @@ class StockAlert extends AbstractModel
         return $r && mysqli_affected_rows($this->db) > 0;
     }
 
-    /**
-     * Escalate unacknowledged alerts older than 2 hours.
-     */
+    
     public function escalateOverdue(): int
     {
         $r = mysqli_query($this->db,
@@ -121,11 +107,7 @@ class StockAlert extends AbstractModel
         return $r ? (int) mysqli_affected_rows($this->db) : 0;
     }
 
-    /**
-     * POST /stock/requisitions — create restocking requisition.
-     * $alertIds  = [int, ...]
-     * $items     = [['item_id'=>X, 'quantity_needed'=>Y], ...]
-     */
+    
     public function createRequisition(array $alertIds, array $items): int
     {
         $uid       = (int) ($_SESSION['user_id'] ?? 0);
@@ -136,7 +118,7 @@ class StockAlert extends AbstractModel
              VALUES ('$itemsJson', $uid)");
         $reqId = (int) mysqli_insert_id($this->db);
 
-        // Resolve linked alerts
+    
         foreach ($alertIds as $aid) {
             $aid = (int) $aid;
             mysqli_query($this->db,

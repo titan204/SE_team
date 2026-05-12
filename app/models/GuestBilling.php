@@ -11,9 +11,9 @@ class GuestBilling extends AbstractBilling
         $this->registerAggregate('paymentProcessor', PaymentService::class);
     }
 
-    const TAX_RATE = 0.10; // 10% — configurable
+    const TAX_RATE = 0.10; 
 
-    // ── Step 1: Load full billing state ──────────────────────
+    
 
     public function getReservationWithGuest(int $reservationId): ?array
     {
@@ -33,9 +33,7 @@ class GuestBilling extends AbstractBilling
         return mysqli_fetch_assoc($r) ?: null;
     }
 
-    /**
-     * Get all non-voided billing items for a reservation, grouped by type.
-     */
+    
     public function getBillingItems(int $reservationId): array
     {
         $id = (int) $reservationId;
@@ -49,9 +47,7 @@ class GuestBilling extends AbstractBilling
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Get all adjustments (discounts, surcharges, loyalty redemptions).
-     */
+    
     public function getAdjustments(int $reservationId): array
     {
         $id = (int) $reservationId;
@@ -65,9 +61,7 @@ class GuestBilling extends AbstractBilling
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Get the final_invoice for a reservation (if finalized).
-     */
+    
     public function getFinalInvoice(int $reservationId): ?array
     {
         $id = (int) $reservationId;
@@ -77,17 +71,14 @@ class GuestBilling extends AbstractBilling
         return mysqli_fetch_assoc($r) ?: null;
     }
 
-    /**
-     * Compute the running totals.
-     * Returns: [ subtotal, roomTotal, taxAmount, discountTotal, grandTotal ]
-     */
+    
     public function computeTotals(array $reservation, array $items, array $adjustments): array
     {
-        // Room charges: nights × daily_rate
+        
         $nights    = max(1, (int) $reservation['nights']);
         $roomTotal = round((float)$reservation['daily_rate'] * $nights, 2);
 
-        // Sum active billing items
+        
         $itemsTotal = 0;
         foreach ($items as $item) {
             if ($item['is_voided']) continue;
@@ -96,13 +87,13 @@ class GuestBilling extends AbstractBilling
 
         $subtotal = round($roomTotal + $itemsTotal, 2);
 
-        // Sum adjustments (discounts negative, surcharges positive)
+        
         $discountTotal = 0;
         foreach ($adjustments as $adj) {
             if ($adj['type'] === 'discount' || $adj['type'] === 'loyalty_redemption') {
                 $discountTotal += (float) $adj['value'];
             } else {
-                $discountTotal -= (float) $adj['value']; // surcharge reduces discount bucket
+                $discountTotal -= (float) $adj['value']; 
             }
         }
 
@@ -113,7 +104,7 @@ class GuestBilling extends AbstractBilling
         return compact('subtotal','roomTotal','itemsTotal','taxAmount','discountTotal','grandTotal');
     }
 
-    // ── Step 2a: Add charge item ──────────────────────────────
+    
 
     public function addItem(int $reservationId, array $data): int
     {
@@ -131,7 +122,7 @@ class GuestBilling extends AbstractBilling
         return (int) mysqli_insert_id($this->db);
     }
 
-    // ── Step 2b: Void item (NEVER delete) ────────────────────
+    
 
     public function voidItem(int $itemId, string $reason): bool
     {
@@ -144,7 +135,7 @@ class GuestBilling extends AbstractBilling
         return $result && mysqli_affected_rows($this->db) > 0;
     }
 
-    // ── Step 2c: Apply discount / surcharge ──────────────────
+    
 
     public function applyAdjustment(int $reservationId, array $data): int
     {
@@ -160,19 +151,13 @@ class GuestBilling extends AbstractBilling
         return (int) mysqli_insert_id($this->db);
     }
 
-    // ── Step 2d: Loyalty redemption ───────────────────────────
-
-    /**
-     * Redeem loyalty points as a discount.
-     * 1 point = $0.01 (configurable).
-     * Returns [ 'success'=>bool, 'error'=>string|null, 'discount'=>float ]
-     */
+    
     public function redeemPoints(int $reservationId, int $guestId, int $points): array
     {
         $guestId = (int) $guestId;
         $points  = (int) $points;
 
-        // Check guest has enough points
+        
         $r   = mysqli_query($this->db,
             "SELECT loyalty_points FROM guests WHERE id = $guestId LIMIT 1");
         $row = mysqli_fetch_assoc($r);
@@ -187,11 +172,11 @@ class GuestBilling extends AbstractBilling
 
         $dollarValue = round($points * 0.01, 2); // 1pt = $0.01
 
-        // Deduct points from guest
+        
         mysqli_query($this->db,
             "UPDATE guests SET loyalty_points = loyalty_points - $points WHERE id = $guestId");
 
-        // Create loyalty_redemption adjustment
+        
         $this->applyAdjustment($reservationId, [
             'type'   => 'loyalty_redemption',
             'value'  => $dollarValue,
@@ -201,12 +186,7 @@ class GuestBilling extends AbstractBilling
         return ['success' => true, 'discount' => $dollarValue, 'error' => null];
     }
 
-    // ── Step 3: Finalize ─────────────────────────────────────
-
-    /**
-     * Lock the billing. Creates/updates final_invoices row.
-     * Returns the final_invoice ID.
-     */
+    
     public function finalize(int $reservationId, array $totals): int
     {
         $id            = (int)   $reservationId;
@@ -214,7 +194,7 @@ class GuestBilling extends AbstractBilling
         $taxAmount     = (float) $totals['taxAmount'];
         $discountTotal = (float) $totals['discountTotal'];
 
-        // Upsert final_invoices
+        
         mysqli_query($this->db,
             "INSERT INTO final_invoices
                  (reservation_id, total_amount, tax_amount, discount_amount, is_finalized, issued_at)
@@ -228,7 +208,7 @@ class GuestBilling extends AbstractBilling
 
         $invoiceId = (int) mysqli_insert_id($this->db);
 
-        // Audit log
+        
         $userId = (int) ($_SESSION['user_id'] ?? 0);
         $msg    = mysqli_real_escape_string($this->db,
             "Bill finalized for reservation #$id. Grand total: $grandTotal");
@@ -239,9 +219,7 @@ class GuestBilling extends AbstractBilling
         return $invoiceId;
     }
 
-    /**
-     * Check if a reservation's bill is already finalized.
-     */
+    
     public function isFinalized(int $reservationId): bool
     {
         $id = (int) $reservationId;
@@ -251,13 +229,7 @@ class GuestBilling extends AbstractBilling
         return $r && mysqli_num_rows($r) > 0;
     }
 
-    // ── Step 4: Split payment ─────────────────────────────────
-
-    /**
-     * Process a multi-method payment via UC12 PaymentService.
-     * $payments = [ ['method'=>'card','amount'=>X], ['method'=>'cash','amount'=>Y] ]
-     * Returns [ 'success'=>bool, 'errors'=>[] ]
-     */
+    
     public function processSplitPayment(int $reservationId, int $guestId, array $payments, float $grandTotal): array
     {
         $sum = array_sum(array_column($payments, 'amount'));

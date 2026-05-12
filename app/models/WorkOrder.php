@@ -11,11 +11,7 @@ class WorkOrder extends AbstractModel
         $this->registerAggregate('auditLogs', AuditLog::class);
     }
 
-    // ── UC34: Shared service functions ───────────────────────
-
-    /**
-     * GET /maintenance/work-orders — list with filters.
-     */
+    
     public function getList(array $filters = []): array
     {
         $where = ['1=1'];
@@ -63,9 +59,7 @@ class WorkOrder extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Find single work order with full details.
-     */
+    
     public function find(int $id): ?array
     {
         $id = (int) $id;
@@ -84,9 +78,7 @@ class WorkOrder extends AbstractModel
         return mysqli_fetch_assoc($r) ?: null;
     }
 
-    /**
-     * UC34 createWorkOrder()
-     */
+    
     public function createWorkOrder(array $data): int
     {
         $type        = in_array($data['type'] ?? '', ['emergency','preventative']) ? $data['type'] : 'emergency';
@@ -96,7 +88,7 @@ class WorkOrder extends AbstractModel
         $priority    = in_array($data['priority'] ?? '', ['low','normal','high','emergency']) ? $data['priority'] : 'normal';
         $assigned    = !empty($data['assigned_to_user_id']) ? (int)$data['assigned_to_user_id'] : 'NULL';
         $created     = (int) ($_SESSION['user_id'] ?? 0);
-        // UC35 extra fields
+        
         $failType    = mysqli_real_escape_string($this->db, $data['failure_type'] ?? '');
         $failTypeSql = $failType ? "'$failType'" : 'NULL';
         $contractor  = (int) !empty($data['contractor_required']);
@@ -114,9 +106,7 @@ class WorkOrder extends AbstractModel
         return $id;
     }
 
-    /**
-     * UC34 updateWorkOrder()
-     */
+    
     public function updateWorkOrder(int $id, array $fields): bool
     {
         $id   = (int) $id;
@@ -134,9 +124,7 @@ class WorkOrder extends AbstractModel
         return (bool) $r;
     }
 
-    /**
-     * UC34 technicianCompleteWO()
-     */
+    
     public function technicianCompleteWO(int $id, array $data): bool
     {
         $id      = (int) $id;
@@ -154,9 +142,7 @@ class WorkOrder extends AbstractModel
         return (bool) $r;
     }
 
-    /**
-     * UC34 supervisorCloseWO()
-     */
+    
     public function supervisorCloseWO(int $id, int $supervisorId): array
     {
         $id  = (int) $id;
@@ -173,7 +159,7 @@ class WorkOrder extends AbstractModel
              SET    status = 'closed', supervisor_id = $sid, closed_at = NOW()
              WHERE  id = $id AND status = 'completed'");
 
-        // Restore room status if room is set
+        
         if (!empty($wo['room_id'])) {
             mysqli_query($this->db,
                 "UPDATE rooms SET status = 'available' WHERE id = {$wo['room_id']} AND status = 'out_of_order'");
@@ -183,9 +169,7 @@ class WorkOrder extends AbstractModel
         return ['success' => true];
     }
 
-    /**
-     * Reject a work order.
-     */
+    
     public function reject(int $id, string $reason): bool
     {
         $id     = (int) $id;
@@ -199,9 +183,7 @@ class WorkOrder extends AbstractModel
         return (bool) $r;
     }
 
-    /**
-     * Update progress (technician notes mid-job).
-     */
+    
     public function updateProgress(int $id, string $notes): bool
     {
         $id    = (int) $id;
@@ -212,14 +194,10 @@ class WorkOrder extends AbstractModel
         return (bool) $r;
     }
 
-    // ── UC35: Emergency ──────────────────────────────────────
-
-    /**
-     * UC35 POST /maintenance/emergency
-     */
+    
     public function createEmergency(array $data): array
     {
-        // a: create base work order
+        
         $data['type']     = 'emergency';
         $data['priority'] = 'emergency';
         $woId = $this->createWorkOrder($data);
@@ -228,18 +206,18 @@ class WorkOrder extends AbstractModel
                      ? $data['severity'] : 'high';
         $isCrit    = (int) ($severity === 'safety_critical');
 
-        // b: insert emergency flag
+        
         mysqli_query($this->db,
             "INSERT INTO emergency_flags (work_order_id, severity, is_safety_critical)
              VALUES ($woId, '$severity', $isCrit)");
 
-        // c: room out_of_order immediately
+        
         if (!empty($data['room_id'])) {
             $rid = (int) $data['room_id'];
             mysqli_query($this->db, "UPDATE rooms SET status = 'out_of_order' WHERE id = $rid");
         }
 
-        // e: safety_critical OR immediate_safety_risk → property_wide_alert
+        
         $propAlert   = false;
         $isSafetyRisk = !empty($data['immediate_safety_risk']);
         if ($isCrit || $isSafetyRisk) {
@@ -255,7 +233,7 @@ class WorkOrder extends AbstractModel
             $propAlert = true;
         }
 
-        // Recurring detection: ≥3 emergencies for same room/asset in 30 days
+        
         $this->checkRecurringEmergency($data, $woId);
 
         return ['work_order_id' => $woId, 'property_alert' => $propAlert];
@@ -283,7 +261,7 @@ class WorkOrder extends AbstractModel
         $row = $r ? mysqli_fetch_assoc($r) : null;
         if (!$row || (int)$row['cnt'] < 3) return;
 
-        // Flag for review
+        
         $rid   = !empty($data['room_id'])  ? (int)$data['room_id']  : 'NULL';
         $aid   = !empty($data['asset_id']) ? (int)$data['asset_id'] : 'NULL';
         $count = (int) $row['cnt'];
@@ -297,18 +275,13 @@ class WorkOrder extends AbstractModel
              VALUES ($rid, $aid, $count)");
     }
 
-    // ── UC36: Preventative ───────────────────────────────────
-
-    /**
-     * Check scheduling conflicts for a room+date.
-     * Returns ['conflict'=>bool, 'alternatives'=>[]]
-     */
+    
     public function checkAvailability(int $roomId, string $date): array
     {
         $rid  = (int) $roomId;
         $d    = mysqli_real_escape_string($this->db, $date);
 
-        // Check reservation conflict
+        
         $rr = mysqli_query($this->db,
             "SELECT id FROM reservations
              WHERE  room_id = $rid AND status IN ('confirmed','checked_in')
@@ -316,7 +289,7 @@ class WorkOrder extends AbstractModel
              LIMIT  1");
         $resConflict = $rr && mysqli_num_rows($rr) > 0;
 
-        // Check existing work order conflict
+        
         $rw = mysqli_query($this->db,
             "SELECT wo.id FROM work_orders wo
              JOIN   preventative_schedules ps ON ps.work_order_id = wo.id
@@ -327,7 +300,7 @@ class WorkOrder extends AbstractModel
 
         $conflict = $resConflict || $woConflict;
 
-        // Suggest 3 alternatives (next 7 days without conflicts)
+        
         $alternatives = [];
         if ($conflict) {
             $checkDate = new DateTime($date);
@@ -344,9 +317,7 @@ class WorkOrder extends AbstractModel
         return compact('conflict', 'alternatives');
     }
 
-    /**
-     * UC36 POST /maintenance/preventative
-     */
+    
     public function createPreventative(array $data): array
     {
         $data['type'] = 'preventative';
@@ -369,7 +340,7 @@ class WorkOrder extends AbstractModel
              VALUES ($woId, $assetId, $roomId, '$maintType', '$schedDate',
                      $estMins, $isRecur, $freqSql, $nextDue)");
 
-        // Set room status to reserved_for_maintenance (extend rooms.status enum handled in app logic)
+        
         if (!empty($data['room_id'])) {
             $rid = (int) $data['room_id'];
             mysqli_query($this->db, "UPDATE rooms SET status = 'out_of_order' WHERE id = $rid");
@@ -390,12 +361,10 @@ class WorkOrder extends AbstractModel
         return $d->format('Y-m-d');
     }
 
-    /**
-     * Get all technician users for dropdown.
-     */
+    
     public function getTechnicians(): array
     {
-        // Maintenance staff = housekeeper role + manager (adjust if you add maintenance role)
+        
         $r = mysqli_query($this->db,
             "SELECT u.id, u.name FROM users u
              JOIN   roles r ON u.role_id = r.id
@@ -405,9 +374,7 @@ class WorkOrder extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Get all assets.
-     */
+    
     public function getAssets(): array
     {
         $r = mysqli_query($this->db,
@@ -416,9 +383,7 @@ class WorkOrder extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Get all rooms.
-     */
+    
     public function getRooms(): array
     {
         $r = mysqli_query($this->db,
@@ -427,20 +392,12 @@ class WorkOrder extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    // ── UC36: Preventative Maintenance extras ────────────────
-
-    /**
-     * UC36 Step 3 — Overdue detection.
-     * Called by a nightly job or on page load (supervisor/manager only).
-     * Finds preventative WOs where scheduled_date < TODAY and status='open'.
-     * → Escalates priority to 'high' and logs action.
-     * Returns array of escalated WO IDs.
-     */
+    
     public function escalateOverdue(): array
     {
         $today = date('Y-m-d');
 
-        // Find open preventative WOs that are past their scheduled date
+        
         $r = mysqli_query($this->db,
             "SELECT wo.id
              FROM   work_orders wo
@@ -461,7 +418,7 @@ class WorkOrder extends AbstractModel
             $escalated[] = $woId;
         }
 
-        // Log to audit_log for supervisor visibility
+        
         if (!empty($escalated)) {
             $uid  = (int) ($_SESSION['user_id'] ?? 0);
             $ids  = implode(',', $escalated);
@@ -475,17 +432,13 @@ class WorkOrder extends AbstractModel
         return $escalated;
     }
 
-    /**
-     * UC36 Step 4 — Cancel all scheduled tasks for a decommissioned asset.
-     * Sets matching open/in_progress WOs to 'rejected', logs cancellation reason.
-     * Also removes future preventative_schedules rows for that asset.
-     */
+    
     public function cancelAssetTasks(int $assetId, string $reason): int
     {
         $assetId = (int) $assetId;
         $reason  = mysqli_real_escape_string($this->db, $reason);
 
-        // Find open/in_progress WOs linked to asset
+        
         $r = mysqli_query($this->db,
             "SELECT id FROM work_orders
              WHERE  asset_id = $assetId AND status IN ('open','in_progress','pending_parts')");
@@ -502,7 +455,7 @@ class WorkOrder extends AbstractModel
             $count++;
         }
 
-        // Remove future preventative_schedules for this asset
+        
         mysqli_query($this->db,
             "DELETE ps FROM preventative_schedules ps
              JOIN   work_orders wo ON ps.work_order_id = wo.id
@@ -511,9 +464,7 @@ class WorkOrder extends AbstractModel
         return $count;
     }
 
-    /**
-     * UC36 Step 4 — Decommission asset + auto-cancel all its tasks.
-     */
+    
     public function decommissionAsset(int $assetId, string $reason): array
     {
         $assetId = (int) $assetId;
@@ -523,7 +474,7 @@ class WorkOrder extends AbstractModel
         return ['asset_id' => $assetId, 'cancelled_work_orders' => $cancelled];
     }
 
-    // ── Helpers ──────────────────────────────────────────────
+    
 
     private function logAction(int $woId, string $action, string $notes = ''): void
     {
@@ -535,9 +486,7 @@ class WorkOrder extends AbstractModel
              VALUES ($woId, '$act', $uid, '$notes')");
     }
 
-    /**
-     * Get log entries for a work order.
-     */
+    
     public function getLogs(int $woId): array
     {
         $id = (int) $woId;

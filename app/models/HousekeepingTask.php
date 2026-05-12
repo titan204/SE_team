@@ -5,10 +5,10 @@ class HousekeepingTask extends AbstractModel
     protected $id;
     protected $room_id;
     protected $assigned_to;
-    protected $task_type;      // cleaning, turndown, inspection, deep_clean, minibar_check
-    protected $status;         // pending, in_progress, done, skipped
+    protected $task_type;      
+    protected $status;         
     protected $notes;
-    protected $quality_score;  // 1-5
+    protected $quality_score;  
     protected $created_at;
     protected $updated_at;
 

@@ -1,10 +1,4 @@
 <?php
-// ============================================================
-//  CorporateAccount Model — Company accounts with contracted rates
-//  Table: corporate_accounts
-//
-//  Usage: $corp = new CorporateAccount();
-// ============================================================
 
 class CorporateAccount extends AbstractModel
 {

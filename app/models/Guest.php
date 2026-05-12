@@ -130,14 +130,14 @@ class Guest extends AbstractUser
 {
     $id = (int)$id;
 
-    // حذف البيانات المرتبطة أولاً
+
     mysqli_query($this->db, "DELETE FROM feedback WHERE guest_id = $id");
     mysqli_query($this->db, "DELETE FROM service_bookings WHERE guest_id = $id");
     mysqli_query($this->db, "DELETE FROM guest_preferences WHERE guest_id = $id");
     mysqli_query($this->db, "DELETE FROM guest_corporate WHERE guest_id = $id");
     mysqli_query($this->db, "DELETE FROM lost_and_found WHERE guest_id = $id");
 
-    // حذف الـ folios المرتبطة بالـ reservations
+    
     $res = mysqli_query($this->db, "SELECT id FROM reservations WHERE guest_id = $id");
     while ($row = mysqli_fetch_assoc($res)) {
         $rid = (int)$row['id'];

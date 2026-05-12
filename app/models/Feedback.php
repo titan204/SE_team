@@ -1,7 +1,6 @@
 <?php
-// ============================================================
-//  Feedback Model - hotel_management.feedback table
-// ============================================================
+
+
 class Feedback extends AbstractReport
 {
     private $columnCache = null;
@@ -15,10 +14,7 @@ class Feedback extends AbstractReport
         $this->registerAggregate('reservations', Reservation::class);
     }
 
-    /**
-     * Submit new feedback for a reservation.
-     * Returns new ID on success, false on duplicate or DB error.
-     */
+   
     public function createFeedback(array $data)
     {
         if ($this->hasFeedbackForReservation((int)$data['reservation_id'], (int)$data['guest_id'])) {
@@ -71,9 +67,7 @@ class Feedback extends AbstractReport
         return (int) mysqli_insert_id($this->db);
     }
 
-    /**
-     * All feedback rows for one guest, newest first.
-     */
+    
     public function getGuestFeedback(int $guestId): array
     {
         $guestId     = (int)$guestId;
@@ -97,11 +91,7 @@ class Feedback extends AbstractReport
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
 
-    /**
-     * All feedback with guest/room info + optional filters.
-     *
-     * @param array $filters Keys: rating, date_from, date_to, guest_id, is_resolved
-     */
+    
     public function getAllFeedback(array $filters = []): array
     {
         $where      = ['1=1'];
@@ -158,9 +148,7 @@ class Feedback extends AbstractReport
         return $result ? mysqli_fetch_all($result, MYSQLI_ASSOC) : [];
     }
 
-    /**
-     * Average ratings across all (filtered) feedback.
-     */
+    
     public function calculateAverageRatings(array $filters = []): array
     {
         $where      = ['1=1'];
@@ -219,9 +207,7 @@ class Feedback extends AbstractReport
         return $row;
     }
 
-    /**
-     * Mark feedback as resolved.
-     */
+    
     public function markAsResolved(int $id, int $resolvedBy): bool
     {
         if (!$this->hasColumn('is_resolved') || !$this->hasColumn('resolved_at') || !$this->hasColumn('resolved_by')) {
@@ -238,9 +224,7 @@ class Feedback extends AbstractReport
         return $ok && mysqli_affected_rows($this->db) > 0;
     }
 
-    /**
-     * Single feedback row with guest name/email.
-     */
+    
     public function find(int $id): ?array
     {
         $id          = (int)$id;
@@ -266,10 +250,7 @@ class Feedback extends AbstractReport
         return $row ?: null;
     }
 
-    /**
-     * Checks whether THIS guest already submitted feedback for a reservation.
-     * Scoped by guest_id so old seed data from other guests doesn't block new submissions.
-     */
+    
     public function hasFeedbackForReservation(int $resId, int $guestId = 0): bool
     {
         $resId   = (int)$resId;
@@ -284,9 +265,7 @@ class Feedback extends AbstractReport
         return $result && mysqli_num_rows($result) > 0;
     }
 
-    /**
-     * Checks that a reservation belongs to the guest AND is checked_out.
-     */
+    
     public function reservationBelongsToGuest(int $resId, int $guestId): bool
     {
         $resId   = (int)$resId;
@@ -299,9 +278,7 @@ class Feedback extends AbstractReport
         return $result && mysqli_num_rows($result) > 0;
     }
 
-    /**
-     * Checked-out reservations that have NO feedback from THIS guest yet.
-     */
+    
     public function eligibleReservations(int $guestId): array
     {
         $guestId = (int)$guestId;

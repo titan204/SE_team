@@ -19,7 +19,7 @@ class User extends AbstractUser implements AuthenticatableInterface
         $this->registerAggregate('auditLogs', AuditLog::class);
     }
 
-    // ── CRUD ─────────────────────────────────────────────────
+    
 
     public function all()
     {
@@ -71,9 +71,7 @@ class User extends AbstractUser implements AuthenticatableInterface
         $email   = mysqli_real_escape_string($this->db, $data['email']);
         $role_id = mysqli_real_escape_string($this->db, $data['role_id']);
 
-        // Always hash through the central helper — callers MUST pass plaintext here.
-        // This guarantees bcrypt (PASSWORD_DEFAULT) regardless of which controller
-        // creates the user (self-registration, Admin, Front Desk, etc.).
+        
         $password = mysqli_real_escape_string($this->db, $this->hashPassword($data['password']));
 
         mysqli_query($this->db,
@@ -83,12 +81,7 @@ class User extends AbstractUser implements AuthenticatableInterface
         return mysqli_insert_id($this->db);
     }
 
-    /**
-     * Updates allowed profile fields for a user.
-     * To change a password use updatePassword() instead.
-     *
-     * Allowed keys: name, email, role_id, is_active
-     */
+    
     public function update($id, $data)
     {
         $this->hydrateProfileData($data);
@@ -110,17 +103,7 @@ class User extends AbstractUser implements AuthenticatableInterface
         mysqli_query($this->db, $query);
     }
 
-    /**
-     * Updates a user's password using the canonical bcrypt hashing workflow.
-     *
-     * Accepts a PLAIN-TEXT password. Never call this with a pre-hashed value.
-     * This is the single source of truth for password changes across every
-     * role: self-registration, Admin, Front Desk, and Manager.
-     *
-     * @param  int|string $id          User ID
-     * @param  string     $plainPassword  Plain-text password (≥ 6 chars expected)
-     * @return bool  true on success, false if the query failed
-     */
+   
     public function updatePassword($id, $plainPassword): bool
     {
         $id   = mysqli_real_escape_string($this->db, $id);
@@ -133,12 +116,12 @@ class User extends AbstractUser implements AuthenticatableInterface
 
     public function delete($id)
     {
-        // Soft delete: set is_active = 0
+        
         $id = mysqli_real_escape_string($this->db, $id);
         mysqli_query($this->db, "UPDATE users SET is_active = 0 WHERE id = '$id'");
     }
 
-    // ── Relationships ────────────────────────────────────────
+    
 
     public function role()
     {
@@ -146,7 +129,7 @@ class User extends AbstractUser implements AuthenticatableInterface
         return mysqli_fetch_assoc($result);
     }
 
-    // ── Authentication Helpers ───────────────────────────────
+    
     public function authenticate($email, $password)
     {
         $email = trim($email);
@@ -160,7 +143,7 @@ class User extends AbstractUser implements AuthenticatableInterface
             return false;
         }
 
-        // Strip the password hash — it must NEVER leave the model layer
+        
         unset($user['password']);
 
         return $user;

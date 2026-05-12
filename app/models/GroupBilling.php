@@ -1,8 +1,5 @@
 <?php
-// ============================================================
-//  GroupBilling Model — UC06: Manage Group Billing
-//  Tables: group_reservations, group_members, invoices
-// ============================================================
+
 
 class GroupBilling extends AbstractBilling
 {
@@ -16,12 +13,7 @@ class GroupBilling extends AbstractBilling
         $this->registerAggregate('paymentProcessor', PaymentService::class);
     }
 
-    // ── Group Reservation Queries ────────────────────────────
-
-    /**
-     * Find a group_reservation record by its ID.
-     * Returns the group row including the coordinator guest's name and email.
-     */
+    
     public function findGroup($groupId)
     {
         $groupId = (int) $groupId;
@@ -37,11 +29,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_fetch_assoc($result);
     }
 
-    /**
-     * Returns all members of a group with their reservation details,
-     * guest info, room info, folio totals, and per-member charge breakdown.
-     * Cancelled reservations are flagged but still returned (excluded at invoice level).
-     */
+   
     public function getMembersWithDetails($groupId)
     {
         $groupId = (int) $groupId;
@@ -110,11 +98,7 @@ class GroupBilling extends AbstractBilling
                AND reservation_id IN ($idList)");
     }
 
-    // ── Invoice Queries ──────────────────────────────────────
-
-    /**
-     * Find the latest group-level invoice for a group, if one exists.
-     */
+    
     public function findGroupInvoice($groupId)
     {
         $groupId = (int) $groupId;
@@ -127,9 +111,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_fetch_assoc($result);
     }
 
-    /**
-     * Find the current draft group invoice for a group.
-     */
+    
     public function findDraftGroupInvoice($groupId)
     {
         $groupId = (int) $groupId;
@@ -144,17 +126,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_fetch_assoc($result);
     }
 
-    /**
-     * Generate or update a consolidated group invoice draft.
-     * Applies the group discount percentage from group_reservations.
-     * Only includes non-cancelled members in the total.
-     *
-     * @param  int   $groupId
-     * @param  float $subtotal           Sum of active members' non-tax charges
-     * @param  float $taxAmount
-     * @param  float $discountPercentage From group_reservations.discount_percentage
-     * @return int   Draft invoice ID
-     */
+    
     public function createGroupInvoice($groupId, $subtotal, $taxAmount, $discountPercentage)
     {
         $groupId            = (int)   $groupId;
@@ -188,9 +160,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_insert_id($this->db);
     }
 
-    /**
-     * Find the latest individual invoice for a member reservation in a group.
-     */
+    
     public function findIndividualInvoice($groupId, $reservationId)
     {
         $groupId       = (int) $groupId;
@@ -207,16 +177,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_fetch_assoc($result);
     }
 
-    /**
-     * Create an individual invoice for a split-billing member.
-     *
-     * @param  int   $groupId
-     * @param  int   $reservationId
-     * @param  float $totalAmount
-     * @param  float $taxAmount
-     * @param  float $discountAmount
-     * @return int   New invoice ID
-     */
+    
     public function createIndividualInvoice($groupId, $reservationId, $totalAmount, $taxAmount, $discountAmount)
     {
         $groupId       = (int)   $groupId;
@@ -239,9 +200,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_insert_id($this->db);
     }
 
-    /**
-     * Finalize an invoice (set status = 'finalized').
-     */
+    
     public function finalizeInvoice($invoiceId)
     {
         $invoiceId = (int) $invoiceId;
@@ -251,9 +210,7 @@ class GroupBilling extends AbstractBilling
         return (bool) $result;
     }
 
-    /**
-     * Get all invoices (group + individual) for a group.
-     */
+   
     public function getInvoicesForGroup($groupId)
     {
         $groupId = (int) $groupId;
@@ -270,17 +227,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    // ── Cancellation helper (UC11 delegation) ────────────────
-
-    /**
-     * Logs a cancellation-notification audit entry for each cancelled member.
-     * This is the hook point for UC11 sendCancellationNotification().
-     * Actual email delivery is handled externally; this logs the intent.
-     *
-     * @param  int   $reservationId
-     * @param  array $guestRow        Must contain 'id' and 'name'
-     * @return bool
-     */
+    
     public function sendCancellationNotification($reservationId, array $guestRow)
     {
         $reservationId = (int) $reservationId;
@@ -305,16 +252,7 @@ class GroupBilling extends AbstractBilling
         return (bool) $result;
     }
 
-    // ── Incomplete payment flag ───────────────────────────────
-
-    /**
-     * Flag a member reservation as having incomplete payment info.
-     * Logs to audit_log so the coordinator can be notified.
-     *
-     * @param  int    $reservationId
-     * @param  string $reason
-     * @return bool
-     */
+    
     public function flagIncompletePayment($reservationId, $reason = '', $guestName = '')
     {
         $reservationId = (int) $reservationId;
@@ -337,14 +275,7 @@ class GroupBilling extends AbstractBilling
         return (bool) $result;
     }
 
-    // ── Audit log ─────────────────────────────────────────────
-
-    /**
-     * Write an audit log entry for the group finalize event.
-     *
-     * @param  int  $groupId
-     * @return bool
-     */
+    
     public function logFinalizeEvent($groupId)
     {
         $groupId = (int) $groupId;
@@ -360,9 +291,7 @@ class GroupBilling extends AbstractBilling
         return (bool) $result;
     }
 
-    /**
-     * The project uses audit_log as its notification dispatch mechanism.
-     */
+    
     public function notifyCoordinatorInvoice($groupId, $invoiceId, array $group): bool
     {
         $groupId   = (int) $groupId;
@@ -451,33 +380,19 @@ class GroupBilling extends AbstractBilling
         return $result && mysqli_num_rows($result) > 0;
     }
 
-    // ── UC13: Split Group Billing ─────────────────────────────
-
-    /**
-     * Get member rows eligible for split (non-cancelled, with folio data).
-     * Returns same structure as getMembersWithDetails() — reuses existing query.
-     */
+    
     public function getSplitPreviewMembers($groupId)
     {
         $members = $this->getMembersWithDetails($groupId);
         return array_values(array_filter($members, fn($m) => $m['res_status'] !== 'cancelled'));
     }
 
-    /**
-     * UC13 Step 3b: Generate an individual invoice for one split member.
-     * Calculates proportional tax from the group total.
-     *
-     * @param int   $groupId
-     * @param array $member    Row from getMembersWithDetails()
-     * @param float $groupTax  Total tax of the group invoice (for proportional split)
-     * @param float $groupSubtotal  Subtotal before tax (for tax ratio)
-     * @return int  New invoice_id
-     */
+    
     public function createSplitInvoice(int $groupId, array $member, float $groupTax, float $groupSubtotal): int
     {
         $memberSubtotal = (float) ($member['member_subtotal'] ?? 0);
 
-        // Proportional tax: member_subtotal / group_subtotal * group_tax
+        
         $proportionalTax = $groupSubtotal > 0
             ? round(($memberSubtotal / $groupSubtotal) * $groupTax, 2)
             : (float) $member['tax_charges'];
@@ -492,15 +407,13 @@ class GroupBilling extends AbstractBilling
             0
         );
 
-        // Insert invoice_items for the audit trail
+        
         $this->insertInvoiceItems($invoiceId, $member, $proportionalTax);
 
         return $invoiceId;
     }
 
-    /**
-     * Insert per-charge line items into invoice_items for one member's invoice.
-     */
+    
     private function insertInvoiceItems(int $invoiceId, array $m, float $proportionalTax): void
     {
         $resId     = (int) $m['reservation_id'];
@@ -525,17 +438,7 @@ class GroupBilling extends AbstractBilling
         }
     }
 
-    /**
-     * UC13 Step 3c/d/e: Update the consolidated group invoice after splitting.
-     *
-     * If ALL active members are splitting → void the consolidated invoice.
-     * If partial split → recalculate and update the consolidated total.
-     *
-     * @param int   $groupId
-     * @param array $splitMemberIds  reservation_ids being split out
-     * @param array $allActiveMembers All non-cancelled members
-     * @return string 'voided' | 'updated'
-     */
+    
     public function updateConsolidatedAfterSplit(int $groupId, array $splitMemberIds, array $allActiveMembers): string
     {
         $groupInvoice = $this->findGroupInvoice($groupId);
@@ -543,18 +446,18 @@ class GroupBilling extends AbstractBilling
 
         $invoiceId = (int) $groupInvoice['id'];
 
-        // Check if all active members are splitting
+        
         $activeResIds = array_column($allActiveMembers, 'reservation_id');
         $remaining    = array_diff($activeResIds, $splitMemberIds);
 
         if (empty($remaining)) {
-            // All split → void consolidated
+            
             mysqli_query($this->db,
                 "UPDATE invoices SET status = 'void' WHERE id = $invoiceId");
             return 'voided';
         }
 
-        // Partial split → recalculate consolidated total for remaining members
+        
         $newSubtotal = 0;
         $newTax      = 0;
         foreach ($allActiveMembers as $m) {
@@ -563,7 +466,7 @@ class GroupBilling extends AbstractBilling
             $newTax      += (float) $m['tax_charges'];
         }
 
-        // Re-apply group discount
+        
         $group          = $this->findGroup($groupId);
         $discountPct    = (float) ($group['discount_percentage'] ?? 0);
         $discountAmount = round($newSubtotal * ($discountPct / 100), 2);
@@ -577,9 +480,7 @@ class GroupBilling extends AbstractBilling
         return 'updated';
     }
 
-    /**
-     * UC13 Step 3f: Log the split event to billing_split_log.
-     */
+    
     public function logSplit(int $groupId, array $splitMemberIds, float $originalTotal): void
     {
         $groupId       = (int)   $groupId;
@@ -593,9 +494,7 @@ class GroupBilling extends AbstractBilling
              VALUES ($groupId, $userId, '$membersJson', $originalTotal)");
     }
 
-    /**
-     * Create a billing dispute record — pauses split until resolved.
-     */
+    
     public function createDispute(int $groupId, int $reservationId, string $description): int
     {
         $groupId       = (int) $groupId;
@@ -610,9 +509,7 @@ class GroupBilling extends AbstractBilling
         return (int) mysqli_insert_id($this->db);
     }
 
-    /**
-     * Returns any open disputes for a group (blocks split if any exist).
-     */
+    
     public function getOpenDisputes(int $groupId): array
     {
         $groupId = (int) $groupId;
@@ -623,10 +520,7 @@ class GroupBilling extends AbstractBilling
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Flag an invoice for manual delivery (member has no email).
-     * Inserts into front_desk_queue.
-     */
+    
     public function flagManualDelivery(int $invoiceId, int $reservationId, string $guestName): void
     {
         $invoiceId     = (int) $invoiceId;

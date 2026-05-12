@@ -14,11 +14,7 @@ class RoomType extends AbstractModel
         $this->registerAggregate('rooms', Room::class);
     }
 
-    // ── CRUD ─────────────────────────────────────────────────
-
-    /**
-     * SELECT all room types ordered by base_price ASC.
-     */
+   
     public function all()
     {
         $stmt = mysqli_prepare($this->db, "SELECT * FROM room_types ORDER BY base_price ASC");
@@ -27,9 +23,7 @@ class RoomType extends AbstractModel
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    /**
-     * SELECT one room type by ID.
-     */
+    
     public function find($id)
     {
         $stmt = mysqli_prepare($this->db, "SELECT * FROM room_types WHERE id = ? LIMIT 1");
@@ -39,9 +33,7 @@ class RoomType extends AbstractModel
         return mysqli_fetch_assoc($result);
     }
 
-    /**
-     * INSERT a new room type.
-     */
+    
     public function create($data)
     {
         $stmt = mysqli_prepare(
@@ -58,9 +50,7 @@ class RoomType extends AbstractModel
         return mysqli_insert_id($this->db);
     }
 
-    /**
-     * UPDATE room type fields.
-     */
+    
     public function update($id, $data)
     {
         $stmt = mysqli_prepare(
@@ -77,9 +67,7 @@ class RoomType extends AbstractModel
         mysqli_stmt_execute($stmt);
     }
 
-    /**
-     * DELETE only if no rooms reference this type.
-     */
+    
     public function delete($id)
     {
         $stmt = mysqli_prepare($this->db, "SELECT COUNT(*) AS cnt FROM rooms WHERE room_type_id = ?");
@@ -98,11 +86,7 @@ class RoomType extends AbstractModel
         return true;
     }
 
-    // ── Relationships ────────────────────────────────────────
-
-    /**
-     * SELECT all rooms that belong to this room type.
-     */
+    
     public function rooms()
     {
         $stmt = mysqli_prepare($this->db, "SELECT * FROM rooms WHERE room_type_id = ? ORDER BY room_number ASC");

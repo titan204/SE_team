@@ -1,8 +1,4 @@
 <?php
-// ============================================================
-//  ExternalService Model — Guest-facing external services
-//  Table: external_services
-// ============================================================
 
 class ExternalService extends AbstractModel
 {

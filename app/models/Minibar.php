@@ -11,11 +11,7 @@ class Minibar extends AbstractModel
         $this->registerAggregate('stockAlerts', StockAlert::class);
     }
 
-    // ── UC29 Step 1: Inventory list for a room ───────────────
-
-    /**
-     * Return all active minibar items with their current stock for the given room.
-     */
+    
     public function getInventoryForRoom(int $roomId): array
     {
         $id = (int) $roomId;
@@ -31,11 +27,6 @@ class Minibar extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    // ── UC29 Step 2: POST /minibar/log ───────────────────────
-
-    /**
-     * Find the active checked-in reservation for a room.
-     */
     public function findActiveReservation(int $roomId): ?array
     {
         $id = (int) $roomId;
@@ -47,17 +38,12 @@ class Minibar extends AbstractModel
         return mysqli_fetch_assoc($r) ?: null;
     }
 
-    /**
-     * Process minibar consumption log.
-     * $items = [ ['item_id'=>X, 'quantity'=>Y], ... ]
-     * Returns [ 'success'=>bool, 'total'=>float, 'log_id'=>int,
-     *           'billing_queued'=>bool, 'low_stock_items'=>[] ]
-     */
+    
     public function logConsumption(int $roomId, array $items, int $housekeeperId): array
     {
         $reservation = $this->findActiveReservation($roomId);
 
-        // Filter to items with qty > 0
+        
         $consumed = array_filter($items, fn($i) => (int)($i['quantity'] ?? 0) > 0);
         if (empty($consumed)) {
             return ['success' => false, 'error' => 'No quantities entered.'];
@@ -72,11 +58,11 @@ class Minibar extends AbstractModel
             $itemId   = (int) $row['item_id'];
             $qty      = (int) $row['quantity'];
 
-            // Load item price
+            
             $ir    = mysqli_query($this->db,
                 "SELECT id, name, price, reorder_threshold FROM minibar_items WHERE id = $itemId AND is_active = 1 LIMIT 1");
             $item  = $ir ? mysqli_fetch_assoc($ir) : null;
-            if (!$item) continue; // skip unknown
+            if (!$item) continue; 
 
             $lineTotal    = round((float)$item['price'] * $qty, 2);
             $totalAmount += $lineTotal;
@@ -84,10 +70,10 @@ class Minibar extends AbstractModel
             $logItems[]     = ['item_id' => $itemId, 'name' => $item['name'], 'quantity' => $qty, 'unit_price' => $item['price'], 'line_total' => $lineTotal];
             $billingLines[] = ['description' => "Minibar — {$item['name']} x{$qty}", 'amount' => (float)$item['price'], 'quantity' => $qty];
 
-            // Step f: update stock
+            
             $newStock = $this->deductStock($roomId, $itemId, $qty);
 
-            // Step g: check threshold
+            
             if ($newStock !== null && $newStock < (int)$item['reorder_threshold']) {
                 $lowStockItemIds[] = $itemId;
             }
@@ -98,13 +84,13 @@ class Minibar extends AbstractModel
         $hkId         = (int) $housekeeperId;
         $totalEscaped = (float) $totalAmount;
 
-        // Step e: insert into minibar_logs
+    
         mysqli_query($this->db,
             "INSERT INTO minibar_logs (room_id, reservation_id, housekeeper_id, items, total_amount)
              VALUES ($roomId, $resId, $hkId, '$itemsJson', $totalEscaped)");
         $logId = (int) mysqli_insert_id($this->db);
 
-        // Step c/d: insert billing_items (or queue on failure)
+        
         $billingQueued = false;
         if ($reservation) {
             $resIdInt  = (int) $reservation['id'];
@@ -117,7 +103,7 @@ class Minibar extends AbstractModel
                     "INSERT INTO billing_items (reservation_id, item_type, description, amount, quantity, added_by_user_id)
                      VALUES ($resIdInt, 'minibar', '$desc', $amt, $qty, $userId)");
                 if (!$ok) {
-                    // Error handling: queue for retry
+                    
                     mysqli_query($this->db,
                         "INSERT INTO billing_retry_queue (reservation_id, description, amount, quantity)
                          VALUES ($resIdInt, '$desc', $amt, $qty)");
@@ -136,9 +122,7 @@ class Minibar extends AbstractModel
         ];
     }
 
-    /**
-     * Reduce stock for a room/item pair. Returns new stock level or null.
-     */
+    
     private function deductStock(int $roomId, int $itemId, int $qty): ?int
     {
         mysqli_query($this->db,
@@ -153,10 +137,7 @@ class Minibar extends AbstractModel
         return $row ? (int) $row['current_stock'] : null;
     }
 
-    /**
-     * Manual entry for an item not in the system.
-     * Returns billing_item id (flagged for manager review via is_voided=0 but type='manual').
-     */
+    
     public function addManualItem(int $reservationId, string $description, float $unitPrice, int $qty): int
     {
         $resId = (int)   $reservationId;

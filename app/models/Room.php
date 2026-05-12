@@ -7,7 +7,7 @@ class Room extends AbstractModel
     protected $room_type_id;
     protected $room_number;
     protected $floor;
-    protected $status;       // available, occupied, dirty, cleaning, inspecting, out_of_order
+    protected $status;      
     protected $notes;
     protected $created_at;
     protected $updated_at;
@@ -28,16 +28,7 @@ class Room extends AbstractModel
         return $this->features;
     }
 
-    /**
-     * State machine — only these transitions are valid:
-     *   available    → occupied       (guest checks in)
-     *   occupied     → dirty          (guest checks out)
-     *   dirty        → cleaning       (housekeeping starts)
-     *   cleaning     → inspecting     (housekeeping done)
-     *   inspecting   → available      (inspection passed)
-     *   any status   → out_of_order   (escalation / maintenance)
-     *   out_of_order → available      (issue resolved)
-     */
+    
     private $transitions = [
         'available'    => ['occupied',   'out_of_order'],
         'occupied'     => ['dirty',      'out_of_order'],
@@ -47,11 +38,7 @@ class Room extends AbstractModel
         'out_of_order' => ['available'],
     ];
 
-    // ── CRUD ─────────────────────────────────────────────────
-
-    /**
-     * SELECT all rooms with JOIN on room_types to include type_name and base_price.
-     */
+    
     public function all()
     {
         $stmt = mysqli_prepare(
@@ -70,9 +57,7 @@ class Room extends AbstractModel
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    /**
-     * SELECT one room by ID with JOIN on room_types.
-     */
+    
     public function find($id)
     {
         $stmt = mysqli_prepare(
@@ -92,9 +77,7 @@ class Room extends AbstractModel
         return mysqli_fetch_assoc($result);
     }
 
-    /**
-     * INSERT new room; default status is 'available'.
-     */
+    
     public function create($data)
     {
         $stmt = mysqli_prepare(
@@ -111,9 +94,7 @@ class Room extends AbstractModel
         return mysqli_insert_id($this->db);
     }
 
-    /**
-     * UPDATE room fields.
-     */
+    
     public function update($id, $data)
     {
         $stmt = mysqli_prepare(
@@ -130,9 +111,7 @@ class Room extends AbstractModel
         mysqli_stmt_execute($stmt);
     }
 
-    /**
-     * DELETE only if no active reservations exist (pending / confirmed / checked_in).
-     */
+    
     public function delete($id)
     {
         $stmt = mysqli_prepare(
@@ -157,11 +136,7 @@ class Room extends AbstractModel
         return true;
     }
 
-    // ── Relationships ────────────────────────────────────────
-
-    /**
-     * Return the associated room_type record for this room.
-     */
+    
     public function roomType()
     {
         $stmt = mysqli_prepare($this->db, "SELECT * FROM room_types WHERE id = ? LIMIT 1");
@@ -171,9 +146,7 @@ class Room extends AbstractModel
         return mysqli_fetch_assoc($result);
     }
 
-    /**
-     * Return all reservations for this room.
-     */
+    
     public function reservations()
     {
         $stmt = mysqli_prepare(
@@ -186,9 +159,7 @@ class Room extends AbstractModel
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    /**
-     * Return all housekeeping tasks for this room.
-     */
+   
     public function housekeepingTasks()
     {
         $stmt = mysqli_prepare(
@@ -201,9 +172,7 @@ class Room extends AbstractModel
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    /**
-     * Return all maintenance orders for this room.
-     */
+    
     public function maintenanceOrders()
     {
         $stmt = mysqli_prepare(
@@ -216,12 +185,7 @@ class Room extends AbstractModel
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    // ── Status Helpers ───────────────────────────────────────
-
-    /**
-     * Validate the transition against the state machine, then UPDATE if valid.
-     * Returns true on success, or an error message string if the transition is invalid.
-     */
+    
     public function updateStatus($roomId, $newStatus = null)
     {
         if ($newStatus === null) {
@@ -233,7 +197,7 @@ class Room extends AbstractModel
             throw new Exception("Room ID is required to update status.");
         }
 
-        // Fetch current status
+        
         $stmt = mysqli_prepare($this->db, "SELECT status FROM rooms WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'i', $roomId);
         mysqli_stmt_execute($stmt);
@@ -246,30 +210,26 @@ class Room extends AbstractModel
 
         $current = $row['status'];
 
-        // Validate that newStatus is a known status
+        
         $allStatuses = array_keys($this->transitions);
         if (!in_array($newStatus, $allStatuses)) {
             throw new Exception("Invalid status: '$newStatus'.");
         }
 
-        // Validate transition
+        
         $allowed = $this->transitions[$current] ?? [];
         if (!in_array($newStatus, $allowed)) {
             throw new Exception("Transition from '$current' to '$newStatus' is not allowed.");
         }
 
-        // Perform update
+        
         $stmt = mysqli_prepare($this->db, "UPDATE rooms SET status = ? WHERE id = ?");
         mysqli_stmt_bind_param($stmt, 'si', $newStatus, $roomId);
         mysqli_stmt_execute($stmt);
         return true;
     }
 
-    /**
-     * Find all rooms NOT reserved during the given date range.
-     * Excludes reservations with status IN ('cancelled', 'no_show', 'checked_out').
-     * Optionally filter by room_type_id.
-     */
+    
     public function findAvailable($checkIn, $checkOut, $typeId = null)
     {
         $sql = "SELECT rooms.*,
@@ -307,14 +267,10 @@ class Room extends AbstractModel
         return mysqli_fetch_all($result, MYSQLI_ASSOC);
     }
 
-    /**
-     * Suggest an upgrade: find the current room's base_price, then find
-     * room types with a higher base_price, and return the first available
-     * higher-tier room for the given date range.
-     */
+    
     public function suggestUpgrade($currentRoomId, $checkIn, $checkOut)
     {
-        // Find current room's type and base_price
+        
         $stmt = mysqli_prepare(
             $this->db,
             "SELECT room_types.base_price
@@ -334,7 +290,7 @@ class Room extends AbstractModel
 
         $currentPrice = $current['base_price'];
 
-        // Find room types with a higher base_price
+        
         $stmt = mysqli_prepare(
             $this->db,
             "SELECT id FROM room_types WHERE base_price > ? ORDER BY base_price ASC"
@@ -344,7 +300,7 @@ class Room extends AbstractModel
         $result = mysqli_stmt_get_result($stmt);
         $higherTypes = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
-        // For each higher type, call findAvailable and return the first hit
+        
         foreach ($higherTypes as $type) {
             $available = $this->findAvailable($checkIn, $checkOut, $type['id']);
             if (!empty($available)) {
@@ -355,12 +311,7 @@ class Room extends AbstractModel
         return false;
     }
 
-    /**
-     * Dynamic room allocation:
-     * - excludes overlapping reservations (reuses findAvailable)
-     * - applies capacity/budget/preference matching
-     * - returns rooms ordered by best match
-     */
+    
     public function getBestRoomsForClient($clientData)
     {
         $request = $this->normalizeAllocationInput((array) $clientData);
@@ -379,7 +330,7 @@ class Room extends AbstractModel
             $request['preferred_room_type_id']
         );
 
-        // If preferred type has no inventory, still return best alternatives.
+        
         if (empty($available) && !empty($request['preferred_room_type_id'])) {
             $available = $this->findAvailable($request['check_in_date'], $request['check_out_date']);
         }
@@ -663,7 +614,7 @@ class Room extends AbstractModel
             $score += 10;
         }
 
-        // Budget fit.
+        
         if ($request['max_budget_per_night'] !== null) {
             $budget = (float) $request['max_budget_per_night'];
             if ($price <= $budget) {
@@ -676,7 +627,7 @@ class Room extends AbstractModel
             $score += 15;
         }
 
-        // Room type preference.
+        
         if (!empty($request['preferred_room_type_id'])) {
             if ((int) $room['room_type_id'] === (int) $request['preferred_room_type_id']) {
                 $score += 25;
@@ -685,7 +636,7 @@ class Room extends AbstractModel
             }
         }
 
-        // Floor preference.
+    
         if ($request['floor_preference'] !== null) {
             $preference = $request['floor_preference'];
 
@@ -706,7 +657,7 @@ class Room extends AbstractModel
             }
         }
 
-        // Tie-break helper: slight preference for lower nightly price.
+        
         $score += max(0, 5 - ($price / 1000));
 
         return round($score, 2);

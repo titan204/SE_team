@@ -14,11 +14,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
     }
 
 
-    // ── UC07: Virtual Inventory ──────────────────────────────
-
-    /**
-     * Returns physical room count for a room type (excludes out_of_order).
-     */
+    
     public function getPhysicalRooms($roomTypeId)
     {
         $roomTypeId = (int) $roomTypeId;
@@ -29,9 +25,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
         return (int) ($row['cnt'] ?? 0);
     }
 
-    /**
-     * Returns all room types with their physical room counts.
-     */
+    
     public function getRoomTypesWithCount()
     {
         $r = mysqli_query($this->db,
@@ -46,10 +40,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Builds the 30-day inventory grid.
-     * Returns: [ 'roomTypes'=>[], 'dates'=>[], 'grid'=>[rtId][date]=>cell ]
-     */
+    
     public function getInventoryGrid($days = 30)
     {
         $roomTypes = $this->getRoomTypesWithCount();
@@ -60,7 +51,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
         $dateFrom = $dates[0];
         $dateTo   = $dates[$days - 1];
 
-        // Fetch stored virtual_inventory rows
+        
         $viResult = mysqli_query($this->db,
             "SELECT room_type_id, DATE(date) AS date,
                     physical_rooms, virtual_max, confirmed_count, updated_at
@@ -71,7 +62,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
             $viMap[$row['room_type_id']][$row['date']] = $row;
         }
 
-        // Count confirmed/checked_in reservations per room_type per date (PHP aggregation)
+        
         $resResult = mysqli_query($this->db,
             "SELECT r.room_id, rm.room_type_id, r.check_in_date, r.check_out_date
              FROM   reservations r
@@ -89,7 +80,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
             }
         }
 
-        // Build grid cells
+        
         $grid = [];
         foreach ($roomTypes as $rt) {
             $rtId        = $rt['id'];
@@ -112,9 +103,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
         return ['roomTypes' => $roomTypes, 'dates' => $dates, 'grid' => $grid];
     }
 
-    /**
-     * INSERT or UPDATE a virtual_inventory row.
-     */
+    
     public function upsertVirtualMax($roomTypeId, $date, $physical, $newVirtualMax)
     {
         $roomTypeId    = (int)   $roomTypeId;
@@ -136,9 +125,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
         return true;
     }
 
-    /**
-     * Log a virtual_max change to inventory_change_log.
-     */
+   
     public function logChange($roomTypeId, $date, $oldMax, $newMax, $reason = '')
     {
         $roomTypeId = (int) $roomTypeId;
@@ -154,17 +141,13 @@ class RevenueManagerVirtualInventory extends AbstractReport
              VALUES ($roomTypeId, '$date', $oldMax, $newMax, $userId, '$reason')");
     }
 
-    /**
-     * UC15 — checkOverbooking: fires on every adjustment.
-     * If confirmed > physical, logs an overbooking alert to audit_log.
-     * Returns true if overbooking detected.
-     */
+    
     public function checkOverbooking($date, $roomTypeId)
     {
         $roomTypeId = (int) $roomTypeId;
         $date       = mysqli_real_escape_string($this->db, $date);
 
-        // Count live confirmed reservations for this room type on this date
+        
         $r = mysqli_query($this->db,
             "SELECT COUNT(*) AS cnt
              FROM   reservations res
@@ -175,7 +158,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
                AND  res.check_out_date >  '$date'");
         $confirmed = (int) (mysqli_fetch_assoc($r)['cnt'] ?? 0);
 
-        // Get physical room count
+        
         $physical = $this->getPhysicalRooms($roomTypeId);
 
         if ($confirmed > $physical) {
@@ -192,9 +175,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
         return false;
     }
 
-    /**
-     * Get the existing virtual_max for a specific room_type + date (for old_max in log).
-     */
+   
     public function getCurrentVirtualMax($roomTypeId, $date)
     {
         $roomTypeId = (int) $roomTypeId;
@@ -206,10 +187,7 @@ class RevenueManagerVirtualInventory extends AbstractReport
         return $row ? (int) $row['virtual_max'] : null;
     }
 
-    /**
-     * Sync status — returns last updated_at per room type from virtual_inventory.
-     * Treats rows older than 1 hour as stale (simulating channel sync lag).
-     */
+    
     public function getSyncStatus()
     {
         $r = mysqli_query($this->db,

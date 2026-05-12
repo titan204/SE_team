@@ -13,11 +13,7 @@ class QAInspection extends AbstractReport
         $this->registerAggregate('feedback', Feedback::class);
     }
 
-    // ── UC32 ─────────────────────────────────────────────────
-
-    /**
-     * Rooms pending inspection (status='clean', no inspection today).
-     */
+    
     public function getRoomsPendingInspection(): array
     {
         $today = date('Y-m-d');
@@ -34,9 +30,7 @@ class QAInspection extends AbstractReport
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Rooms flagged by low guest feedback (overall_score ≤ 2, flagged_for_qa=1).
-     */
+    
     public function getRoomsFlaggedByFeedback(): array
     {
         $r = mysqli_query($this->db,
@@ -52,9 +46,7 @@ class QAInspection extends AbstractReport
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Load checklist data + existing inspections for a room.
-     */
+   
     public function getInspectionData(int $roomId): array
     {
         $id = (int) $roomId;
@@ -64,7 +56,7 @@ class QAInspection extends AbstractReport
              WHERE  rm.id = $id LIMIT 1");
         $room = $rr ? mysqli_fetch_assoc($rr) : null;
 
-        // Housekeepers list (for corrective assignment)
+        
         $rh = mysqli_query($this->db,
             "SELECT id, name FROM users
              WHERE  role_id = (SELECT id FROM roles WHERE name = 'housekeeper') AND is_active = 1
@@ -74,12 +66,7 @@ class QAInspection extends AbstractReport
         return compact('room', 'housekeepers');
     }
 
-    /**
-     * UC32 POST /qa/inspections
-     * $data keys: room_id, checklist_scores (assoc), overall_result, notes,
-     *             corrective_assignments [{housekeeper_id, task_description, due_by}]
-     *             is_critical (bool)
-     */
+    
     public function submitInspection(array $data): array
     {
         $roomId   = (int)   $data['room_id'];
@@ -98,7 +85,7 @@ class QAInspection extends AbstractReport
 
         $correctives = [];
 
-        // Step b: create corrective tasks
+        
         foreach ($data['corrective_assignments'] ?? [] as $ca) {
             $hkId = (int)   $ca['housekeeper_id'];
             $desc = mysqli_real_escape_string($this->db, $ca['task_description'] ?? '');
@@ -110,12 +97,12 @@ class QAInspection extends AbstractReport
             $correctives[] = (int) mysqli_insert_id($this->db);
         }
 
-        // Step c: FAIL + critical → room out_of_order + maintenance request
+        
         $isCritical = !empty($data['is_critical']);
         if ($result === 'fail' && $isCritical) {
             mysqli_query($this->db,
                 "UPDATE rooms SET status = 'out_of_order' WHERE id = $roomId");
-            // Auto-create a maintenance order for critical QA failure
+            
             $mDesc = mysqli_real_escape_string($this->db,
                 "Critical QA failure in room. Inspection #$inspectionId requires immediate maintenance.");
             $uid = $inspector;
@@ -125,7 +112,7 @@ class QAInspection extends AbstractReport
                  VALUES ($roomId, $uid, '$mDesc', 'critical', 'open')");
         }
 
-        // Step d: PASS → mark room inspected
+        
         if ($result === 'pass') {
             mysqli_query($this->db,
                 "UPDATE rooms SET status = 'available' WHERE id = $roomId");
@@ -138,14 +125,12 @@ class QAInspection extends AbstractReport
         ];
     }
 
-    /**
-     * UC32 GET /qa/trends — pass rates per housekeeper and floor.
-     */
+   
     public function getTrends(int $days = 30): array
     {
         $since = date('Y-m-d', strtotime("-{$days} days"));
 
-        // Per inspector
+        
         $ri = mysqli_query($this->db,
             "SELECT u.name AS inspector_name,
                     COUNT(*) AS total,
@@ -158,7 +143,7 @@ class QAInspection extends AbstractReport
              ORDER  BY pass_rate DESC");
         $byInspector = $ri ? mysqli_fetch_all($ri, MYSQLI_ASSOC) : [];
 
-        // Per floor
+        
         $rf = mysqli_query($this->db,
             "SELECT rm.floor,
                     COUNT(*) AS total,
@@ -174,11 +159,7 @@ class QAInspection extends AbstractReport
         return compact('byInspector', 'byFloor');
     }
 
-    // ── UC33 ─────────────────────────────────────────────────
-
-    /**
-     * Load inspection for the scoring form.
-     */
+   
     public function findInspection(int $id): ?array
     {
         $id = (int) $id;
@@ -192,9 +173,7 @@ class QAInspection extends AbstractReport
         return mysqli_fetch_assoc($r) ?: null;
     }
 
-    /**
-     * UC33 POST /qa/scores — submit quality score.
-     */
+    
     public function submitScore(array $data): array
     {
         $inspId = (int) $data['inspection_id'];
@@ -216,14 +195,14 @@ class QAInspection extends AbstractReport
              VALUES ($inspId, $hkId, $roomId, $c, $p, $co, $s, $overall, '$notes', '$photos', $uid)");
         $scoreId = (int) mysqli_insert_id($this->db);
 
-        // Step c: update housekeeper_performance
+        
         $this->updatePerformance($hkId, $overall);
 
-        // Step e: follow-up alert if overall < 60
+        
         $followUp = false;
         if ($overall < 60) {
             $followUp = true;
-            // Store as a qa_inspection note (simple approach without separate follow_up_alerts table)
+            
             $msg = mysqli_real_escape_string($this->db,
                 "Low quality score ($overall/100) for housekeeper #$hkId in room #$roomId.");
             mysqli_query($this->db,
@@ -234,12 +213,10 @@ class QAInspection extends AbstractReport
         return ['score_id' => $scoreId, 'overall' => $overall, 'follow_up_triggered' => $followUp];
     }
 
-    /**
-     * UC33 Step c — update running average + trend on housekeeper_performance.
-     */
+    
     private function updatePerformance(int $hkId, float $newScore): void
     {
-        // Recalculate from all scores
+        
         $r = mysqli_query($this->db,
             "SELECT AVG(overall_score) AS avg_s, COUNT(*) AS total
              FROM   quality_scores WHERE housekeeper_id = $hkId");
@@ -249,7 +226,7 @@ class QAInspection extends AbstractReport
         $avg   = round((float)$row['avg_s'], 2);
         $total = (int) $row['total'];
 
-        // Trend: compare last 5 scores
+        
         $rt = mysqli_query($this->db,
             "SELECT overall_score FROM quality_scores
              WHERE  housekeeper_id = $hkId ORDER BY created_at DESC LIMIT 5");
@@ -273,9 +250,7 @@ class QAInspection extends AbstractReport
                  updated_at = NOW()");
     }
 
-    /**
-     * UC33 PUT /qa/scores/{id}/dispute
-     */
+    
     public function disputeScore(int $scoreId, string $note): bool
     {
         $id   = (int) $scoreId;

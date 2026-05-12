@@ -1,9 +1,4 @@
 <?php
-// ============================================================
-//  AuditLog Model — Immutable system audit trail
-//  Table: audit_log
-//  RULE: INSERT-ONLY. update() and delete() throw exceptions.
-// ============================================================
 
 class AuditLog extends AbstractReport
 {
@@ -15,12 +10,7 @@ class AuditLog extends AbstractReport
         $this->registerAggregate('users', User::class);
     }
 
-    // ── Query helpers ─────────────────────────────────────────
-
-    /**
-     * Paginated + filtered list.
-     * Filters: user_id, action, target_type, start, end
-     */
+    
     public function all(array $filters = [], int $limit = 500, int $offset = 0): array
     {
         $where = ['1=1'];
@@ -43,7 +33,7 @@ class AuditLog extends AbstractReport
         return $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
     }
 
-    /** Single record by id. */
+    
     public function find($id): ?array
     {
         $id = (int) $id;
@@ -52,11 +42,7 @@ class AuditLog extends AbstractReport
         return mysqli_fetch_assoc($r) ?: null;
     }
 
-    /**
-     * INSERT only. Returns new record id.
-     * Data keys: user_id, action, target_type, target_id, old_value, new_value
-     * ip_address and user_agent captured automatically from $_SERVER.
-     */
+    
     public function create(array $data): int
     {
         $uid    = !empty($data['user_id'])    ? (int)$data['user_id']  : 'NULL';
@@ -69,7 +55,7 @@ class AuditLog extends AbstractReport
         $newVal = isset($data['new_value']) && $data['new_value'] !== null
                     ? "'" . mysqli_real_escape_string($this->db, is_array($data['new_value']) ? json_encode($data['new_value']) : (string)$data['new_value']) . "'"
                     : 'NULL';
-        // Auto-capture client context
+        
         $ip        = mysqli_real_escape_string($this->db,
                         $data['ip_address'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '');
         $ua        = mysqli_real_escape_string($this->db,
@@ -82,7 +68,7 @@ class AuditLog extends AbstractReport
         return (int) mysqli_insert_id($this->db);
     }
 
-    /** Recent actions by a specific user. */
+    
     public function findByUser(int $userId, int $limit = 50): array
     {
         $uid = (int) $userId;
@@ -91,7 +77,7 @@ class AuditLog extends AbstractReport
         return $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
     }
 
-    /** Full history for a specific record. */
+    
     public function findByTarget(string $type, int $id): array
     {
         $t  = mysqli_real_escape_string($this->db, $type);
@@ -101,11 +87,7 @@ class AuditLog extends AbstractReport
         return $r ? mysqli_fetch_all($r, MYSQLI_ASSOC) : [];
     }
 
-    // ── Static shortcut ───────────────────────────────────────
-
-    /**
-     * Quick log: AuditLog::log($userId, 'reservation.created', 'reservation', $id, $old, $new)
-     */
+    
     public static function log(
         ?int $userId,
         string $action,
@@ -125,15 +107,12 @@ class AuditLog extends AbstractReport
         ]);
     }
 
-    // ── Forbidden mutations ───────────────────────────────────
-
-    /** @throws RuntimeException always — audit logs are immutable. */
+    
     public function update($id, $data = []): never
     {
         throw new RuntimeException('AuditLog records are immutable. Update is forbidden.');
     }
 
-    /** @throws RuntimeException always — audit logs cannot be deleted. */
     public function delete($id): never
     {
         throw new RuntimeException('AuditLog records cannot be deleted for compliance.');

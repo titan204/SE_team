@@ -1,11 +1,4 @@
 <?php
-// ============================================================
-//  Folio Model — Billing folio for a reservation
-//  Table: folios
-//
-//  Usage:
-//    $folio = new Folio();
-// ============================================================
 
 class Folio extends AbstractBilling
 {
@@ -13,8 +6,8 @@ class Folio extends AbstractBilling
     protected $reservation_id;
     protected $total_amount;
     protected $amount_paid;
-    protected $balance_due;    // computed column
-    protected $status;         // open, settled, refunded
+    protected $balance_due;    
+    protected $status;         
     protected $created_at;
     protected $updated_at;
 

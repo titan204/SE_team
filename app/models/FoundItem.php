@@ -1,9 +1,5 @@
 <?php
-// ============================================================
-//  FoundItem Model — UC30: Log Found Item / UC37: Manage L&F
-//  Tables: found_items, security_alerts, lost_item_reports,
-//          item_returns
-// ============================================================
+
 
 class FoundItem extends AbstractModel
 {
@@ -15,11 +11,7 @@ class FoundItem extends AbstractModel
         $this->registerAggregate('auditLogs', AuditLog::class);
     }
 
-    // ── UC30: Housekeeper logs a found item ──────────────────
-
-    /**
-     * Generate next L&F reference: LF-YYYY-#####
-     */
+    
     private function generateReference(): string
     {
         $year = date('Y');
@@ -30,9 +22,7 @@ class FoundItem extends AbstractModel
         return sprintf('LF-%s-%05d', $year, $seq);
     }
 
-    /**
-     * UC30 duplicate check: same room + similar description within 2 hours.
-     */
+    
     public function checkDuplicate(string $roomNumber, string $description): array
     {
         $rm   = mysqli_real_escape_string($this->db, $roomNumber);
@@ -48,12 +38,7 @@ class FoundItem extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * UC30 POST /found-items — insert record, trigger security if high-value.
-     * $data keys: description, location_type, room_number, public_area,
-     *             condition, photo_url, is_high_value
-     * Returns [ 'id'=>int, 'lf_reference'=>string ]
-     */
+    
     public function create(array $data): array
     {
         $ref         = $this->generateReference();
@@ -76,7 +61,7 @@ class FoundItem extends AbstractModel
                      '$cond', $photoSql, $isHV, $userId)");
         $id = (int) mysqli_insert_id($this->db);
 
-        // Step d: high-value → security alert
+        
         if ($isHV) {
             $msg = mysqli_real_escape_string($this->db,
                 "High-value item found: $desc. Ref: $ref. Please secure immediately.");
@@ -90,11 +75,7 @@ class FoundItem extends AbstractModel
         return ['id' => $id, 'lf_reference' => $ref];
     }
 
-    // ── UC37: Front desk manages L&F queue ───────────────────
-
-    /**
-     * List all found_items with filters.
-     */
+   
     public function getQueue(array $filters = []): array
     {
         $where = ['1=1'];
@@ -121,9 +102,7 @@ class FoundItem extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * Get all guest lost-item reports.
-     */
+    
     public function getLostReports(): array
     {
         $r = mysqli_query($this->db,
@@ -137,9 +116,7 @@ class FoundItem extends AbstractModel
         return mysqli_fetch_all($r, MYSQLI_ASSOC);
     }
 
-    /**
-     * UC37 Step 2 — Accept guest report, try auto-match.
-     */
+    
     public function acceptGuestReport(array $data): array
     {
         $guestId  = (int)   $data['guest_id'];
@@ -152,7 +129,7 @@ class FoundItem extends AbstractModel
              VALUES ($guestId, '$desc', $resId, '$lostDate')");
         $reportId = (int) mysqli_insert_id($this->db);
 
-        // Auto-match: similar description within ±3 days of lost_date
+        
         $r = mysqli_query($this->db,
             "SELECT id, lf_reference, description, found_at, photo_url
              FROM   found_items
@@ -166,9 +143,7 @@ class FoundItem extends AbstractModel
         return ['report_id' => $reportId, 'candidates' => $candidates];
     }
 
-    /**
-     * UC37 Step 3 — Confirm match between found_item and guest report.
-     */
+    
     public function confirmMatch(int $foundItemId, int $reportId, int $confirmedByUserId): bool
     {
         $fid  = (int) $foundItemId;
@@ -184,10 +159,7 @@ class FoundItem extends AbstractModel
         return true;
     }
 
-    /**
-     * UC37 Step 4 — Record item return.
-     * method: 'pickup' or 'courier'
-     */
+   
     public function recordReturn(int $foundItemId, int $guestId, string $method, ?string $address, float $shippingCost): int
     {
         $fid    = (int)   $foundItemId;
@@ -210,9 +182,7 @@ class FoundItem extends AbstractModel
         return $retId;
     }
 
-    /**
-     * UC37 Step 5 — Dispose of item (requires supervisor_approval_code validation upstream).
-     */
+    
     public function dispose(int $foundItemId, string $method): bool
     {
         $fid  = (int) $foundItemId;
@@ -230,10 +200,7 @@ class FoundItem extends AbstractModel
         return mysqli_fetch_assoc($r) ?: null;
     }
 
-    /**
-     * UC37 Step 5 — Items past retention period (default 90 days), still in 'stored' status.
-     * Returned to front desk/supervisor for action (dispose or extend).
-     */
+    
     public function getOverdueItems(int $retentionDays = 90): array
     {
         $r = mysqli_query($this->db,
