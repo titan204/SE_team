@@ -125,7 +125,6 @@ class PaymentService extends AbstractModel
     
     private function submitToGateway(string $gatewayToken, float $amount, string $idempotencyKey): array
     {
-                     → success
         $suffix = substr($gatewayToken, -4);
 
         if ($suffix === '0000') {
